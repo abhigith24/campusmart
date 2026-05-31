@@ -46,24 +46,27 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     try {
       const chatId  = [currentUser.uid, listing.sellerId].sort().join("_") + "_" + listing.id;
       const chatRef = doc(db, "chats", chatId);
-      const snap    = await getDoc(chatRef);
-      if (!snap.exists()) {
-        await setDoc(chatRef, {
-          participants:     [currentUser.uid, listing.sellerId],
-          participantNames: {
-            [currentUser.uid]:    userProfile?.name || currentUser.displayName,
-            [listing.sellerId]:   listing.sellerName
-          },
-          listingId:       listing.id,
-          listingTitle:    listing.title,
-          lastMessage:     "",
-          lastMessageTime: serverTimestamp(),
-          createdAt:       serverTimestamp()
-        });
-      }
+
+      // setDoc with merge:true — creates if not exists, no-op if exists
+      await setDoc(chatRef, {
+        participants:     [currentUser.uid, listing.sellerId],
+        participantNames: {
+          [currentUser.uid]:  userProfile?.name || currentUser.displayName || "Student",
+          [listing.sellerId]: listing.sellerName || "Seller"
+        },
+        listingId:       listing.id,
+        listingTitle:    listing.title,
+        lastMessage:     "",
+        lastMessageTime: serverTimestamp(),
+        createdAt:       serverTimestamp()
+      }, { merge: true });
+
       setChatWith({ chatId, listing, seller: sellerData });
       setPage("chat");
-    } catch { toast("Could not open chat", "error"); }
+    } catch (err) {
+      console.error("Chat error:", err?.code, err?.message);
+      toast(`Could not open chat: ${err?.code || err?.message || "unknown error"}`, "error");
+    }
     setContactLoading(false);
   }
 

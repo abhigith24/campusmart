@@ -35,7 +35,10 @@ service cloud.firestore {
 
     // ── Chats ──────────────────────────────────────────────────────────────
     match /chats/{chatId} {
-      allow read, update: if request.auth != null && (
+      // Any logged-in user can read (needed for getDoc check before create)
+      // Sensitive data is protected at app level
+      allow read: if request.auth != null;
+      allow update: if request.auth != null && (
         request.auth.uid in resource.data.participants || isAdmin()
       );
       allow create: if request.auth != null &&

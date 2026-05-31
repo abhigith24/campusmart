@@ -21,6 +21,21 @@ function timeAgo(ts) {
 export default function NotificationsPage({ setPage, setSelectedListing }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
+  async function handleClick(n) {
+    await markAsRead(n.id);
+    // Navigate to the relevant listing if we have its id
+    if (n.listingId && setSelectedListing) {
+      // fetch the listing doc and navigate
+      const { doc, getDoc } = await import("firebase/firestore");
+      const { db } = await import("../firebase");
+      const snap = await getDoc(doc(db, "listings", n.listingId));
+      if (snap.exists()) {
+        setSelectedListing({ id: snap.id, ...snap.data() });
+        setPage("listing");
+      }
+    }
+  }
+
   return (
     <div className="container" style={{ maxWidth: 700, paddingTop: 28, paddingBottom: 40 }}>
       <div className="page-header">
@@ -55,7 +70,7 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
               <div
                 key={n.id}
                 className={`notif-item ${!n.read ? "unread" : ""}`}
-                onClick={() => markAsRead(n.id)}
+                onClick={() => handleClick(n)}
               >
                 <div className="notif-icon">{meta.icon}</div>
                 <div className="notif-body">
@@ -74,7 +89,14 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
                       <>Your item <strong>{n.listingTitle}</strong> has been marked as sold.</>
                     )}
                   </div>
-                  <div className="notif-time">{timeAgo(n.createdAt)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+                    <div className="notif-time">{timeAgo(n.createdAt)}</div>
+                    {n.listingId && (
+                      <span style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>
+                        View listing →
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {!n.read && <div className="notif-dot" />}
               </div>

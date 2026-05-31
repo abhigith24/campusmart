@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
   async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
     await createOrUpdateProfile(result.user);
+    await fetchProfile(result.user.uid);
     return result;
   }
 
@@ -31,6 +32,7 @@ export function AuthProvider({ children }) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: name });
     await createOrUpdateProfile(result.user, { college, branch, year });
+    await fetchProfile(result.user.uid);
     return result;
   }
 
