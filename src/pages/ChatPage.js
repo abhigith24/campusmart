@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  collection, query, orderBy, onSnapshot, addDoc,
+  collection, query, onSnapshot, addDoc,
   serverTimestamp, doc, updateDoc, where, getDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -23,11 +23,16 @@ export default function ChatPage({ initialChatWith, setPage }) {
     if (!currentUser) return;
     const q = query(
       collection(db, "chats"),
-      where("participants", "array-contains", currentUser.uid),
-      orderBy("lastMessageTime", "desc")
+      where("participants", "array-contains", currentUser.uid)
     );
     const unsub = onSnapshot(q, snap => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const list = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const ta = a.lastMessageTime?.seconds || 0;
+          const tb = b.lastMessageTime?.seconds || 0;
+          return tb - ta;
+        });
       setChats(list);
 
       // Auto-select active chat if it updated (keeps messages in sync)
@@ -59,16 +64,21 @@ export default function ChatPage({ initialChatWith, setPage }) {
 
   // ── Load messages for active chat (realtime) ───────────────────────────────
   useEffect(() => {
-    // Clean up previous listener
     if (unsubMsgRef.current) { unsubMsgRef.current(); unsubMsgRef.current = null; }
     if (!activeChat?.id) { setMessages([]); return; }
 
-    const q = query(
-      collection(db, "chats", activeChat.id, "messages"),
-      orderBy("createdAt", "asc")
-    );
+    // No orderBy — avoids composite index requirement. Sort client-side instead.
+    const q = collection(db, "chats", activeChat.id, "messages");
+
     unsubMsgRef.current = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const msgs = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const ta = a.createdAt?.seconds || a.createdAt?.toMillis?.() / 1000 || 0;
+          const tb = b.createdAt?.seconds || b.createdAt?.toMillis?.() / 1000 || 0;
+          return ta - tb;
+        });
+      setMessages(msgs);
       requestAnimationFrame(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       });
