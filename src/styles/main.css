@@ -1087,7 +1087,6 @@ input,textarea,select{font-family:inherit}
   grid-template-columns:2fr 1fr 1fr 1fr;
   gap:40px;padding:52px 0 40px;
 }
-.footer-brand{}
 .footer-logo{
   display:flex;align-items:center;gap:10px;
   cursor:pointer;margin-bottom:14px;
@@ -1105,7 +1104,6 @@ input,textarea,select{font-family:inherit}
   font-size:12px;font-weight:700;
   border:1px solid rgba(249,115,22,.25);
 }
-.footer-col{}
 .footer-col-title{
   font-size:12px;font-weight:700;color:#6b7280;
   text-transform:uppercase;letter-spacing:.8px;
