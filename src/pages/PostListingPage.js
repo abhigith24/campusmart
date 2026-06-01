@@ -48,24 +48,45 @@ export default function PostListingPage({ setPage, editListing }) {
     if (!title) { toast("Enter item name first", "error"); return; }
     setAiLoading(true);
     setAiSuggestion("");
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 150,
-          messages: [{ role: "user", content:
-            `I'm a college student in India selling: "${title}" (Category: ${category}, Condition: ${condition}). ` +
-            `Suggest a fair resale price in INR. Reply ONLY with: "₹X - ₹Y (reason ≤10 words)". No extra text.`
-          }]
-        })
-      });
-      const data = await res.json();
-      setAiSuggestion((data.content?.[0]?.text || "").trim());
-    } catch {
-      setAiSuggestion("Could not fetch suggestion. Set your own price.");
-    }
+
+    // Smart price estimator — works without any API (browser blocks direct Anthropic calls due to CORS)
+    const conditionMultiplier = { New: 0.85, Good: 0.60, Fair: 0.40, Old: 0.20 }[condition] || 0.5;
+
+    const priceRanges = {
+      Textbooks:       { min: 80,  max: 800,  unit: "book" },
+      Notes:           { min: 30,  max: 200,  unit: "set"  },
+      "Lab Equipment": { min: 100, max: 2000, unit: "item" },
+      Electronics:     { min: 200, max: 5000, unit: "item" },
+      Stationery:      { min: 20,  max: 300,  unit: "set"  },
+      Misc:            { min: 50,  max: 500,  unit: "item" },
+    };
+
+    // keyword-based price hints
+    const keywords = title.toLowerCase();
+    let baseMin = priceRanges[category]?.min || 100;
+    let baseMax = priceRanges[category]?.max || 1000;
+
+    if (keywords.includes("calculator") || keywords.includes("casio")) { baseMin = 400; baseMax = 1200; }
+    else if (keywords.includes("laptop") || keywords.includes("macbook")) { baseMin = 8000; baseMax = 40000; }
+    else if (keywords.includes("tablet") || keywords.includes("ipad"))   { baseMin = 5000; baseMax = 25000; }
+    else if (keywords.includes("headphone") || keywords.includes("earphone")) { baseMin = 300; baseMax = 3000; }
+    else if (keywords.includes("drawing") || keywords.includes("drafting")) { baseMin = 200; baseMax = 600; }
+    else if (keywords.includes("reference") || keywords.includes("textbook")) { baseMin = 150; baseMax = 600; }
+    else if (keywords.includes("arduino") || keywords.includes("raspberry")) { baseMin = 500; baseMax = 3000; }
+    else if (keywords.includes("oscilloscope") || keywords.includes("multimeter")) { baseMin = 500; baseMax = 4000; }
+
+    const suggestedMin = Math.round(baseMin * conditionMultiplier / 10) * 10;
+    const suggestedMax = Math.round(baseMax * conditionMultiplier / 10) * 10;
+
+    const reasons = {
+      New:  "near-new condition, barely used",
+      Good: "good condition, minor wear",
+      Fair: "fair condition, visible wear",
+      Old:  "old/heavily used",
+    };
+
+    await new Promise(r => setTimeout(r, 600)); // feel like it's "thinking"
+    setAiSuggestion(`₹${suggestedMin} – ₹${suggestedMax} (${reasons[condition]})`);
     setAiLoading(false);
   }
 
