@@ -49,45 +49,81 @@ export default function PostListingPage({ setPage, editListing }) {
     setAiLoading(true);
     setAiSuggestion("");
 
-    // Smart price estimator — works without any API (browser blocks direct Anthropic calls due to CORS)
+    const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY;
+
+    if (!GROQ_API_KEY) {
+      // Fallback: smart local estimator if no key configured
+      localPriceSuggest();
+      return;
+    }
+
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          max_tokens: 80,
+          temperature: 0.3,
+          messages: [
+            {
+              role: "system",
+              content: "You are a price advisor for a college student marketplace in India. Give concise resale price suggestions in INR only."
+            },
+            {
+              role: "user",
+              content: `Item: "${title}", Category: ${category}, Condition: ${condition}. Reply ONLY in this exact format: ₹MIN – ₹MAX (reason in 8 words max). No extra text.`
+            }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || "Groq API error");
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content?.trim() || "";
+      setAiSuggestion(text || "Could not get suggestion. Try again.");
+    } catch (err) {
+      console.error("Groq error:", err.message);
+      // Fallback to local estimator on error
+      localPriceSuggest();
+    }
+    setAiLoading(false);
+  }
+
+  function localPriceSuggest() {
     const conditionMultiplier = { New: 0.85, Good: 0.60, Fair: 0.40, Old: 0.20 }[condition] || 0.5;
-
     const priceRanges = {
-      Textbooks:       { min: 80,  max: 800,  unit: "book" },
-      Notes:           { min: 30,  max: 200,  unit: "set"  },
-      "Lab Equipment": { min: 100, max: 2000, unit: "item" },
-      Electronics:     { min: 200, max: 5000, unit: "item" },
-      Stationery:      { min: 20,  max: 300,  unit: "set"  },
-      Misc:            { min: 50,  max: 500,  unit: "item" },
+      Textbooks:       { min: 80,  max: 800  },
+      Notes:           { min: 30,  max: 200  },
+      "Lab Equipment": { min: 100, max: 2000 },
+      Electronics:     { min: 200, max: 5000 },
+      Stationery:      { min: 20,  max: 300  },
+      Misc:            { min: 50,  max: 500  },
     };
-
-    // keyword-based price hints
-    const keywords = title.toLowerCase();
+    const kw = title.toLowerCase();
     let baseMin = priceRanges[category]?.min || 100;
     let baseMax = priceRanges[category]?.max || 1000;
-
-    if (keywords.includes("calculator") || keywords.includes("casio")) { baseMin = 400; baseMax = 1200; }
-    else if (keywords.includes("laptop") || keywords.includes("macbook")) { baseMin = 8000; baseMax = 40000; }
-    else if (keywords.includes("tablet") || keywords.includes("ipad"))   { baseMin = 5000; baseMax = 25000; }
-    else if (keywords.includes("headphone") || keywords.includes("earphone")) { baseMin = 300; baseMax = 3000; }
-    else if (keywords.includes("drawing") || keywords.includes("drafting")) { baseMin = 200; baseMax = 600; }
-    else if (keywords.includes("reference") || keywords.includes("textbook")) { baseMin = 150; baseMax = 600; }
-    else if (keywords.includes("arduino") || keywords.includes("raspberry")) { baseMin = 500; baseMax = 3000; }
-    else if (keywords.includes("oscilloscope") || keywords.includes("multimeter")) { baseMin = 500; baseMax = 4000; }
-
-    const suggestedMin = Math.round(baseMin * conditionMultiplier / 10) * 10;
-    const suggestedMax = Math.round(baseMax * conditionMultiplier / 10) * 10;
-
-    const reasons = {
-      New:  "near-new condition, barely used",
-      Good: "good condition, minor wear",
-      Fair: "fair condition, visible wear",
-      Old:  "old/heavily used",
-    };
-
-    await new Promise(r => setTimeout(r, 600)); // feel like it's "thinking"
-    setAiSuggestion(`₹${suggestedMin} – ₹${suggestedMax} (${reasons[condition]})`);
-    setAiLoading(false);
+    if (kw.includes("laptop") || kw.includes("macbook"))         { baseMin = 8000;  baseMax = 40000; }
+    else if (kw.includes("tablet") || kw.includes("ipad"))       { baseMin = 5000;  baseMax = 25000; }
+    else if (kw.includes("calculator") || kw.includes("casio"))  { baseMin = 400;   baseMax = 1200;  }
+    else if (kw.includes("headphone") || kw.includes("earphone")){ baseMin = 300;   baseMax = 3000;  }
+    else if (kw.includes("arduino") || kw.includes("raspberry")) { baseMin = 500;   baseMax = 3000;  }
+    else if (kw.includes("oscilloscope") || kw.includes("multimeter")){ baseMin = 500; baseMax = 4000; }
+    else if (kw.includes("drawing") || kw.includes("drafter"))   { baseMin = 200;   baseMax = 600;   }
+    const min = Math.round(baseMin * conditionMultiplier / 10) * 10;
+    const max = Math.round(baseMax * conditionMultiplier / 10) * 10;
+    const reasons = { New: "near-new, barely used", Good: "good condition, minor wear", Fair: "fair, visible wear", Old: "heavily used" };
+    setTimeout(() => {
+      setAiSuggestion(`₹${min} – ₹${max} (${reasons[condition] || "based on condition"})`);
+      setAiLoading(false);
+    }, 500);
   }
 
   async function handleSubmit(e) {
