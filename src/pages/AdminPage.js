@@ -169,7 +169,7 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ background: "var(--green-light)", border: "2px solid var(--green)", borderRadius: "var(--radius)", padding: 20, marginTop: 8 }}>
+              <div style={{ background: "var(--green-light)", border: "2px solid var(--green)", borderRadius: "var(--r-md)", padding: 20, marginTop: 8 }}>
                 <div style={{ fontWeight: 800, color: "var(--green)", marginBottom: 8 }}>🎓 Platform Health</div>
                 <div style={{ display: "flex", gap: 32, flexWrap: "wrap", fontSize: 14 }}>
                   <div>
@@ -217,7 +217,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ background: "white", borderRadius: "var(--radius)", border: "2px solid var(--border)", overflow: "auto" }}>
+              <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
                 <table className="report-table">
                   <thead>
                     <tr><th>Item</th><th>Seller</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr>
@@ -270,7 +270,7 @@ export default function AdminPage() {
 
           {/* ── Purchase Requests ── */}
           {tab === "requests" && (
-            <div style={{ background: "white", borderRadius: "var(--radius)", border: "2px solid var(--border)", overflow: "auto" }}>
+            <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
               <table className="report-table">
                 <thead>
                   <tr><th>Item</th><th>Buyer</th><th>Seller</th><th>Price</th><th>Status</th><th>Date</th></tr>
@@ -310,7 +310,7 @@ export default function AdminPage() {
                   {users.length} students registered
                 </div>
               </div>
-              <div style={{ background: "white", borderRadius: "var(--radius)", border: "2px solid var(--border)", overflow: "auto" }}>
+              <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
                 <table className="report-table">
                   <thead>
                     <tr><th>Name</th><th>Email</th><th>College</th><th>Year</th><th>Rating</th><th>Admin</th><th>Actions</th></tr>

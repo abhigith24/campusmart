@@ -146,7 +146,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery }) {
           </div>
 
           {/* Mobile user info */}
-          <div style={{ paddingTop: 8, borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ paddingTop: 8, borderTop: "1px solid var(--bdr)", display: "flex", alignItems: "center", gap: 10 }}>
             <div className="avatar" style={{ flexShrink: 0 }}>
               {currentUser?.photoURL ? <img src={currentUser.photoURL} alt="" /> : initials}
             </div>

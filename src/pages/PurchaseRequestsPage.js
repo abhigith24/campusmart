@@ -147,7 +147,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith }) {
                       : <>🏪 Seller: <strong>{req.sellerName}</strong></>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "var(--primary)" }}>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: "var(--p)" }}>
                       {req.isFree ? "Free 💚" : `₹${req.price}`}
                     </div>
                     <span style={{
@@ -164,7 +164,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith }) {
                   </div>
                 )}
                 {tab === "outgoing" && req.status === "accepted" && (
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", textAlign: "center", padding: "0 8px" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--grn)", textAlign: "center", padding: "0 8px" }}>
                     Accepted!<br/>Check your chat 💬
                   </div>
                 )}

@@ -145,9 +145,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               <div style={{
                 position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                borderRadius: "var(--radius)"
+                borderRadius: "var(--r-md)"
               }}>
-                <span style={{ color: "white", fontSize: 26, fontWeight: 900, background: "var(--green)", padding: "8px 24px", borderRadius: 30 }}>
+                <span style={{ color: "white", fontSize: 26, fontWeight: 900, background: "var(--grn)", padding: "8px 24px", borderRadius: 30 }}>
                   ✅ SOLD
                 </span>
               </div>
@@ -162,7 +162,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               ))}
             </div>
           )}
-          <div style={{ background: "white", borderRadius: "var(--radius)", border: "1.5px solid var(--border)", padding: 20, marginTop: 16 }}>
+          <div style={{ background: "white", borderRadius: "var(--r-md)", border: "1.5px solid var(--bdr)", padding: 20, marginTop: 16 }}>
             <h4 style={{ fontWeight: 800, marginBottom: 10 }}>📄 Description</h4>
             <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--muted)" }}>{listing.description}</p>
             <div style={{ marginTop: 12, fontSize: 13, color: "var(--muted)", display: "flex", gap: 16 }}>
@@ -182,8 +182,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
             <div className="detail-badges">
               <span className={`badge ${CONDITIONS[listing.condition] || ""}`}>{listing.condition}</span>
-              {listing.isFree && <span className="badge" style={{ background: "var(--green-light)", color: "var(--green)" }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "var(--green-light)", color: "var(--green)" }}>Sold</span>}
+              {listing.isFree && <span className="badge" style={{ background: "var(--green-light)", color: "var(--grn)" }}>Free</span>}
+              {isSold && <span className="badge" style={{ background: "var(--green-light)", color: "var(--grn)" }}>Sold</span>}
               <span className="badge">{listing.category}</span>
             </div>
 
@@ -212,7 +212,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   <button className="btn btn-danger" onClick={handleDelete}>🗑️ Delete Listing</button>
                 </>
               ) : isSold ? (
-                <div style={{ background: "var(--green-light)", border: "1.5px solid var(--green)", borderRadius: 10, padding: "12px 16px", textAlign: "center", fontWeight: 700, color: "var(--green)" }}>
+                <div style={{ background: "var(--green-light)", border: "1.5px solid var(--grn)", borderRadius: 10, padding: "12px 16px", textAlign: "center", fontWeight: 700, color: "var(--grn)" }}>
                   This item has been sold 🎉
                 </div>
               ) : (
@@ -249,7 +249,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               {listing.images?.[0] && <img src={listing.images[0]} alt="" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8, marginBottom: 12 }} />}
               <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{listing.title}</div>
               <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>{listing.condition} · {listing.category}</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: listing.isFree ? "var(--green)" : "var(--primary)" }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: listing.isFree ? "var(--grn)" : "var(--p)" }}>
                 {listing.isFree ? "Free 💚" : `₹${listing.price}`}
               </div>
             </div>

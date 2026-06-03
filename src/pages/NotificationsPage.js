@@ -92,7 +92,7 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
                     <div className="notif-time">{timeAgo(n.createdAt)}</div>
                     {n.listingId && (
-                      <span style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>
+                      <span style={{ fontSize: 12, color: "var(--p)", fontWeight: 700 }}>
                         View listing →
                       </span>
                     )}
