@@ -10,7 +10,7 @@ export default function Footer({ setPage }) {
           {/* Brand */}
           <div className="footer-brand">
             <div className="footer-logo" onClick={() => setPage("home")}>
-              <img src="logo-horizontal.png" alt="CampusMart India"
+              <img src="\logo-horizontal.png" alt="CampusMart India"
                 style={{ height:30, width:"auto", objectFit:"contain", filter:"brightness(0) invert(1)", opacity:0.85 }} />
             </div>
             <p className="footer-tagline">
