@@ -88,6 +88,21 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
     }
+    // ── Ratings ────────────────────────────────────────────────────────────
+    match /ratings/{ratingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.buyerId;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Ratings ────────────────────────────────────────────────────────────
+    match /ratings/{ratingId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.buyerId;
+      allow delete: if isAdmin();
+    }
+
     // ── Support Tickets ────────────────────────────────────────────────────
     match /supportTickets/{ticketId} {
       allow create: if request.auth != null;

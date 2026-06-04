@@ -182,23 +182,28 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
             <div className="detail-badges">
               <span className={`badge ${CONDITIONS[listing.condition] || ""}`}>{listing.condition}</span>
-              {listing.isFree && <span className="badge" style={{ background: "var(--green-light)", color: "var(--grn)" }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "var(--green-light)", color: "var(--grn)" }}>Sold</span>}
+              {listing.isFree && <span className="badge" style={{ background: "var(--grn-light)", color: "var(--grn)" }}>Free</span>}
+              {isSold && <span className="badge" style={{ background: "var(--grn-light)", color: "var(--grn)" }}>Sold</span>}
               <span className="badge">{listing.category}</span>
             </div>
 
             {/* Seller */}
             <div className="seller-card">
-              <div className="avatar" style={{ width: 44, height: 44, fontSize: 16 }}>
+              <div className="avatar" style={{ width:44, height:44, fontSize:16 }}>
                 {sellerData?.photoURL
-                  ? <img src={sellerData.photoURL} alt="" style={{ width: "100%", height: "100%" }} />
+                  ? <img src={sellerData.photoURL} alt="" style={{ width:"100%", height:"100%" }} />
                   : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
               </div>
               <div className="seller-info">
-                <div className="seller-name">{sellerData?.name || listing.sellerName}</div>
+                <div className="seller-name" style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                  {sellerData?.name || listing.sellerName}
+                  {sellerData?.isVerified && <span className="verified-badge-sm">✓ Verified</span>}
+                </div>
                 <div className="seller-college">{[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}</div>
                 <div className="seller-rating">
-                  ⭐ {sellerData?.rating > 0 ? `${sellerData.rating.toFixed(1)} (${sellerData.totalRatings} reviews)` : "New Seller"}
+                  {sellerData?.rating > 0 ? (
+                    <>⭐ {sellerData.rating.toFixed(1)} <span style={{ color:"var(--muted)", fontWeight:500 }}>({sellerData.totalRatings} review{sellerData.totalRatings !== 1 ? "s" : ""})</span></>
+                  ) : "New Seller"}
                 </div>
               </div>
             </div>
@@ -212,9 +217,15 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   <button className="btn btn-danger" onClick={handleDelete}>🗑️ Delete Listing</button>
                 </>
               ) : isSold ? (
-                <div style={{ background: "var(--green-light)", border: "1.5px solid var(--grn)", borderRadius: 10, padding: "12px 16px", textAlign: "center", fontWeight: 700, color: "var(--grn)" }}>
-                  This item has been sold 🎉
-                </div>
+                <>
+                  <div style={{ background:"var(--grn-light)", border:"1.5px solid var(--grn)", borderRadius:10, padding:"12px 16px", textAlign:"center", fontWeight:700, color:"var(--grn)" }}>
+                    This item has been sold 🎉
+                  </div>
+                  {/* Rate seller ONLY after sold */}
+                  <button className="btn btn-outline" onClick={() => setShowRating(true)}>
+                    ⭐ Rate Seller
+                  </button>
+                </>
               ) : (
                 <>
                   <button className="btn btn-primary" onClick={() => setShowBuyModal(true)}>🛒 Buy Now</button>
@@ -224,7 +235,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   <button className="btn btn-outline" onClick={openChat} disabled={contactLoading}>
                     💬 {contactLoading ? "Opening..." : "Message Seller"}
                   </button>
-                  <button className="btn btn-outline" onClick={() => setShowRating(true)}>⭐ Rate Seller</button>
                 </>
               )}
             </div>
@@ -237,7 +247,12 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       </div>
 
       {showRating && (
-        <RatingModal sellerId={listing.sellerId} sellerName={sellerData?.name || listing.sellerName} onClose={() => setShowRating(false)} />
+        <RatingModal
+          sellerId={listing.sellerId}
+          sellerName={sellerData?.name || listing.sellerName}
+          listingId={listing.id}
+          onClose={() => setShowRating(false)}
+        />
       )}
 
       {showBuyModal && (

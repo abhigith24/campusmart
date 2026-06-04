@@ -66,7 +66,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
   const [condition,setCondition]= useState("All");
   const [freeOnly, setFreeOnly] = useState(false);
   const [sortBy,   setSortBy]   = useState("newest");
-  const [stats,    setStats]    = useState({ items: 0, users: 0, free: 0 });
 
   useEffect(() => {
     const q = query(
@@ -79,11 +78,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setListings(data);
       setLoading(false);
-      setStats({
-        items: data.length,
-        free:  data.filter(x => x.isFree).length,
-        users: new Set(data.map(x => x.sellerId)).size
-      });
     });
     return unsub;
   }, []);
@@ -113,34 +107,35 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
     <div>
       {/* Hero */}
       <div className="hero">
-        <div className="container hero-inner">
-          <div className="hero-text">
-            <div className="hero-eyebrow">🎓 Campus-Only Marketplace</div>
-            <h1>Your Campus <span className="gradient-text">Marketplace</span></h1>
-            <p>Buy, sell & donate textbooks, notes and equipment — exclusively within your college community.</p>
-            <div className="hero-cta-row">
-              <button className="btn btn-primary hero-cta" onClick={() => setPage("post")}>
-                + List an Item
-              </button>
-              <button className="btn btn-outline hero-cta-outline" onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}>
-                Browse Listings ↓
-              </button>
-            </div>
-          </div>
-          <div className="hero-stats-col">
+        <div className="container">
+          <div className="hero-eyebrow">🎓 India's Campus-Only Marketplace</div>
+          <h1>Your Campus <span className="gradient-text">Marketplace</span></h1>
+          <p>Buy, sell & donate textbooks, notes and equipment — exclusively within your college community.</p>
+
+          {/* Trust badges */}
+          <div className="hero-trust-row">
             {[
-              { num: stats.items, label: "Active Listings", icon: "📦", color: "#f97316" },
-              { num: stats.users, label: "Students",         icon: "🎓", color: "#6366f1" },
-              { num: stats.free,  label: "Free Items",       icon: "💚", color: "#22c55e" },
-            ].map((s, i) => (
-              <div key={i} className="hero-stat-card">
-                <div className="hero-stat-icon" style={{ background: `${s.color}18`, color: s.color }}>{s.icon}</div>
+              { icon:"🎓", label:"Students Only",  desc:"College emails only"    },
+              { icon:"🔒", label:"Secure Chat",     desc:"Direct messaging"       },
+              { icon:"📍", label:"Buy Locally",     desc:"Same campus deals"      },
+              { icon:"💚", label:"Donate for Free", desc:"Help your juniors"      },
+            ].map((b, i) => (
+              <div key={i} className="hero-trust-badge">
+                <span className="hero-trust-icon">{b.icon}</span>
                 <div>
-                  <div className="hero-stat-num" style={{ color: s.color }}>{s.num}+</div>
-                  <div className="hero-stat-label">{s.label}</div>
+                  <div className="hero-trust-label">{b.label}</div>
+                  <div className="hero-trust-desc">{b.desc}</div>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="hero-cta-row">
+            <button className="btn btn-primary hero-cta" onClick={() => setPage("post")}>+ List an Item</button>
+            <button className="btn btn-outline hero-cta-outline"
+              onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+              Browse Listings ↓
+            </button>
           </div>
         </div>
       </div>

@@ -5,14 +5,14 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const STATUS_COLORS = {
-  active:   { bg: "var(--green-light)",      color: "var(--green)" },
-  sold:     { bg: "var(--secondary-light)",   color: "var(--secondary)" },
-  removed:  { bg: "#fee2e2",                  color: "var(--red)" },
-  deleted:  { bg: "#f3f4f6",                  color: "var(--muted)" },
-  flagged:  { bg: "#fff7ed",                  color: "#f97316" },
-  pending:  { bg: "#fef3c7",                  color: "#92400e" },
-  accepted: { bg: "var(--green-light)",       color: "#15803d" },
-  rejected: { bg: "#fee2e2",                  color: "#b91c1c" },
+  active:   { bg:"#dcfce7", color:"#15803d" },
+  sold:     { bg:"#dbeafe", color:"#1d4ed8" },
+  removed:  { bg:"#fee2e2", color:"#b91c1c" },
+  deleted:  { bg:"#f3f4f6", color:"#6b7280" },
+  flagged:  { bg:"#fff7ed", color:"#f97316" },
+  pending:  { bg:"#fef9c3", color:"#a16207" },
+  accepted: { bg:"#dcfce7", color:"#15803d" },
+  rejected: { bg:"#fee2e2", color:"#b91c1c" },
 };
 
 function StatusBadge({ status }) {
@@ -44,14 +44,19 @@ export default function AdminPage() {
 
   async function loadData() {
     setLoading(true);
-    const [listSnap, userSnap, reqSnap] = await Promise.all([
-      getDocs(query(collection(db, "listings"),       orderBy("createdAt", "desc"))),
+    const [listSnap, userSnap, reqSnap, ratingSnap, chatSnap] = await Promise.all([
+      getDocs(query(collection(db, "listings"),         orderBy("createdAt", "desc"))),
       getDocs(collection(db, "users")),
       getDocs(query(collection(db, "purchaseRequests"), orderBy("createdAt", "desc"))),
+      getDocs(collection(db, "ratings")),
+      getDocs(collection(db, "chats")),
     ]);
     const ldata = listSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const udata = userSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const rdata = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const ratdata = ratingSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const cdata  = chatSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const activeSellers = new Set(ldata.filter(l => l.status === "active").map(l => l.sellerId)).size;
     setListings(ldata);
     setUsers(udata);
     setRequests(rdata);
@@ -65,6 +70,10 @@ export default function AdminPage() {
       banned:        udata.filter(u => u.banned).length,
       pendingReqs:   rdata.filter(r => r.status === "pending").length,
       acceptedReqs:  rdata.filter(r => r.status === "accepted").length,
+      totalRatings:  ratdata.length,
+      avgRating:     ratdata.length ? (ratdata.reduce((s,r) => s + r.stars, 0) / ratdata.length).toFixed(1) : "—",
+      totalChats:    cdata.length,
+      activeSellers,
     });
     setLoading(false);
   }
@@ -152,41 +161,30 @@ export default function AdminPage() {
             <>
               <div className="admin-grid">
                 {[
-                  { num: stats.totalListings, lbl: "Total Listings",      icon: "📦" },
-                  { num: stats.active,        lbl: "Active Now",          icon: "✅" },
-                  { num: stats.sold,          lbl: "Items Sold",          icon: "💸" },
-                  { num: stats.free,          lbl: "Free Donations",      icon: "💚" },
-                  { num: stats.flagged,       lbl: "Flagged Listings",    icon: "🚩" },
-                  { num: stats.users,         lbl: "Students",            icon: "👤" },
-                  { num: stats.banned,        lbl: "Banned Users",        icon: "🚫" },
-                  { num: stats.pendingReqs,   lbl: "Pending Requests",    icon: "⏳" },
-                  { num: stats.acceptedReqs,  lbl: "Accepted Deals",      icon: "🤝" },
+                  { num: stats.users,         lbl: "Students",            icon: "👤", accent:"#6366f1" },
+                  { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"#f97316" },
+                  { num: stats.free,          lbl: "Free Items",          icon: "💚", accent:"#22c55e" },
+                  { num: stats.sold,          lbl: "Sold Products",       icon: "💸", accent:"#3b82f6" },
+                  { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"#f59e0b" },
+                  { num: stats.totalChats,    lbl: "Total Chats",         icon: "💬", accent:"#8b5cf6" },
+                  { num: stats.activeSellers, lbl: "Active Sellers",      icon: "🏪", accent:"#ec4899" },
+                  { num: stats.flagged,       lbl: "Flagged",             icon: "🚩", accent:"#ef4444" },
+                  { num: stats.pendingReqs,   lbl: "Pending Requests",    icon: "⏳", accent:"#a16207" },
                 ].map((s, i) => (
                   <div className="stat-card" key={i}>
-                    <div style={{ fontSize: 28 }}>{s.icon}</div>
-                    <div className="num">{s.num ?? 0}</div>
+                    <div style={{ fontSize:26, marginBottom:6 }}>{s.icon}</div>
+                    <div className="num" style={{ color: s.accent }}>{s.num ?? 0}</div>
                     <div className="lbl">{s.lbl}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ background: "var(--green-light)", border: "2px solid var(--green)", borderRadius: "var(--r-md)", padding: 20, marginTop: 8 }}>
-                <div style={{ fontWeight: 800, color: "var(--green)", marginBottom: 8 }}>🎓 Platform Health</div>
-                <div style={{ display: "flex", gap: 32, flexWrap: "wrap", fontSize: 14 }}>
-                  <div>
-                    <strong>Conversion:</strong> {stats.totalListings > 0
-                      ? `${Math.round((stats.sold / stats.totalListings) * 100)}%`
-                      : "—"} items sold
-                  </div>
-                  <div>
-                    <strong>Free ratio:</strong> {stats.totalListings > 0
-                      ? `${Math.round((stats.free / stats.totalListings) * 100)}%`
-                      : "—"} donated
-                  </div>
-                  <div>
-                    <strong>Deal rate:</strong> {requests.length > 0
-                      ? `${Math.round((stats.acceptedReqs / requests.length) * 100)}%`
-                      : "—"} requests accepted
-                  </div>
+              <div style={{ background:"#dcfce7", border:"1px solid #86efac", borderRadius:"var(--r-md)", padding:20, marginTop:8 }}>
+                <div style={{ fontWeight:800, color:"#15803d", marginBottom:8 }}>📊 Platform Health</div>
+                <div style={{ display:"flex", gap:32, flexWrap:"wrap", fontSize:14, color:"var(--txt-2)" }}>
+                  <div><strong>Conversion:</strong> {stats.totalListings > 0 ? `${Math.round((stats.sold/stats.totalListings)*100)}%` : "—"} items sold</div>
+                  <div><strong>Free ratio:</strong> {stats.totalListings > 0 ? `${Math.round((stats.free/stats.totalListings)*100)}%` : "—"} donated</div>
+                  <div><strong>Deal rate:</strong> {requests.length > 0 ? `${Math.round((stats.acceptedReqs/requests.length)*100)}%` : "—"} accepted</div>
+                  <div><strong>Avg rating:</strong> {stats.avgRating} / 5 ⭐</div>
                 </div>
               </div>
             </>
