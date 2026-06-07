@@ -39,7 +39,7 @@ export default function PostListingPage({ setPage, editListing }) {
   const [condition,     setCondition]     = useState(editListing?.condition     || "Good");
   const [listingType,   setListingType]   = useState(editListing?.listingType   || "sell"); // "sell" | "free" | "rent"
   const [price,         setPrice]         = useState(editListing?.price         || "");
-  const [isFree,        setIsFree]        = useState(editListing?.isFree        || false);
+ const [,        setIsFree]        = useState(editListing?.isFree        || false);
   // Rent fields
   const [rentPerDay,    setRentPerDay]    = useState(editListing?.rentPerDay    || "");
   const [rentMinDays,   setRentMinDays]   = useState(editListing?.rentMinDays   || "1");

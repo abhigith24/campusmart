@@ -198,7 +198,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
         <div className="container" style={{ paddingTop: 32 }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
             <h2 style={{ fontSize:20, fontWeight:800, color:"var(--txt)" }}>🔥 Trending Now</h2>
-            <span style={{ fontSize:12, color:"var(--muted)", background:"var(--p-light)", color:"var(--p-dark)", padding:"2px 10px", borderRadius:"var(--r-full)", fontWeight:600 }}>
+            <span style={{ fontSize:12, background:"var(--p-light)", color:"var(--p-dark)", padding:"2px 10px", borderRadius:"var(--r-full)", fontWeight:600 }}>
               Most viewed this week
             </span>
           </div>
