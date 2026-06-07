@@ -38,6 +38,41 @@ export default function PostListingPage({ setPage, editListing }) {
   const totalImages = existingImages.length + newPreviews.length;
   const progress = [title, description, (totalImages > 0 || isEdit)].filter(Boolean).length;
 
+  // ── SOLD GUARD: block editing of sold listings ──────────────────────────
+  if (isEdit && editListing?.status === "sold") {
+    return (
+      <div className="post-page">
+        <div className="post-container" style={{ maxWidth:600 }}>
+          <div className="post-header">
+            <button className="post-back" onClick={() => setPage("home")}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div>
+              <h1 className="post-title">Listing Sold</h1>
+              <p className="post-subtitle">This item has been marked as sold</p>
+            </div>
+          </div>
+          <div style={{
+            background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:"var(--r-lg)",
+            padding:32, textAlign:"center", boxShadow:"var(--s1)"
+          }}>
+            <div style={{ fontSize:56, marginBottom:16 }}>🔒</div>
+            <h2 style={{ fontSize:20, fontWeight:800, marginBottom:10, color:"var(--txt)" }}>
+              Cannot Edit Sold Listing
+            </h2>
+            <p style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
+              This listing has been sold and can no longer be edited. Sold listings are locked to maintain transaction integrity.
+            </p>
+            <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
+              <button className="btn btn-outline" onClick={() => setPage("home")}>← Back to Feed</button>
+              <button className="btn btn-primary" onClick={() => setPage("post")}>+ Post New Item</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function handleFiles(files) {
     const picked = Array.from(files).slice(0, 4 - existingImages.length);
     setNewFiles(picked);
@@ -101,6 +136,19 @@ export default function PostListingPage({ setPage, editListing }) {
     if (totalImages === 0 && !isEdit) { toast("Add at least one photo", "error"); return; }
     setLoading(true);
     try {
+      // ── Backend sold validation ──────────────────────────────────────────
+      // Re-fetch listing status from Firestore before allowing any edit
+      if (isEdit) {
+        const { getDoc, doc: fsDoc } = await import("firebase/firestore");
+        const freshSnap = await getDoc(fsDoc(db, "listings", editListing.id));
+        if (freshSnap.exists() && freshSnap.data().status === "sold") {
+          toast("This listing has been sold and cannot be edited.", "error");
+          setLoading(false);
+          setPage("home");
+          return;
+        }
+      }
+
       let uploaded = [];
       if (newFiles.length > 0) uploaded = await uploadMultipleToCloudinary(newFiles);
       const allImages = [...existingImages, ...uploaded];

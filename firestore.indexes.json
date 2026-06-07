@@ -60,8 +60,8 @@
       "collectionGroup": "purchaseRequests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "sellerId",  "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "listingId", "order": "ASCENDING" },
+        { "fieldPath": "buyerId",   "order": "ASCENDING" }
       ]
     },
     {

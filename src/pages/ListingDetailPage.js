@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   doc, getDoc, updateDoc, increment, serverTimestamp,
-  addDoc, collection, setDoc
+  addDoc, collection, setDoc, query, where, getDocs
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -10,13 +10,13 @@ import { useWishlist } from "../context/WishlistContext";
 import RatingModal from "../components/RatingModal";
 
 const CONDITIONS = {
-  New: "condition-New", Good: "condition-Good",
-  Fair: "condition-Fair", Old: "condition-Old"
+  New:"condition-New", Good:"condition-Good",
+  Fair:"condition-Fair", Old:"condition-Old"
 };
 
 export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith }) {
   const { currentUser, userProfile } = useAuth();
-  const toast    = useToast();
+  const toast   = useToast();
   const { isWishlisted, toggleWishlist } = useWishlist();
 
   const [activeImg,      setActiveImg]      = useState(0);
@@ -25,29 +25,61 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const [showRating,     setShowRating]     = useState(false);
   const [showBuyModal,   setShowBuyModal]   = useState(false);
   const [buyLoading,     setBuyLoading]     = useState(false);
+  const [isEligibleBuyer,setIsEligibleBuyer]= useState(false);
+  const [alreadyRated,   setAlreadyRated]   = useState(false);
 
-  const isOwner  = currentUser?.uid === listing.sellerId;
-  const isSold   = listing.status === "sold";
+  const isOwner    = currentUser?.uid === listing.sellerId;
+  const isSold     = listing.status === "sold";
   const wishlisted = isWishlisted(listing.id);
 
   useEffect(() => {
-    async function loadSeller() {
+    async function load() {
+      // Load seller data
       const snap = await getDoc(doc(db, "users", listing.sellerId));
       if (snap.exists()) setSellerData(snap.data());
-    }
-    loadSeller();
-    updateDoc(doc(db, "listings", listing.id), { views: increment(1) }).catch(() => {});
-  }, [listing.id, listing.sellerId]);
 
-  // ── Open / create chat room ───────────────────────────────────────────────
+      // Increment view count (ignore errors)
+      updateDoc(doc(db, "listings", listing.id), { views: increment(1) }).catch(() => {});
+
+      // If listing is sold and current user is not owner → check if eligible buyer
+      if (isSold && currentUser && !isOwner) {
+        try {
+          // Check accepted purchase request
+          const reqQ = query(
+            collection(db, "purchaseRequests"),
+            where("listingId", "==", listing.id),
+            where("buyerId",   "==", currentUser.uid)
+          );
+          const reqSnap = await getDocs(reqQ);
+          const hasAccepted = reqSnap.docs.some(d => d.data().status === "accepted");
+          setIsEligibleBuyer(hasAccepted);
+
+          // Check if already rated
+          if (hasAccepted) {
+            const ratingQ = query(
+              collection(db, "ratings"),
+              where("listingId", "==", listing.id),
+              where("buyerId",   "==", currentUser.uid)
+            );
+            const ratingSnap = await getDocs(ratingQ);
+            setAlreadyRated(!ratingSnap.empty);
+          }
+        } catch (err) {
+          console.error("Buyer check error:", err.message);
+        }
+      }
+    }
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.id, listing.sellerId, isSold, currentUser?.uid, isOwner]);
+
+  // ── Open / create chat ───────────────────────────────────────────────────
   async function openChat() {
     if (isOwner) return;
     setContactLoading(true);
     try {
       const chatId  = [currentUser.uid, listing.sellerId].sort().join("_") + "_" + listing.id;
       const chatRef = doc(db, "chats", chatId);
-
-      // Check if chat already exists — only create if new
       const existing = await getDoc(chatRef);
       if (!existing.exists()) {
         await setDoc(chatRef, {
@@ -63,7 +95,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           createdAt:       serverTimestamp()
         });
       }
-
       setChatWith({ chatId, listing, seller: sellerData });
       setPage("chat");
     } catch (err) {
@@ -73,7 +104,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     setContactLoading(false);
   }
 
-  // ── Buy Now ───────────────────────────────────────────────────────────────
+  // ── Buy Now ──────────────────────────────────────────────────────────────
   async function confirmBuy() {
     setBuyLoading(true);
     try {
@@ -90,7 +121,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         status:       "pending",
         createdAt:    serverTimestamp()
       });
-
       await addDoc(collection(db, "notifications"), {
         type:         "purchase_request",
         sellerId:     listing.sellerId,
@@ -102,7 +132,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         read:         false,
         createdAt:    serverTimestamp()
       });
-
       toast("Purchase request sent! 🎉 Opening chat...", "success");
       setShowBuyModal(false);
       await openChat();
@@ -113,81 +142,96 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     setBuyLoading(false);
   }
 
+  // ── Delete listing ───────────────────────────────────────────────────────
   async function handleDelete() {
-    if (!window.confirm("Delete this listing?")) return;
-    await updateDoc(doc(db, "listings", listing.id), { status: "deleted" });
-    toast("Listing deleted", "success");
-    setPage("home");
+    if (!window.confirm("Delete this listing? This cannot be undone.")) return;
+    try {
+      await updateDoc(doc(db, "listings", listing.id), { status: "deleted" });
+      toast("Listing deleted", "success");
+      setPage("home");
+    } catch (err) {
+      toast("Failed to delete: " + err.message, "error");
+    }
   }
 
+  // ── Mark as sold ─────────────────────────────────────────────────────────
   async function handleMarkSold() {
-    await updateDoc(doc(db, "listings", listing.id), { status: "sold" });
-    toast("Marked as sold! ✅", "success");
-    setPage("home");
+    if (!window.confirm("Mark this listing as sold? You will no longer be able to edit it.")) return;
+    try {
+      await updateDoc(doc(db, "listings", listing.id), { status: "sold" });
+      toast("Marked as sold! ✅", "success");
+      setPage("home");
+    } catch (err) {
+      toast("Failed to mark sold: " + err.message, "error");
+    }
   }
 
   const images = listing.images?.length > 0 ? listing.images : null;
 
   return (
     <div className="container detail-page">
-      <button className="btn btn-ghost" onClick={() => setPage("home")} style={{ marginBottom: 20 }}>
+      <button className="btn btn-ghost" onClick={() => setPage("home")} style={{ marginBottom:20 }}>
         ← Back to listings
       </button>
 
       <div className="detail-grid">
-        {/* Images */}
+        {/* ── Left: Images + description ── */}
         <div>
-          <div className="detail-imgs" style={{ position: "relative" }}>
+          <div className="detail-imgs" style={{ position:"relative" }}>
             {images
               ? <img src={images[activeImg]} alt={listing.title} />
-              : <span style={{ fontSize: 64 }}>📦</span>}
+              : <span style={{ fontSize:64 }}>📦</span>}
             {isSold && (
               <div style={{
-                position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                borderRadius: "var(--r-md)"
+                position:"absolute", inset:0, background:"rgba(0,0,0,.45)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                borderRadius:"var(--r-md)"
               }}>
-                <span style={{ color: "white", fontSize: 26, fontWeight: 900, background: "var(--grn)", padding: "8px 24px", borderRadius: 30 }}>
+                <span style={{ color:"#fff", fontSize:22, fontWeight:900, background:"#22c55e", padding:"8px 24px", borderRadius:30 }}>
                   ✅ SOLD
                 </span>
               </div>
             )}
           </div>
+
           {images && images.length > 1 && (
             <div className="detail-thumbs">
               {images.map((url, i) => (
-                <div key={i} className={`detail-thumb ${activeImg === i ? "active" : ""}`} onClick={() => setActiveImg(i)}>
+                <div key={i} className={`detail-thumb ${activeImg===i?"active":""}`} onClick={() => setActiveImg(i)}>
                   <img src={url} alt="" />
                 </div>
               ))}
             </div>
           )}
-          <div style={{ background: "white", borderRadius: "var(--r-md)", border: "1.5px solid var(--bdr)", padding: 20, marginTop: 16 }}>
-            <h4 style={{ fontWeight: 800, marginBottom: 10 }}>📄 Description</h4>
-            <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--muted)" }}>{listing.description}</p>
-            <div style={{ marginTop: 12, fontSize: 13, color: "var(--muted)", display: "flex", gap: 16 }}>
-              <span>👀 {listing.views || 0} views</span>
+
+          <div style={{ background:"#fff", borderRadius:"var(--r-md)", border:"1.5px solid var(--bdr)", padding:20, marginTop:16 }}>
+            <h4 style={{ fontWeight:800, marginBottom:10 }}>📄 Description</h4>
+            <p style={{ fontSize:14, lineHeight:1.7, color:"var(--muted)" }}>{listing.description}</p>
+            <div style={{ marginTop:12, fontSize:13, color:"var(--muted-2)", display:"flex", gap:16 }}>
+              <span>👀 {listing.views||0} views</span>
               <span>📅 {listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}</span>
             </div>
           </div>
         </div>
 
-        {/* Details card */}
+        {/* ── Right: Detail card ── */}
         <div>
           <div className="detail-card">
             <div className="detail-cat">{listing.category}</div>
             <div className="detail-title">{listing.title}</div>
-            <div className={`detail-price ${listing.isFree ? "free" : ""}`}>
+
+            <div className={`detail-price ${listing.isFree?"free":""}`}>
               {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : `₹${listing.price}`}
             </div>
+
             <div className="detail-badges">
-              <span className={`badge ${CONDITIONS[listing.condition] || ""}`}>{listing.condition}</span>
-              {listing.isFree && <span className="badge" style={{ background: "var(--grn-light)", color: "var(--grn)" }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "var(--grn-light)", color: "var(--grn)" }}>Sold</span>}
+              <span className={`badge ${CONDITIONS[listing.condition]||""}`}>{listing.condition}</span>
+              {listing.isFree && <span className="badge" style={{ background:"#f0fdf4", color:"#15803d" }}>Free</span>}
+              {isSold && <span className="badge" style={{ background:"#f0fdf4", color:"#15803d" }}>Sold</span>}
               <span className="badge">{listing.category}</span>
             </div>
 
-            {/* Seller */}
+            {/* Seller info */}
             <div className="seller-card">
               <div className="avatar" style={{ width:44, height:44, fontSize:16 }}>
                 {sellerData?.photoURL
@@ -201,35 +245,79 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 </div>
                 <div className="seller-college">{[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}</div>
                 <div className="seller-rating">
-                  {sellerData?.rating > 0 ? (
-                    <>⭐ {sellerData.rating.toFixed(1)} <span style={{ color:"var(--muted)", fontWeight:500 }}>({sellerData.totalRatings} review{sellerData.totalRatings !== 1 ? "s" : ""})</span></>
-                  ) : "New Seller"}
+                  {sellerData?.rating > 0
+                    ? <>⭐ {sellerData.rating.toFixed(1)} <span style={{ color:"var(--muted)", fontWeight:500 }}>({sellerData.totalRatings} review{sellerData.totalRatings!==1?"s":""})</span></>
+                    : <span style={{ color:"var(--muted-2)", fontWeight:500, fontSize:12 }}>No reviews yet</span>}
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
+            {/* ── Action Buttons ── */}
             <div className="action-btns">
               {isOwner ? (
+                /* OWNER ACTIONS */
                 <>
-                  <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }}>✏️ Edit Listing</button>
-                  {!isSold && <button className="btn btn-green" onClick={handleMarkSold}>✅ Mark as Sold</button>}
+                  {/* Edit — hidden when sold */}
+                  {!isSold ? (
+                    <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }}>
+                      ✏️ Edit Listing
+                    </button>
+                  ) : (
+                    <div style={{
+                      background:"#fef9c3", border:"1px solid #fde047",
+                      borderRadius:"var(--r-sm)", padding:"10px 14px",
+                      fontSize:13, color:"#a16207", fontWeight:600, lineHeight:1.5
+                    }}>
+                      🔒 This listing has been sold and can no longer be edited.
+                    </div>
+                  )}
+                  {/* Mark as sold — only if active */}
+                  {!isSold && (
+                    <button className="btn btn-green" onClick={handleMarkSold}>✅ Mark as Sold</button>
+                  )}
+                  {/* Delete — always available to owner */}
                   <button className="btn btn-danger" onClick={handleDelete}>🗑️ Delete Listing</button>
                 </>
               ) : isSold ? (
+                /* SOLD STATE — buyer actions */
                 <>
-                  <div style={{ background:"var(--grn-light)", border:"1.5px solid var(--grn)", borderRadius:10, padding:"12px 16px", textAlign:"center", fontWeight:700, color:"var(--grn)" }}>
+                  <div style={{
+                    background:"#f0fdf4", border:"1.5px solid #22c55e",
+                    borderRadius:"var(--r-sm)", padding:"12px 16px",
+                    textAlign:"center", fontWeight:700, color:"#15803d"
+                  }}>
                     This item has been sold 🎉
                   </div>
-                  {/* Rate seller ONLY after sold */}
-                  <button className="btn btn-outline" onClick={() => setShowRating(true)}>
-                    ⭐ Rate Seller
+
+                  {/* Rate Seller — only eligible buyer, only once */}
+                  {isEligibleBuyer && (
+                    alreadyRated ? (
+                      <div style={{
+                        background:"#f0fdf4", border:"1px solid #86efac",
+                        borderRadius:"var(--r-sm)", padding:"10px 14px",
+                        fontSize:13, color:"#15803d", fontWeight:600, textAlign:"center"
+                      }}>
+                        ✅ You've already reviewed this seller
+                      </div>
+                    ) : (
+                      <button className="btn btn-primary" onClick={() => setShowRating(true)}>
+                        ⭐ Rate Seller
+                      </button>
+                    )
+                  )}
+
+                  {/* Chat always available */}
+                  <button className="btn btn-outline" onClick={openChat} disabled={contactLoading}>
+                    💬 {contactLoading ? "Opening..." : "View Chat"}
                   </button>
                 </>
               ) : (
+                /* ACTIVE — buyer actions */
                 <>
                   <button className="btn btn-primary" onClick={() => setShowBuyModal(true)}>🛒 Buy Now</button>
-                  <button className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`} onClick={() => toggleWishlist(listing.id)}>
+                  <button
+                    className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
+                    onClick={() => toggleWishlist(listing.id)}>
                     {wishlisted ? "❤️ Remove from Wishlist" : "🤍 Add to Wishlist"}
                   </button>
                   <button className="btn btn-outline" onClick={openChat} disabled={contactLoading}>
@@ -240,40 +328,51 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
           </div>
 
-          <div style={{ background: "var(--secondary-light)", border: "1.5px solid #c7d2fe", borderRadius: 12, padding: "12px 16px", marginTop: 12, fontSize: 13, fontWeight: 600, color: "var(--secondary)" }}>
+          <div style={{
+            background:"#eef2ff", border:"1.5px solid #c7d2fe",
+            borderRadius:"var(--r-sm)", padding:"12px 16px", marginTop:12,
+            fontSize:13, fontWeight:600, color:"#4338ca"
+          }}>
             🛡️ Always meet in a safe, public place on campus. Never pay before seeing the item.
           </div>
         </div>
       </div>
 
+      {/* Rating Modal */}
       {showRating && (
         <RatingModal
           sellerId={listing.sellerId}
           sellerName={sellerData?.name || listing.sellerName}
           listingId={listing.id}
-          onClose={() => setShowRating(false)}
+          onClose={() => {
+            setShowRating(false);
+            setAlreadyRated(true); // optimistic update
+          }}
         />
       )}
 
+      {/* Buy Now Modal */}
       {showBuyModal && (
         <div className="modal-overlay" onClick={() => setShowBuyModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>🛒 Confirm Purchase Request</h3>
-            <p>Send a purchase request to the seller. They'll be notified and can accept or reject.</p>
-            <div style={{ background: "var(--light)", borderRadius: 12, padding: 16, marginBottom: 18 }}>
-              {listing.images?.[0] && <img src={listing.images[0]} alt="" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 8, marginBottom: 12 }} />}
-              <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{listing.title}</div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>{listing.condition} · {listing.category}</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: listing.isFree ? "var(--grn)" : "var(--p)" }}>
+            <p>Send a request to the seller. They'll be notified and can accept or decline.</p>
+            <div style={{ background:"var(--light)", borderRadius:"var(--r-md)", padding:16, marginBottom:16 }}>
+              {listing.images?.[0] && (
+                <img src={listing.images[0]} alt="" style={{ width:"100%", height:130, objectFit:"cover", borderRadius:"var(--r-sm)", marginBottom:12 }} />
+              )}
+              <div style={{ fontWeight:800, fontSize:16, marginBottom:4 }}>{listing.title}</div>
+              <div style={{ fontSize:13, color:"var(--muted)", marginBottom:8 }}>{listing.condition} · {listing.category}</div>
+              <div style={{ fontSize:24, fontWeight:900, color: listing.isFree ? "#22c55e" : "var(--p)" }}>
                 {listing.isFree ? "Free 💚" : `₹${listing.price}`}
               </div>
             </div>
-            <div style={{ background: "#fef9c3", border: "1px solid #fde047", borderRadius: 8, padding: "10px 14px", marginBottom: 18, fontSize: 13, color: "#854d0e" }}>
-              ⚠️ No payment required now. This sends a request to the seller who will contact you via chat.
+            <div style={{ background:"#fef9c3", border:"1px solid #fde047", borderRadius:"var(--r-xs)", padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a16207" }}>
+              ⚠️ No payment required now. Seller will contact you via chat.
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn btn-outline" onClick={() => setShowBuyModal(false)} style={{ flex: 1, justifyContent: "center" }}>Cancel</button>
-              <button className="btn btn-primary" onClick={confirmBuy} disabled={buyLoading} style={{ flex: 1, justifyContent: "center" }}>
+            <div style={{ display:"flex", gap:10 }}>
+              <button className="btn btn-outline" onClick={() => setShowBuyModal(false)} style={{ flex:1, justifyContent:"center" }}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmBuy} disabled={buyLoading} style={{ flex:1, justifyContent:"center" }}>
                 {buyLoading ? "Sending..." : "Confirm 🚀"}
               </button>
             </div>

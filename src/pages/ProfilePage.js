@@ -125,19 +125,32 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab })
             </div>
           ) : (
             <>
-              <div className="profile-name">{userProfile?.name || currentUser?.displayName}</div>
+              <div className="profile-name" style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                {userProfile?.name || currentUser?.displayName}
+                {userProfile?.isVerified && <span className="verified-badge-lg">✓ Verified Student</span>}
+              </div>
               <div className="profile-college">
                 {[userProfile?.college, userProfile?.branch, userProfile?.year].filter(Boolean).join(" • ")}
               </div>
               <div className="profile-college">{currentUser?.email}</div>
+
+              {/* Rating display */}
+              {userProfile?.rating > 0 && (
+                <div className="profile-rating-display">
+                  <div className="profile-stars">
+                    {[1,2,3,4,5].map(n => (
+                      <span key={n} className={`profile-star ${n <= Math.round(userProfile.rating) ? "filled" : ""}`}>★</span>
+                    ))}
+                  </div>
+                  <span className="profile-rating-num">{userProfile.rating.toFixed(1)}</span>
+                  <span className="profile-rating-count">({userProfile.totalRatings} review{userProfile.totalRatings !== 1 ? "s" : ""})</span>
+                </div>
+              )}
+
               <div className="profile-stats">
                 <div className="profile-stat"><div className="n">{activeListings.length}</div><div className="l">Active</div></div>
                 <div className="profile-stat"><div className="n">{soldListings.length}</div><div className="l">Sold</div></div>
                 <div className="profile-stat"><div className="n">{wishlistDocs.length}</div><div className="l">Wishlist</div></div>
-                <div className="profile-stat">
-                  <div className="n">{userProfile?.rating > 0 ? `⭐ ${userProfile.rating.toFixed(1)}` : "—"}</div>
-                  <div className="l">Rating</div>
-                </div>
               </div>
             </>
           )}
