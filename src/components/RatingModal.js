@@ -105,10 +105,10 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
       const avg      = allStars.reduce((s, n) => s + n, 0) / allStars.length;
 
       // 3. Update seller's user doc
-      await updateDoc(doc(db, "users", sellerId), {
-        rating:       parseFloat(avg.toFixed(2)),
-        totalRatings: allStars.length,
-      });
+     // await updateDoc(doc(db, "users", sellerId), {
+       // rating:       parseFloat(avg.toFixed(2)),
+        //totalRatings: allStars.length,
+      //});
 
       toast("⭐ Rating submitted! Thank you for your feedback.", "success");
       onClose();
