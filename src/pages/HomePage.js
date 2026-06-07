@@ -11,7 +11,6 @@ const SORT_OPTS  = [
   { val:"newest",     label:"⏰ Newest first" },
   { val:"price-low",  label:"💰 Price: Low to High" },
   { val:"price-high", label:"💸 Price: High to Low" },
-  { val:"most-viewed",label:"🔥 Most Viewed" },
 ];
 
 function DropdownBtn({ label, options, selected, onSelect }) {
@@ -60,42 +59,13 @@ function SkeletonCard() {
   );
 }
 
-// Trending horizontal card (smaller)
-function TrendingCard({ listing, onClick }) {
-  const img = listing.images?.[0];
-  return (
-    <div className="trending-card" onClick={onClick}>
-      <div className="trending-card-img">
-        {img
-          ? <img src={img} alt={listing.title} />
-          : <div className="trending-card-placeholder">{CAT_ICONS[listing.category] || "📦"}</div>
-        }
-        <span className="trending-hot-badge">🔥 HOT</span>
-        {listing.isFree && <span className="free-badge" style={{ fontSize: 9, padding: "2px 6px" }}>FREE</span>}
-      </div>
-      <div className="trending-card-body">
-        <div className="trending-card-title">{listing.title}</div>
-        <div className="trending-card-price">
-          {listing.isFree ? "Free 💚" : `₹${Number(listing.price || 0).toLocaleString("en-IN")}`}
-        </div>
-        <div className="trending-card-views">👁 {listing.views || 0} views</div>
-      </div>
-    </div>
-  );
-}
-
 export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
-  const [listings,    setListings]    = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [category,    setCategory]    = useState("All");
-  const [condition,   setCondition]   = useState("All");
-  const [freeOnly,    setFreeOnly]    = useState(false);
-  const [sortBy,      setSortBy]      = useState("newest");
-  // Price range filter
-  const [priceMin,    setPriceMin]    = useState("");
-  const [priceMax,    setPriceMax]    = useState("");
-  const [showPriceFilter, setShowPriceFilter] = useState(false);
-  const priceRef = useRef(null);
+  const [listings, setListings] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [category, setCategory] = useState("All");
+  const [condition,setCondition]= useState("All");
+  const [freeOnly, setFreeOnly] = useState(false);
+  const [sortBy,   setSortBy]   = useState("newest");
 
   useEffect(() => {
     const q = query(
@@ -112,22 +82,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
     return unsub;
   }, []);
 
-  // Close price filter on outside click
-  useEffect(() => {
-    function h(e) { if (priceRef.current && !priceRef.current.contains(e.target)) setShowPriceFilter(false); }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-
-  // Trending = top 6 by views, excluding free items, only active
-  const trending = [...listings]
-    .filter(l => l.status === "active" && (l.views || 0) > 0)
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
-    .slice(0, 6);
-
-  // Also show some recent if not enough views yet
-  const trendingDisplay = trending.length >= 3 ? trending : [...listings].slice(0, 6);
-
   let filtered = listings;
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -140,23 +94,14 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
   if (category  !== "All") filtered = filtered.filter(l => l.category  === category);
   if (condition !== "All") filtered = filtered.filter(l => l.condition === condition);
   if (freeOnly)            filtered = filtered.filter(l => l.isFree);
-  if (priceMin !== "")     filtered = filtered.filter(l => !l.isFree && (l.price || 0) >= Number(priceMin));
-  if (priceMax !== "")     filtered = filtered.filter(l => !l.isFree && (l.price || 0) <= Number(priceMax));
-
   if (sortBy === "price-low")  filtered = [...filtered].sort((a,b) => (a.price||0)-(b.price||0));
   if (sortBy === "price-high") filtered = [...filtered].sort((a,b) => (b.price||0)-(a.price||0));
-  if (sortBy === "most-viewed") filtered = [...filtered].sort((a,b) => (b.views||0)-(a.views||0));
 
   const catLabel  = `${CAT_ICONS[category] || "🏠"} ${category}`;
-  const sortLabel = SORT_OPTS.find(o => o.val === sortBy)?.label || "⏰ Newest";
+  const sortLabel = SORT_OPTS.find(o => o.val === sortBy)?.label.split(" first")[0].split(":")[0] || "⏰ Newest";
   const condLabel = `${COND_ICONS[condition] || "✅"} ${condition === "All" ? "Condition" : condition}`;
 
-  const priceFilterActive = priceMin !== "" || priceMax !== "";
-  const activeFilters = (category !== "All" ? 1 : 0) + (condition !== "All" ? 1 : 0) + (freeOnly ? 1 : 0) + (sortBy !== "newest" ? 1 : 0) + (priceFilterActive ? 1 : 0);
-
-  function clearAllFilters() {
-    setCategory("All"); setCondition("All"); setFreeOnly(false); setSortBy("newest"); setPriceMin(""); setPriceMax("");
-  }
+  const activeFilters = (category !== "All" ? 1 : 0) + (condition !== "All" ? 1 : 0) + (freeOnly ? 1 : 0) + (sortBy !== "newest" ? 1 : 0);
 
   return (
     <div>
@@ -167,14 +112,15 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
           <h1>Your Campus <span className="gradient-text">Marketplace</span></h1>
           <p>Buy, sell & donate textbooks, notes and equipment — exclusively within your college community.</p>
 
+          {/* Trust badges */}
           <div className="hero-trust-row">
             {[
-              { icon:"🎓", label:"Students Only",  desc:"College emails only" },
-              { icon:"🔒", label:"Secure Chat",     desc:"Direct messaging"    },
-              { icon:"📍", label:"Buy Locally",     desc:"Same campus deals"   },
-              { icon:"💚", label:"Donate for Free", desc:"Help your juniors"   },
-            ].map(b => (
-              <div key={b.label} className="hero-trust-badge">
+              { icon:"🎓", label:"Students Only",  desc:"College emails only"    },
+              { icon:"🔒", label:"Secure Chat",     desc:"Direct messaging"       },
+              { icon:"📍", label:"Buy Locally",     desc:"Same campus deals"      },
+              { icon:"💚", label:"Donate for Free", desc:"Help your juniors"      },
+            ].map((b, i) => (
+              <div key={i} className="hero-trust-badge">
                 <span className="hero-trust-icon">{b.icon}</span>
                 <div>
                   <div className="hero-trust-label">{b.label}</div>
@@ -185,117 +131,64 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
           </div>
 
           <div className="hero-cta-row">
-            <button className="btn btn-primary btn-lg" onClick={() => setPage("post")}>+ List an Item</button>
-            <button className="btn btn-outline btn-lg" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+            <button className="btn btn-primary hero-cta" onClick={() => setPage("post")}>+ List an Item</button>
+            <button className="btn btn-outline hero-cta-outline"
+              onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
               Browse Listings ↓
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── TRENDING SECTION ── */}
-      {!loading && trendingDisplay.length > 0 && !searchQuery && (
-        <div className="container" style={{ paddingTop: 32 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-            <h2 style={{ fontSize:20, fontWeight:800, color:"var(--txt)" }}>🔥 Trending Now</h2>
-            <span style={{ fontSize:12, background:"var(--p-light)", color:"var(--p-dark)", padding:"2px 10px", borderRadius:"var(--r-full)", fontWeight:600 }}>
-              Most viewed this week
-            </span>
-          </div>
-          <div className="trending-scroll">
-            {trendingDisplay.map(l => (
-              <TrendingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── LISTINGS SECTION ── */}
-      <div className="container listings-section" id="listings-section" style={{ paddingTop: 28, paddingBottom: 48 }}>
-
+      {/* Main content */}
+      <div className="container" id="listings-section">
         {/* Filter bar */}
-        <div className="filter-bar">
-          <DropdownBtn label={catLabel}  options={CATEGORIES.map(c => ({ val:c, label:`${CAT_ICONS[c]} ${c}` }))} selected={category}  onSelect={setCategory} />
-          <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
-          <DropdownBtn label={condLabel} options={CONDITIONS.map(c => ({ val:c, label:`${COND_ICONS[c]} ${c === "All" ? "All Conditions" : c}` }))} selected={condition} onSelect={setCondition} />
-
-          {/* Price Range Filter */}
-          <div className="dd-wrap" ref={priceRef} style={{ position:"relative" }}>
-            <button
-              className={`dd-btn ${showPriceFilter ? "dd-open" : ""} ${priceFilterActive ? "dd-active" : ""}`}
-              onClick={() => setShowPriceFilter(o => !o)}>
-              {priceFilterActive ? `₹${priceMin||"0"} – ₹${priceMax||"∞"}` : "💰 Price"} <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>▾</span>
-            </button>
-            {showPriceFilter && (
-              <div className="dd-menu" style={{ width: 220, padding: "12px 14px" }}>
-                <div style={{ fontSize:12, fontWeight:600, color:"var(--muted)", marginBottom:10 }}>Price Range (₹)</div>
-                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                  <input
-                    type="number" min="0" placeholder="Min"
-                    value={priceMin} onChange={e => setPriceMin(e.target.value)}
-                    className="form-input" style={{ padding:"6px 10px", fontSize:13, flex:1 }}
-                  />
-                  <span style={{ color:"var(--muted)", fontSize:12 }}>–</span>
-                  <input
-                    type="number" min="0" placeholder="Max"
-                    value={priceMax} onChange={e => setPriceMax(e.target.value)}
-                    className="form-input" style={{ padding:"6px 10px", fontSize:13, flex:1 }}
-                  />
-                </div>
-                <div style={{ display:"flex", gap:6, marginTop:10, flexWrap:"wrap" }}>
-                  {[["Under ₹200","","200"],["₹200–₹500","200","500"],["₹500–₹2k","500","2000"],["₹2k+","2000",""]].map(([label,min,max]) => (
-                    <button key={label}
-                      className="btn btn-outline btn-sm"
-                      style={{ fontSize:11, padding:"3px 8px" }}
-                      onClick={() => { setPriceMin(min); setPriceMax(max); }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {priceFilterActive && (
-                  <button className="btn btn-outline btn-sm" style={{ marginTop:8, width:"100%", justifyContent:"center", fontSize:12 }}
-                    onClick={() => { setPriceMin(""); setPriceMax(""); }}>
-                    Clear price filter
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Free only toggle */}
-          <button className={`dd-btn ${freeOnly ? "dd-active" : ""}`} onClick={() => setFreeOnly(f => !f)}>
-            💚 Free Only {freeOnly && "✓"}
+        <div className="filter-bar-single">
+          <DropdownBtn label={catLabel} selected={category}
+            options={CATEGORIES.map(c => ({ val:c, label:`${CAT_ICONS[c]} ${c}` }))}
+            onSelect={setCategory} />
+          <DropdownBtn label={sortLabel} selected={sortBy}
+            options={SORT_OPTS.map(o => ({ val:o.val, label:o.label }))}
+            onSelect={setSortBy} />
+          <DropdownBtn label={condLabel} selected={condition}
+            options={CONDITIONS.map((c,i) => ({
+              val:c, label:`${COND_ICONS[c]} ${c === "All" ? "All conditions" : c}`, divider: i === 1
+            }))}
+            onSelect={setCondition} />
+          <button className={`dd-btn ${freeOnly ? "dd-free-active" : ""}`}
+            onClick={() => setFreeOnly(f => !f)}>
+            💚 Free Only
           </button>
-
-          {/* Active filter count + clear */}
           {activeFilters > 0 && (
-            <button className="filter-clear-btn" onClick={clearAllFilters}>
-              ✕ Clear {activeFilters} filter{activeFilters > 1 ? "s" : ""}
+            <button className="dd-btn filter-clear"
+              onClick={() => { setCategory("All"); setCondition("All"); setFreeOnly(false); setSortBy("newest"); }}>
+              ✕ Clear ({activeFilters})
             </button>
           )}
-
-          <span className="filter-count">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
+          <div className="filter-count">
+            {!loading && <span>{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>}
+          </div>
         </div>
 
-        {/* Listings grid */}
+        {/* Grid */}
         {loading ? (
           <div className="listings-grid">
-            {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+            {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">🔍</div>
-            <h3>No listings found</h3>
-            <p>Try adjusting your filters or be the first to list this item!</p>
-            <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:16, flexWrap:"wrap" }}>
-              <button className="btn btn-outline" onClick={clearAllFilters}>Clear Filters</button>
-              <button className="btn btn-primary" onClick={() => setPage("post")}>+ Post Item</button>
-            </div>
+            <h3>No items found</h3>
+            <p>Try adjusting your filters or be the first to post in this category!</p>
+            <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={() => setPage("post")}>
+              + Post First Item
+            </button>
           </div>
         ) : (
           <div className="listings-grid">
-            {filtered.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+            {filtered.map(listing => (
+              <ListingCard key={listing.id} listing={listing}
+                onClick={() => { setSelectedListing(listing); setPage("listing"); }} />
             ))}
           </div>
         )}

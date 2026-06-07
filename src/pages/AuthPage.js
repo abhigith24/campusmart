@@ -55,7 +55,8 @@ export default function AuthPage() {
       <div className="auth-left">
         <div className="auth-left-inner">
           <div className="auth-brand">
-            <img src="/logo-horizontal.png" alt="CampusMart India" className="auth-logo-img" />
+            <div className="auth-brand-icon">📚</div>
+            <span className="auth-brand-name">CampusMart</span>
           </div>
           <h2 className="auth-left-title">
             India's Trusted<br />

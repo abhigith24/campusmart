@@ -220,8 +220,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             <div className="detail-cat">{listing.category}</div>
             <div className="detail-title">{listing.title}</div>
 
-            <div className={`detail-price ${listing.isFree?"free":""}`} style={{ color: listing.listingType==="rent" ? "#2563eb" : undefined }}>
-              {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : listing.listingType==="rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
+            <div className={`detail-price ${listing.isFree?"free":""}`}>
+              {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : `₹${listing.price}`}
             </div>
 
             <div className="detail-badges">
@@ -327,13 +327,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               )}
             </div>
           </div>
-
-          {/* Meetup spot — shown if seller set one */}
-          {listing.meetupSpot && (
-            <div className="listing-meetup-spot">
-              📍 Meetup: <span style={{ fontWeight:800 }}>{listing.meetupSpot}</span>
-            </div>
-          )}
 
           <div style={{
             background:"#eef2ff", border:"1.5px solid #c7d2fe",
