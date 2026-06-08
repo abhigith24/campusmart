@@ -1925,3 +1925,193 @@ input,textarea,select { font-family:inherit }
   .hero-trust-badge { flex-direction:column; text-align:center; gap:6px }
   .hero-trust-icon { font-size:22px }
 }
+/* ════════════════════════════════════════════════════
+   NEW FEATURES CSS — paste at the END of main.css
+════════════════════════════════════════════════════ */
+
+/* ── TRENDING SECTION ───────────────────────────── */
+.trending-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.trending-scroll::-webkit-scrollbar { height: 3px; }
+.trending-scroll::-webkit-scrollbar-thumb { background: var(--p-mid); border-radius: 10px; }
+
+.trending-card {
+  min-width: 160px;
+  max-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+  flex-shrink: 0;
+}
+.trending-card:hover { transform: translateY(-3px); box-shadow: var(--s2); }
+.trending-card-img { position: relative; height: 110px; background: var(--light); overflow: hidden; }
+.trending-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.trending-card-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:36px; }
+.trending-hot-badge {
+  position: absolute; top: 6px; left: 6px;
+  background: var(--p); color: #fff;
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px; border-radius: var(--r-full);
+  letter-spacing: .3px;
+}
+.trending-card-body { padding: 10px 10px 12px; }
+.trending-card-title { font-size: 12px; font-weight: 600; color: var(--txt); line-height: 1.4; margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.trending-card-price { font-size: 13px; font-weight: 800; color: var(--p); }
+.trending-card-views { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
+
+/* ── RENT BADGE ─────────────────────────────────── */
+.rent-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: #2563eb; color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: var(--r-full);
+  letter-spacing: .4px;
+}
+.card-rent-badge {
+  display: inline-block;
+  background: #eff6ff; color: #1d4ed8;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: var(--r-full);
+}
+
+/* ── POST LISTING — TYPE SELECTOR ───────────────── */
+.post-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.post-type-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 8px;
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  text-align: center;
+}
+.post-type-btn:hover { border-color: var(--p); background: var(--p-light); }
+.post-type-btn.active { border-color: var(--p); background: var(--p-light); box-shadow: 0 0 0 3px var(--p-glow); }
+.post-type-label { font-size: 13px; font-weight: 700; color: var(--txt); }
+.post-type-desc  { font-size: 11px; color: var(--muted); line-height: 1.3; }
+
+.post-rent-info {
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--r-md);
+  padding: 10px 14px; font-size: 13px; color: #1e40af; line-height: 1.5;
+}
+
+/* ── MEETUP SPOT SELECTOR ───────────────────────── */
+.post-meetup-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 4px;
+}
+.post-meetup-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font-size: 13px; color: var(--txt);
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.post-meetup-btn:hover { border-color: var(--p); color: var(--p); background: var(--p-light); }
+.post-meetup-btn.active { border-color: var(--p); background: var(--p-light); color: var(--p-dark); font-weight: 600; box-shadow: 0 0 0 2px var(--p-glow); }
+.post-meetup-icon { font-size: 14px; }
+
+/* Meetup spot on listing detail page */
+.listing-meetup-spot {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--p-light); border: 1px solid var(--p-mid);
+  border-radius: var(--r-md); padding: 10px 14px;
+  font-size: 14px; color: var(--p-dark); font-weight: 600;
+  margin-top: 12px;
+}
+
+/* ── PRICE FILTER ───────────────────────────────── */
+.filter-clear-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--red);
+  border-radius: var(--r-full);
+  background: var(--red-light);
+  color: var(--red);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.filter-clear-btn:hover { background: var(--red); color: #fff; }
+
+/* ── ANALYTICS TAB ──────────────────────────────── */
+.analytics-tab { padding: 8px 0 32px; }
+
+.analytics-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.analytics-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: var(--s0);
+}
+.analytics-stat-icon { font-size: 22px; margin-bottom: 8px; }
+.analytics-stat-value { font-size: 26px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+.analytics-stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+.analytics-section-title {
+  font-size: 15px; font-weight: 700; color: var(--txt);
+  margin-bottom: 12px;
+}
+
+.analytics-best { margin-bottom: 24px; }
+.analytics-best-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--bdr);
+  border-radius: var(--r-lg); padding: 14px;
+  box-shadow: var(--s0);
+}
+.analytics-best-img {
+  width: 60px; height: 60px; border-radius: var(--r-md);
+  object-fit: cover; flex-shrink: 0;
+}
+
+.analytics-chart { margin-bottom: 24px; }
+.analytics-bars { display: flex; flex-direction: column; gap: 10px; }
+.analytics-bar-row { display: flex; align-items: center; gap: 10px; }
+.analytics-bar-label {
+  width: 140px; font-size: 12px; color: var(--txt-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;
+}
+.analytics-bar-track {
+  flex: 1; height: 10px; background: var(--light);
+  border-radius: var(--r-full); overflow: hidden;
+}
+.analytics-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--p), var(--p-dark));
+  border-radius: var(--r-full);
+  transition: width .6s var(--ease);
+}
+.analytics-bar-count { font-size: 12px; font-weight: 700; color: var(--p); width: 30px; text-align: right; flex-shrink: 0; }
+
+/* status badges for analytics */
+.status-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: var(--r-full); }
+.status-badge.active  { background: #dcfce7; color: #15803d; }
+.status-badge.sold    { background: #ede9fe; color: #5b21b6; }
+.status-badge.deleted { background: var(--red-light); color: var(--red); }

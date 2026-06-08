@@ -9,36 +9,64 @@ const CATEGORIES = ["Textbooks","Notes","Lab Equipment","Electronics","Stationer
 const CAT_ICONS  = { Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Misc:"📦" };
 const CONDITIONS = ["New","Good","Fair","Old"];
 const COND_META  = {
-  New:  { label:"Brand New",     color:"#15803d", bg:"#dcfce7", desc:"Unused, original packaging" },
-  Good: { label:"Good",          color:"#1d4ed8", bg:"#dbeafe", desc:"Minor wear, works perfectly" },
-  Fair: { label:"Fair",          color:"#a16207", bg:"#fef9c3", desc:"Visible wear, fully functional" },
-  Old:  { label:"Heavily Used",  color:"#b91c1c", bg:"#fee2e2", desc:"Signs of heavy use" },
+  New:  { label:"Brand New",    color:"#15803d", bg:"#dcfce7", desc:"Unused, original packaging" },
+  Good: { label:"Good",         color:"#1d4ed8", bg:"#dbeafe", desc:"Minor wear, works perfectly" },
+  Fair: { label:"Fair",         color:"#a16207", bg:"#fef9c3", desc:"Visible wear, fully functional" },
+  Old:  { label:"Heavily Used", color:"#b91c1c", bg:"#fee2e2", desc:"Signs of heavy use" },
 };
+
+const MEETUP_SPOTS = [
+  "Library Entrance",
+  "Main Canteen",
+  "Hostel Gate A",
+  "Hostel Gate B",
+  "Hostel Gate C",
+  "Academic Block Lobby",
+  "Parking Area",
+  "Sports Complex",
+  "Admin Block",
+  "Custom location…",
+];
 
 export default function PostListingPage({ setPage, editListing }) {
   const { currentUser, userProfile } = useAuth();
   const toast = useToast();
   const isEdit = !!editListing;
 
-  const [title,       setTitle]       = useState(editListing?.title       || "");
-  const [description, setDescription] = useState(editListing?.description || "");
-  const [category,    setCategory]    = useState(editListing?.category    || "Textbooks");
-  const [condition,   setCondition]   = useState(editListing?.condition   || "Good");
-  const [price,       setPrice]       = useState(editListing?.price       || "");
-  const [isFree,      setIsFree]      = useState(editListing?.isFree      || false);
+  const [title,         setTitle]         = useState(editListing?.title         || "");
+  const [description,   setDescription]   = useState(editListing?.description   || "");
+  const [category,      setCategory]      = useState(editListing?.category      || "Textbooks");
+  const [condition,     setCondition]     = useState(editListing?.condition     || "Good");
+  const [listingType,   setListingType]   = useState(editListing?.listingType   || "sell"); // "sell" | "free" | "rent"
+  const [price,         setPrice]         = useState(editListing?.price         || "");
+  const [isFree,        setIsFree]        = useState(editListing?.isFree        || false);
+  // Rent fields
+  const [rentPerDay,    setRentPerDay]    = useState(editListing?.rentPerDay    || "");
+  const [rentMinDays,   setRentMinDays]   = useState(editListing?.rentMinDays   || "1");
+  const [rentMaxDays,   setRentMaxDays]   = useState(editListing?.rentMaxDays   || "30");
+  const [rentDeposit,   setRentDeposit]   = useState(editListing?.rentDeposit   || "");
+  // Meetup
+  const [meetupSpot,    setMeetupSpot]    = useState(editListing?.meetupSpot    || "");
+  const [customMeetup,  setCustomMeetup]  = useState("");
   const [existingImages, setExistingImages] = useState(editListing?.images || []);
-  const [newFiles,    setNewFiles]    = useState([]);
-  const [newPreviews, setNewPreviews] = useState([]);
-  const [loading,     setLoading]     = useState(false);
-  const [aiLoading,   setAiLoading]   = useState(false);
-  const [aiSuggestion,setAiSuggestion]= useState("");
-  const [dragOver,    setDragOver]    = useState(false);
+  const [newFiles,      setNewFiles]      = useState([]);
+  const [newPreviews,   setNewPreviews]   = useState([]);
+  const [loading,       setLoading]       = useState(false);
+  const [aiLoading,     setAiLoading]     = useState(false);
+  const [aiSuggestion,  setAiSuggestion]  = useState("");
+  const [dragOver,      setDragOver]      = useState(false);
   const fileRef = useRef();
 
   const totalImages = existingImages.length + newPreviews.length;
   const progress = [title, description, (totalImages > 0 || isEdit)].filter(Boolean).length;
 
-  // ── SOLD GUARD: block editing of sold listings ──────────────────────────
+  // Sync listingType with isFree state
+  function handleTypeChange(type) {
+    setListingType(type);
+    setIsFree(type === "free");
+  }
+
+  // SOLD GUARD
   if (isEdit && editListing?.status === "sold") {
     return (
       <div className="post-page">
@@ -52,16 +80,11 @@ export default function PostListingPage({ setPage, editListing }) {
               <p className="post-subtitle">This item has been marked as sold</p>
             </div>
           </div>
-          <div style={{
-            background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:"var(--r-lg)",
-            padding:32, textAlign:"center", boxShadow:"var(--s1)"
-          }}>
+          <div style={{ background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:"var(--r-lg)", padding:32, textAlign:"center", boxShadow:"var(--s1)" }}>
             <div style={{ fontSize:56, marginBottom:16 }}>🔒</div>
-            <h2 style={{ fontSize:20, fontWeight:800, marginBottom:10, color:"var(--txt)" }}>
-              Cannot Edit Sold Listing
-            </h2>
+            <h2 style={{ fontSize:20, fontWeight:800, marginBottom:10 }}>Cannot Edit Sold Listing</h2>
             <p style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
-              This listing has been sold and can no longer be edited. Sold listings are locked to maintain transaction integrity.
+              This listing has been sold and can no longer be edited.
             </p>
             <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
               <button className="btn btn-outline" onClick={() => setPage("home")}>← Back to Feed</button>
@@ -79,15 +102,9 @@ export default function PostListingPage({ setPage, editListing }) {
     setNewPreviews(picked.map(f => URL.createObjectURL(f)));
   }
   function handleImageChange(e) { handleFiles(e.target.files); }
-  function handleDrop(e) {
-    e.preventDefault(); setDragOver(false);
-    handleFiles(e.dataTransfer.files);
-  }
+  function handleDrop(e) { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }
   function removeExisting(i) { setExistingImages(p => p.filter((_,x) => x !== i)); }
-  function removeNew(i) {
-    setNewFiles(p => p.filter((_,x) => x !== i));
-    setNewPreviews(p => p.filter((_,x) => x !== i));
-  }
+  function removeNew(i) { setNewFiles(p => p.filter((_,x) => x !== i)); setNewPreviews(p => p.filter((_,x) => x !== i)); }
 
   async function suggestPrice() {
     if (!title) { toast("Enter item name first", "error"); return; }
@@ -99,74 +116,73 @@ export default function PostListingPage({ setPage, editListing }) {
         method:"POST",
         headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${GROQ_KEY}` },
         body: JSON.stringify({
-          model:"llama3-8b-8192", max_tokens:80, temperature:0.3,
-          messages:[
-            { role:"system", content:"You are a price advisor for a college student marketplace in India. Give concise resale price suggestions in INR only." },
-            { role:"user",   content:`Item: "${title}", Category: ${category}, Condition: ${condition}. Reply ONLY: ₹MIN – ₹MAX (reason max 8 words). No extra text.` }
-          ]
+          model:"llama3-8b-8192",
+          messages:[{
+            role:"user",
+            content:`You are a price advisor for a college marketplace in India. Suggest a fair second-hand price in INR for: "${title}" (condition: ${condition}). Reply with just 1-2 sentences with a price range.`
+          }],
+          max_tokens:80, temperature:0.4
         })
       });
-      if (!res.ok) throw new Error("API error");
       const data = await res.json();
-      setAiSuggestion(data.choices?.[0]?.message?.content?.trim() || "");
+      setAiSuggestion(data.choices?.[0]?.message?.content || "");
     } catch { localFallback(); }
     setAiLoading(false);
   }
 
   function localFallback() {
-    const m = { New:0.85, Good:0.60, Fair:0.40, Old:0.20 }[condition]||0.5;
-    const r = { Textbooks:{a:80,b:800}, Notes:{a:30,b:200}, "Lab Equipment":{a:100,b:2000}, Electronics:{a:200,b:5000}, Stationery:{a:20,b:300}, Misc:{a:50,b:500} };
-    let a = r[category]?.a||100, b = r[category]?.b||1000;
-    const kw = title.toLowerCase();
-    if (kw.includes("laptop")||kw.includes("macbook"))        { a=8000; b=40000; }
-    else if (kw.includes("tablet")||kw.includes("ipad"))      { a=5000; b=25000; }
-    else if (kw.includes("calculator")||kw.includes("casio")) { a=400;  b=1200;  }
-    else if (kw.includes("headphone")||kw.includes("earphone")){ a=300; b=3000;  }
-    else if (kw.includes("arduino")||kw.includes("raspberry")){ a=500;  b=3000;  }
-    else if (kw.includes("oscilloscope")||kw.includes("multimeter")){ a=500; b=4000; }
-    const lo = Math.round(a*m/10)*10, hi = Math.round(b*m/10)*10;
-    const desc = { New:"near-new, barely used", Good:"good, minor wear", Fair:"fair, visible wear", Old:"heavily used" };
-    setTimeout(() => { setAiSuggestion(`₹${lo} – ₹${hi} (${desc[condition]})`); setAiLoading(false); }, 500);
+    const base = { Textbooks:300, Notes:100, "Lab Equipment":500, Electronics:2000, Stationery:80, Misc:200 };
+    const mult = { New:1, Good:0.65, Fair:0.4, Old:0.2 };
+    const est = Math.round((base[category]||300) * (mult[condition]||0.5));
+    setAiSuggestion(`Suggested price: ₹${Math.round(est*0.8).toLocaleString("en-IN")} – ₹${Math.round(est*1.2).toLocaleString("en-IN")} based on condition and category.`);
+    setAiLoading(false);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!title || !description) { toast("Fill title and description", "error"); return; }
-    if (!isFree && (!price || isNaN(price) || Number(price) <= 0)) { toast("Enter a valid price", "error"); return; }
-    if (totalImages === 0 && !isEdit) { toast("Add at least one photo", "error"); return; }
+    if (listingType === "sell" && !price) { toast("Please enter a price or mark as free", "error"); return; }
+    if (listingType === "rent" && !rentPerDay) { toast("Please enter rent per day amount", "error"); return; }
+    if (!title || !description) { toast("Please fill all required fields", "error"); return; }
+
+    const finalMeetup = meetupSpot === "Custom location…" ? customMeetup : meetupSpot;
+
     setLoading(true);
     try {
-      // ── Backend sold validation ──────────────────────────────────────────
-      // Re-fetch listing status from Firestore before allowing any edit
-      if (isEdit) {
-        const { getDoc, doc: fsDoc } = await import("firebase/firestore");
-        const freshSnap = await getDoc(fsDoc(db, "listings", editListing.id));
-        if (freshSnap.exists() && freshSnap.data().status === "sold") {
-          toast("This listing has been sold and cannot be edited.", "error");
-          setLoading(false);
-          setPage("home");
-          return;
-        }
+      const newUrls = newFiles.length > 0
+        ? await uploadMultipleToCloudinary(newFiles)
+        : [];
+      const allImages = [...existingImages, ...newUrls];
+
+      const baseData = {
+        title, description, category, condition,
+        listingType, // "sell" | "free" | "rent"
+        isFree: listingType === "free",
+        meetupSpot: finalMeetup,
+        images: allImages,
+        sellerId:      currentUser.uid,
+        sellerName:    userProfile?.name || currentUser.displayName || "Student",
+        sellerCollege: userProfile?.college || "",
+        sellerRating:  userProfile?.rating  || 0,
+      };
+
+      if (listingType === "rent") {
+        Object.assign(baseData, {
+          price: 0,
+          rentPerDay:  Number(rentPerDay),
+          rentMinDays: Number(rentMinDays),
+          rentMaxDays: Number(rentMaxDays),
+          rentDeposit: Number(rentDeposit) || 0,
+        });
+      } else {
+        baseData.price = listingType === "free" ? 0 : Number(price);
       }
 
-      let uploaded = [];
-      if (newFiles.length > 0) uploaded = await uploadMultipleToCloudinary(newFiles);
-      const allImages = [...existingImages, ...uploaded];
       if (isEdit) {
-        await updateDoc(doc(db, "listings", editListing.id), {
-          title, description, category, condition,
-          price: isFree ? 0 : Number(price), isFree, images: allImages
-        });
+        await updateDoc(doc(db, "listings", editListing.id), baseData);
         toast("Listing updated! ✅", "success");
       } else {
         await addDoc(collection(db, "listings"), {
-          title, description, category, condition,
-          price: isFree ? 0 : Number(price), isFree,
-          images: allImages,
-          sellerId:      currentUser.uid,
-          sellerName:    userProfile?.name || currentUser.displayName || "Student",
-          sellerCollege: userProfile?.college || "",
-          sellerRating:  userProfile?.rating  || 0,
+          ...baseData,
           status:"active", createdAt:serverTimestamp(), views:0
         });
         toast("Listing posted! 🎉", "success");
@@ -179,11 +195,16 @@ export default function PostListingPage({ setPage, editListing }) {
     setLoading(false);
   }
 
+  const isRent = listingType === "rent";
+  const previewPrice = isRent
+    ? (rentPerDay ? `₹${Number(rentPerDay).toLocaleString("en-IN")}/day` : "Set rent/day")
+    : (listingType === "free" ? "Free 💚" : (price ? `₹${Number(price).toLocaleString("en-IN")}` : "Set price"));
+
   return (
     <div className="post-page">
       <div className="post-container">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="post-header">
           <button className="post-back" onClick={() => setPage("home")}>
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
@@ -194,9 +215,7 @@ export default function PostListingPage({ setPage, editListing }) {
           </div>
           {!isEdit && (
             <div className="post-progress">
-              <div className="post-progress-bar">
-                <div className="post-progress-fill" style={{ width:`${(progress/3)*100}%` }} />
-              </div>
+              <div className="post-progress-bar"><div className="post-progress-fill" style={{ width:`${(progress/3)*100}%` }} /></div>
               <span className="post-progress-text">{progress}/3 fields</span>
             </div>
           )}
@@ -204,11 +223,9 @@ export default function PostListingPage({ setPage, editListing }) {
 
         <form onSubmit={handleSubmit} className="post-form">
           <div className="post-grid">
-
-            {/* ── LEFT: Main form ── */}
             <div className="post-left">
 
-              {/* Photos */}
+              {/* ── Photos ── */}
               <div className="post-section">
                 <div className="post-section-header">
                   <div className="post-section-num">1</div>
@@ -218,17 +235,13 @@ export default function PostListingPage({ setPage, editListing }) {
                   </div>
                   {totalImages > 0 && <span className="post-img-count">{totalImages}/4</span>}
                 </div>
-
                 <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleImageChange} style={{ display:"none" }} />
-
                 {totalImages < 4 && (
-                  <div
-                    className={`post-dropzone ${dragOver ? "dragover" : ""}`}
+                  <div className={`post-dropzone ${dragOver ? "dragover" : ""}`}
                     onClick={() => fileRef.current.click()}
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
-                  >
+                    onDrop={handleDrop}>
                     <div className="post-dropzone-icon">
                       <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -238,18 +251,17 @@ export default function PostListingPage({ setPage, editListing }) {
                     <div className="post-dropzone-hint">JPG, PNG up to 5MB each</div>
                   </div>
                 )}
-
                 {totalImages > 0 && (
                   <div className="post-img-grid">
                     {existingImages.map((url, i) => (
-                      <div key={`e${i}`} className={`post-img-item ${i===0 ? "main" : ""}`}>
+                      <div key={`e${i}`} className={`post-img-item ${i===0?"main":""}`}>
                         <img src={url} alt="" />
                         {i === 0 && <span className="post-img-main-badge">Main</span>}
                         <button type="button" className="post-img-remove" onClick={() => removeExisting(i)}>✕</button>
                       </div>
                     ))}
                     {newPreviews.map((url, i) => (
-                      <div key={`n${i}`} className={`post-img-item ${existingImages.length===0&&i===0 ? "main" : ""}`}>
+                      <div key={`n${i}`} className={`post-img-item ${existingImages.length===0&&i===0?"main":""}`}>
                         <img src={url} alt="" />
                         {existingImages.length===0&&i===0 && <span className="post-img-main-badge">Main</span>}
                         <span className="post-img-new-badge">New</span>
@@ -257,16 +269,13 @@ export default function PostListingPage({ setPage, editListing }) {
                       </div>
                     ))}
                     {totalImages < 4 && (
-                      <div className="post-img-add" onClick={() => fileRef.current.click()}>
-                        <span>+</span>
-                        <span>Add</span>
-                      </div>
+                      <div className="post-img-add" onClick={() => fileRef.current.click()}><span>+</span><span>Add</span></div>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Details */}
+              {/* ── Item Details ── */}
               <div className="post-section">
                 <div className="post-section-header">
                   <div className="post-section-num">2</div>
@@ -275,30 +284,22 @@ export default function PostListingPage({ setPage, editListing }) {
                     <div className="post-section-desc">Be specific to attract serious buyers</div>
                   </div>
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Item Name <span className="req">*</span></label>
-                  <input
-                    className={`form-input ${title ? "filled" : ""}`}
+                  <input className={`form-input ${title ? "filled" : ""}`}
                     placeholder="e.g. Engineering Mathematics by R.K. Jain, 4th Edition"
-                    value={title} onChange={e => setTitle(e.target.value)} required
-                  />
+                    value={title} onChange={e => setTitle(e.target.value)} required />
                   {title && <div className="form-input-check">✓</div>}
                 </div>
-
                 <div className="form-group" style={{ position:"relative" }}>
                   <label className="form-label">Description <span className="req">*</span></label>
-                  <textarea
-                    className={`form-input ${description ? "filled" : ""}`}
-                    rows={4}
-                    placeholder="Describe condition, edition, any highlights or damage..."
+                  <textarea className={`form-input ${description ? "filled" : ""}`}
+                    rows={4} placeholder="Describe condition, edition, any highlights or damage..."
                     value={description} onChange={e => setDescription(e.target.value)}
-                    required style={{ resize:"vertical" }}
-                  />
+                    required style={{ resize:"vertical" }} />
                   <div className="char-count">{description.length}/500</div>
                 </div>
-
-                {/* Category pills */}
+                {/* Category */}
                 <div className="form-group">
                   <label className="form-label">Category <span className="req">*</span></label>
                   <div className="post-cat-grid">
@@ -312,8 +313,7 @@ export default function PostListingPage({ setPage, editListing }) {
                     ))}
                   </div>
                 </div>
-
-                {/* Condition cards */}
+                {/* Condition */}
                 <div className="form-group">
                   <label className="form-label">Condition <span className="req">*</span></label>
                   <div className="post-cond-grid">
@@ -333,49 +333,45 @@ export default function PostListingPage({ setPage, editListing }) {
                 </div>
               </div>
 
-              {/* Pricing */}
+              {/* ── Pricing / Listing Type ── */}
               <div className="post-section">
                 <div className="post-section-header">
                   <div className="post-section-num">3</div>
                   <div>
-                    <div className="post-section-title">Pricing</div>
-                    <div className="post-section-desc">Set a fair price or donate for free</div>
+                    <div className="post-section-title">Listing Type & Pricing</div>
+                    <div className="post-section-desc">Choose how you want to list this item</div>
                   </div>
                 </div>
 
-                {/* Free toggle */}
-                <div className={`post-free-toggle ${isFree ? "active" : ""}`} onClick={() => setIsFree(f => !f)}>
-                  <div className="post-free-left">
-                    <div className="post-free-icon">💚</div>
-                    <div>
-                      <div className="post-free-title">Donate for Free</div>
-                      <div className="post-free-sub">Help fellow students — makes a real impact</div>
-                    </div>
-                  </div>
-                  <div className={`post-free-switch ${isFree ? "on" : ""}`}>
-                    <div className="post-free-thumb" />
-                  </div>
+                {/* Type selector */}
+                <div className="post-type-grid">
+                  {[
+                    { val:"sell", icon:"💰", label:"Sell", desc:"One-time sale" },
+                    { val:"free", icon:"💚", label:"Donate Free", desc:"Help a fellow student" },
+                    { val:"rent", icon:"🔄", label:"Rent/Borrow", desc:"Lend for daily rent" },
+                  ].map(t => (
+                    <button key={t.val} type="button"
+                      className={`post-type-btn ${listingType === t.val ? "active" : ""}`}
+                      onClick={() => handleTypeChange(t.val)}>
+                      <span style={{ fontSize:22 }}>{t.icon}</span>
+                      <span className="post-type-label">{t.label}</span>
+                      <span className="post-type-desc">{t.desc}</span>
+                    </button>
+                  ))}
                 </div>
 
-                {!isFree && (
+                {/* Sell price */}
+                {listingType === "sell" && (
                   <div style={{ marginTop:16 }}>
                     <label className="form-label">Your Price (₹) <span className="req">*</span></label>
                     <div className="post-price-row">
                       <div className="post-price-input-wrap">
                         <span className="post-price-symbol">₹</span>
-                        <input
-                          className="form-input post-price-input"
-                          type="number" min="1"
-                          placeholder="0"
-                          value={price} onChange={e => setPrice(e.target.value)}
-                        />
+                        <input className="form-input post-price-input" type="number" min="1"
+                          placeholder="0" value={price} onChange={e => setPrice(e.target.value)} />
                       </div>
                       <button type="button" className="post-ai-btn" onClick={suggestPrice} disabled={aiLoading}>
-                        {aiLoading ? (
-                          <><span className="post-ai-spinner" /> Getting...</>
-                        ) : (
-                          <><span>🤖</span> AI Suggest</>
-                        )}
+                        {aiLoading ? <><span className="post-ai-spinner" /> Getting…</> : <><span>🤖</span> AI Suggest</>}
                       </button>
                     </div>
                     {aiSuggestion && (
@@ -389,10 +385,95 @@ export default function PostListingPage({ setPage, editListing }) {
                     )}
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* ── RIGHT: Preview card ── */}
+                {/* Free message */}
+                {listingType === "free" && (
+                  <div className="post-free-toggle active" style={{ marginTop:16, cursor:"default" }}>
+                    <div className="post-free-left">
+                      <div className="post-free-icon">💚</div>
+                      <div>
+                        <div className="post-free-title">Donating for Free</div>
+                        <div className="post-free-sub">This item will be listed at ₹0 — great karma! 🙏</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rent fields */}
+                {listingType === "rent" && (
+                  <div style={{ marginTop:16, display:"flex", flexDirection:"column", gap:12 }}>
+                    <div className="post-rent-info">
+                      🔄 Rental listings let students borrow your item for a daily fee with optional security deposit.
+                    </div>
+                    <div>
+                      <label className="form-label">Rent per Day (₹) <span className="req">*</span></label>
+                      <div className="post-price-input-wrap">
+                        <span className="post-price-symbol">₹</span>
+                        <input className="form-input post-price-input" type="number" min="1"
+                          placeholder="e.g. 50" value={rentPerDay} onChange={e => setRentPerDay(e.target.value)} required={isRent} />
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", gap:12 }}>
+                      <div style={{ flex:1 }}>
+                        <label className="form-label">Min. Days</label>
+                        <input className="form-input" type="number" min="1"
+                          value={rentMinDays} onChange={e => setRentMinDays(e.target.value)} />
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <label className="form-label">Max. Days</label>
+                        <input className="form-input" type="number" min="1"
+                          value={rentMaxDays} onChange={e => setRentMaxDays(e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="form-label">Security Deposit (₹) <span style={{ color:"var(--muted-2)", fontSize:12, fontWeight:400 }}>— optional</span></label>
+                      <div className="post-price-input-wrap">
+                        <span className="post-price-symbol">₹</span>
+                        <input className="form-input post-price-input" type="number" min="0"
+                          placeholder="0" value={rentDeposit} onChange={e => setRentDeposit(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Meetup Spot ── */}
+              <div className="post-section">
+                <div className="post-section-header">
+                  <div className="post-section-num">4</div>
+                  <div>
+                    <div className="post-section-title">📍 Preferred Meetup Spot</div>
+                    <div className="post-section-desc">Where will you hand over the item on campus?</div>
+                  </div>
+                </div>
+                <div className="post-meetup-grid">
+                  {MEETUP_SPOTS.map(spot => (
+                    <button key={spot} type="button"
+                      className={`post-meetup-btn ${meetupSpot === spot ? "active" : ""}`}
+                      onClick={() => setMeetupSpot(spot)}>
+                      <span className="post-meetup-icon">
+                        {spot.includes("Library") ? "📚" : spot.includes("Canteen") ? "🍽️" : spot.includes("Hostel") ? "🏠" : spot.includes("Academic") ? "🎓" : spot.includes("Parking") ? "🚗" : spot.includes("Sports") ? "⚽" : spot.includes("Admin") ? "🏢" : "📍"}
+                      </span>
+                      {spot}
+                    </button>
+                  ))}
+                </div>
+                {meetupSpot === "Custom location…" && (
+                  <div style={{ marginTop:12 }}>
+                    <input className="form-input" placeholder="e.g. Near CSE Department, Room 204"
+                      value={customMeetup} onChange={e => setCustomMeetup(e.target.value)} />
+                  </div>
+                )}
+                {!meetupSpot && (
+                  <div style={{ fontSize:12, color:"var(--muted-2)", marginTop:8 }}>
+                    Optional — buyers will see this on the listing
+                  </div>
+                )}
+              </div>
+
+            </div>{/* end post-left */}
+
+            {/* ── RIGHT: Preview ── */}
             <div className="post-right">
               <div className="post-preview-sticky">
                 <div className="post-preview-label">Live Preview</div>
@@ -405,8 +486,9 @@ export default function PostListingPage({ setPage, editListing }) {
                           <span>Add photos above</span>
                         </div>
                     }
-                    {isFree && <span className="free-badge">FREE</span>}
-                    {!isFree && condition && (
+                    {listingType === "free" && <span className="free-badge">FREE</span>}
+                    {listingType === "rent" && <span className="rent-badge">RENT</span>}
+                    {listingType === "sell" && condition && (
                       <span className="condition-badge-new"
                         style={{ background: COND_META[condition]?.bg, color: COND_META[condition]?.color }}>
                         {condition}
@@ -416,18 +498,20 @@ export default function PostListingPage({ setPage, editListing }) {
                   <div style={{ padding:"14px 15px 15px" }}>
                     <div className="card-cat">{CAT_ICONS[category]} {category}</div>
                     <div className="card-title" style={{ fontSize:15, fontWeight:700 }}>
-                      {title || <span style={{ color:"var(--muted-2)", fontWeight:500 }}>Item name...</span>}
+                      {title || <span style={{ color:"var(--muted-2)", fontWeight:500 }}>Item name…</span>}
                     </div>
+                    {meetupSpot && meetupSpot !== "Custom location…" && (
+                      <div style={{ fontSize:11, color:"var(--muted)", marginTop:4 }}>📍 {meetupSpot}</div>
+                    )}
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:8, paddingTop:10, borderTop:"1px solid var(--bdr)" }}>
-                      <div className={`card-price ${isFree ? "free" : ""}`} style={{ fontSize:18 }}>
-                        {isFree ? "Free 💚" : price ? <>₹{Number(price).toLocaleString("en-IN")}</> : <span style={{ color:"var(--muted-2)", fontSize:14, fontWeight:500 }}>Set price</span>}
+                      <div className={`card-price ${listingType === "free" ? "free" : ""}`} style={{ fontSize:18, color: isRent ? "#2563eb" : undefined }}>
+                        {previewPrice}
                       </div>
                       <div className="card-seller-avatar">{(userProfile?.name || "Y")[0].toUpperCase()}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Tips */}
                 <div className="post-tips">
                   <div className="post-tips-title">💡 Tips for faster sales</div>
                   {["Use natural light for photos","Set a competitive price","Mention edition/year","Be honest about condition"].map((tip,i) => (
@@ -438,19 +522,16 @@ export default function PostListingPage({ setPage, editListing }) {
             </div>
           </div>
 
-          {/* ── Submit bar ── */}
+          {/* Submit bar */}
           <div className="post-submit-bar">
-            <button type="button" className="post-cancel-btn" onClick={() => setPage("home")}>
-              Cancel
-            </button>
+            <button type="button" className="post-cancel-btn" onClick={() => setPage("home")}>Cancel</button>
             <button type="submit" className="post-submit-btn" disabled={loading}>
-              {loading ? (
-                <><span className="post-ai-spinner" style={{ borderColor:"rgba(255,255,255,.3)", borderTopColor:"#fff" }} />{isEdit ? "Saving..." : "Uploading..."}</>
-              ) : isEdit ? (
-                <><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Changes</>
-              ) : (
-                <><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Post Listing</>
-              )}
+              {loading
+                ? <><span className="post-ai-spinner" style={{ borderColor:"rgba(255,255,255,.3)", borderTopColor:"#fff" }} />{isEdit ? "Saving…" : "Uploading…"}</>
+                : isEdit
+                  ? <><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Changes</>
+                  : <><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Post Listing</>
+              }
             </button>
           </div>
         </form>
