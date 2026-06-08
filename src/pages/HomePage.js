@@ -3,8 +3,8 @@ import { collection, query, where, orderBy, onSnapshot, limit } from "firebase/f
 import { db } from "../firebase";
 import ListingCard from "../components/ListingCard";
 
-const CATEGORIES = ["All","Textbooks","Notes","Lab Equipment","Electronics","Stationery","Misc"];
-const CAT_ICONS  = { All:"🏠", Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Misc:"📦" };
+const CATEGORIES = ["All","Textbooks","Notes","Lab Equipment","Electronics","Stationery","Girls","Misc"];
+const CAT_ICONS  = { All:"🏠", Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Girls:"👗", Misc:"📦" };
 const CONDITIONS = ["All","New","Good","Fair","Old"];
 const COND_ICONS = { All:"✅", New:"🟢", Good:"🔵", Fair:"🟡", Old:"🔴" };
 const SORT_OPTS  = [

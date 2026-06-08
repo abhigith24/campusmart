@@ -5,8 +5,8 @@ import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
-const CATEGORIES = ["Textbooks","Notes","Lab Equipment","Electronics","Stationery","Misc"];
-const CAT_ICONS  = { Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Misc:"📦" };
+const CATEGORIES = ["Textbooks","Notes","Lab Equipment","Electronics","Stationery","Girls","Misc"];
+const CAT_ICONS  = { Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Girls:"👗", Misc:"📦" };
 const CONDITIONS = ["New","Good","Fair","Old"];
 const COND_META  = {
   New:  { label:"Brand New",    color:"#15803d", bg:"#dcfce7", desc:"Unused, original packaging" },
@@ -39,7 +39,7 @@ export default function PostListingPage({ setPage, editListing }) {
   const [condition,     setCondition]     = useState(editListing?.condition     || "Good");
   const [listingType,   setListingType]   = useState(editListing?.listingType   || "sell"); // "sell" | "free" | "rent"
   const [price,         setPrice]         = useState(editListing?.price         || "");
-  const [,        setIsFree]        = useState(editListing?.isFree        || false);
+  const [isFree,        setIsFree]        = useState(editListing?.isFree        || false);
   // Rent fields
   const [rentPerDay,    setRentPerDay]    = useState(editListing?.rentPerDay    || "");
   const [rentMinDays,   setRentMinDays]   = useState(editListing?.rentMinDays   || "1");
