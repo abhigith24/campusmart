@@ -409,12 +409,10 @@ input,textarea,select { font-family:inherit }
   padding: 14px 0 12px;
   border-bottom: 1px solid var(--bdr);
   margin-bottom: 4px;
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 100;
 }
-.filter-bar::-webkit-scrollbar { display: none; }
 .filter-bar .filter-count { margin-left: auto; flex-shrink: 0; }
 
 .filter-bar-single {
@@ -449,7 +447,7 @@ input,textarea,select { font-family:inherit }
 .dd-menu {
   position:absolute; top:calc(100% + 6px); left:0;
   background:#fff; border:1px solid var(--bdr); border-radius:var(--r-lg);
-  box-shadow:var(--s3); z-index:200; min-width:185px; padding:5px;
+  box-shadow:var(--s3); z-index:500; min-width:185px; padding:5px;
   animation:dropIn .14s var(--ease);
 }
 .dd-item {
