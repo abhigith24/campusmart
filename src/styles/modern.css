@@ -76,6 +76,20 @@ button {
   font-weight: 900;
   font-size: 18px;
   letter-spacing: 0;
+  min-width: 190px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.nav-logo .logo-text {
+  display: inline-block;
+  color: var(--txt) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--txt) !important;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .logo-icon,
@@ -91,6 +105,35 @@ button {
   font-size: 13px;
   font-weight: 900;
   box-shadow: 0 12px 24px rgba(15, 118, 110, .28);
+}
+
+.brand-logo-img,
+.auth-brand-logo-img,
+.footer-logo-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, .18);
+}
+
+.brand-logo-img {
+  width: 44px;
+  height: 44px;
+}
+
+.auth-brand-logo-img {
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, .16);
+}
+
+.footer-logo-img {
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 10px 24px rgba(20, 184, 166, .16);
 }
 
 .nav-search {
@@ -413,6 +456,72 @@ button {
   border-color: rgba(255,255,255,.2);
 }
 
+.auth-box-logo {
+  color: var(--p-dark);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.auth-terms-link,
+.footer-link:hover {
+  color: var(--p-mid);
+}
+
+.footer-logo {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #e6f7f5;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 900;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.footer-logo span {
+  display: inline-block;
+  color: #e6f7f5 !important;
+  background: none !important;
+  -webkit-text-fill-color: #e6f7f5 !important;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.site-footer {
+  background: #081421;
+}
+
+.footer-badge,
+.footer-trust-badge {
+  background: rgba(20, 184, 166, .12);
+  color: #7dd3fc;
+  border-color: rgba(45, 212, 191, .28);
+}
+
+.footer-col-title {
+  color: #ccfbf1;
+}
+
+.footer-link {
+  color: #9fb0c3;
+}
+
+.footer-link:hover {
+  color: #5eead4;
+}
+
+.message-bubble.mine,
+.chat-msg.mine,
+.msg-bubble.mine,
+.msg-mine,
+.bubble.mine,
+.own-message .message-bubble {
+  background: linear-gradient(135deg, #0f766e, #2563eb) !important;
+  color: #fff !important;
+}
+
 .auth-right {
   width: min(520px, 100%);
 }
@@ -530,6 +639,19 @@ button {
   .navbar,
   .navbar-inner {
     height: 66px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+  }
+
+  .nav-logo .logo-text {
+    font-size: 17px;
+  }
+
+  .brand-logo-img {
+    width: 38px;
+    height: 38px;
   }
 
   .container {

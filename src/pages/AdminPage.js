@@ -9,7 +9,7 @@ const STATUS_COLORS = {
   sold:     { bg:"#dbeafe", color:"#1d4ed8" },
   removed:  { bg:"#fee2e2", color:"#b91c1c" },
   deleted:  { bg:"#f3f4f6", color:"#6b7280" },
-  flagged:  { bg:"#fff7ed", color:"#f97316" },
+  flagged:  { bg:"#e0f2fe", color:"#0369a1" },
   pending:  { bg:"#fef9c3", color:"#a16207" },
   accepted: { bg:"#dcfce7", color:"#15803d" },
   rejected: { bg:"#fee2e2", color:"#b91c1c" },
@@ -162,10 +162,10 @@ export default function AdminPage() {
               <div className="admin-grid">
                 {[
                   { num: stats.users,         lbl: "Students",            icon: "👤", accent:"#6366f1" },
-                  { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"#f97316" },
+                  { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"#0f766e" },
                   { num: stats.free,          lbl: "Free Items",          icon: "💚", accent:"#22c55e" },
                   { num: stats.sold,          lbl: "Sold Products",       icon: "💸", accent:"#3b82f6" },
-                  { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"#f59e0b" },
+                  { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"#2563eb" },
                   { num: stats.totalChats,    lbl: "Total Chats",         icon: "💬", accent:"#8b5cf6" },
                   { num: stats.activeSellers, lbl: "Active Sellers",      icon: "🏪", accent:"#ec4899" },
                   { num: stats.flagged,       lbl: "Flagged",             icon: "🚩", accent:"#ef4444" },
@@ -232,7 +232,7 @@ export default function AdminPage() {
                       .map(l => (
                         <tr key={l.id} style={{ background: l.flagged ? "#fff7ed" : "transparent" }}>
                           <td style={{ fontWeight: 700, maxWidth: 180 }}>
-                            {l.flagged && <span style={{ color: "#f97316", marginRight: 4 }}>🚩</span>}
+                            {l.flagged && <span style={{ color: "#0369a1", marginRight: 4 }}>🚩</span>}
                             {l.title}
                           </td>
                           <td>{l.sellerName}</td>
@@ -243,7 +243,7 @@ export default function AdminPage() {
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {l.status === "active" && !l.flagged && (
                                 <>
-                                  <button className="btn btn-sm" style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #f97316", borderRadius: 6 }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
+                                  <button className="btn btn-sm" style={{ background: "#e0f2fe", color: "#0369a1", border: "1px solid #0369a1", borderRadius: 6 }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
                                   <button className="btn btn-danger btn-sm" onClick={() => removeListing(l.id)}>🚫 Remove</button>
                                 </>
                               )}

@@ -45,7 +45,7 @@ function AnalyticsTab({ listings }) {
           { label:"Total Views",       value: totalViews,            icon:"👁",  color:"var(--p)" },
           { label:"Active Listings",   value: activeListings.length, icon:"📦",  color:"#22c55e" },
           { label:"Items Sold",        value: soldListings.length,   icon:"✅",  color:"#6366f1" },
-          { label:"Total Inquiries",   value: inquiries,             icon:"💬",  color:"#f59e0b" },
+          { label:"Total Inquiries",   value: inquiries,             icon:"💬",  color:"#2563eb" },
           { label:"Conversion Rate",   value: `${convRate}%`,        icon:"📈",  color:"var(--p-dark)" },
         ].map(s => (
           <div key={s.label} className="analytics-stat-card">

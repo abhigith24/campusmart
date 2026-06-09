@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const FEATURES = [
-  { icon:"Book", title:"Buy & Sell Textbooks", desc:"Save on course materials" },
+  { icon:"Buy", title:"Buy & Sell Textbooks", desc:"Save on course materials" },
   { icon:"Lab", title:"Lab Equipment Exchange", desc:"Share costly instruments" },
   { icon:"Free", title:"Donate for Free", desc:"Help your juniors out" },
   { icon:"ID", title:"Verified Students", desc:"A safer campus community" },
@@ -76,7 +76,7 @@ export default function AuthPage() {
       <div className="auth-left">
         <div className="auth-left-inner">
           <div className="auth-brand">
-            <div className="auth-brand-icon">CM</div>
+            <img className="auth-brand-logo-img" src="/logo-circular.png" alt="CampusMart" />
             <span className="auth-brand-name">CampusMart</span>
           </div>
           <h2 className="auth-left-title">

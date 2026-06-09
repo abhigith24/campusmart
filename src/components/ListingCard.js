@@ -3,13 +3,13 @@ import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 
 const CAT_ICONS = {
-  Textbooks:"Book", Notes:"Note", "Lab Equipment":"Lab",
+  Textbooks:"Textbook", Notes:"Note", "Lab Equipment":"Lab",
   Electronics:"Tech", Stationery:"Pen", Girls:"Girls", Misc:"Item"
 };
 const COND_META = {
   New:  { label:"New",  dot:"#10b981", bg:"#dcfce7", color:"#166534" },
   Good: { label:"Good", dot:"#3b82f6", bg:"#dbeafe", color:"#1d4ed8" },
-  Fair: { label:"Fair", dot:"#f59e0b", bg:"#fef3c7", color:"#92400e" },
+  Fair: { label:"Fair", dot:"#64748b", bg:"#e2e8f0", color:"#334155" },
   Old:  { label:"Used", dot:"#ef4444", bg:"#fee2e2", color:"#991b1b" },
 };
 

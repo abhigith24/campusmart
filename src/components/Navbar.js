@@ -45,7 +45,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery }) {
       <nav className="navbar">
         <div className="navbar-inner">
           <button className="nav-logo" onClick={() => setPage("home")} type="button">
-            <div className="logo-icon">CM</div>
+            <img className="brand-logo-img" src="/logo-circular.png" alt="CampusMart" />
             <span className="logo-text">CampusMart</span>
           </button>
 
