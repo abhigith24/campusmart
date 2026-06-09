@@ -19,6 +19,7 @@ import PrivacyPolicyPage                 from "./pages/PrivacyPolicyPage";
 import TermsPage                         from "./pages/TermsPage";
 import ContactPage                       from "./pages/ContactPage";
 import "./styles/main.css";
+import "./styles/modern.css";
 
 // Pages that should NOT show Footer
 const NO_FOOTER = ["chat"];
