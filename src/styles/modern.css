@@ -177,6 +177,14 @@ button {
   background: #fff;
   border: 1px solid var(--bdr);
   color: var(--txt-2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-icon-btn:hover,
+.nav-hamburger:hover {
+  border-color: var(--p-mid);
+  color: var(--p-dark);
+  background: var(--p-light);
 }
 
 .nav-avatar {
@@ -280,6 +288,7 @@ button {
 .btn {
   min-height: 38px;
   border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-lg {
@@ -308,6 +317,7 @@ button {
   background: #fff;
   color: var(--txt-2);
   font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dd-active,
@@ -542,6 +552,7 @@ button {
 .google-btn {
   border-radius: 8px;
   min-height: 42px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .post-page,
@@ -576,6 +587,7 @@ button {
 .post-meetup-btn,
 .drawer-nav-btn {
   border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .detail-grid {
@@ -705,3 +717,33 @@ button {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Sleek post form active buttons override */
+.post-cat-btn,
+.post-cond-btn,
+.post-type-btn,
+.post-meetup-btn {
+  background: #ffffff;
+  border: 1px solid var(--bdr);
+  color: var(--txt-2);
+}
+
+.post-cat-btn:hover,
+.post-cond-btn:hover,
+.post-type-btn:hover,
+.post-meetup-btn:hover {
+  background: var(--light);
+  border-color: var(--bdr-2);
+}
+
+.post-cat-btn.active,
+.post-cond-btn.active,
+.post-type-btn.active,
+.post-meetup-btn.active {
+  background: var(--p-light) !important;
+  border-color: var(--p) !important;
+  color: var(--p-dark) !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px var(--p-glow) !important;
+}
+

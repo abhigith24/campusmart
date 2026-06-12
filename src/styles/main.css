@@ -1138,12 +1138,16 @@ input,textarea,select { font-family:inherit }
   .chat-sidebar.sidebar-hidden { display:none }
   .chat-main { display:none; position:absolute; top:0; bottom:0; left:0; right:0; z-index:20 }
   .chat-main.chat-main-visible { display:flex }
-  .footer-grid { grid-template-columns:1fr 1fr; gap:24px; padding:36px 0 28px }
-  .footer-logo { grid-column:1/-1 }
-  .footer-tagline { display:none }
-  .footer-bottom { flex-direction:column; gap:12px }
+  .footer-grid { grid-template-columns:repeat(3,1fr); gap:32px 24px; padding:36px 0 28px }
+  .footer-brand { grid-column:1/-1 }
+  .footer-tagline { display:block; max-width:450px; margin-bottom:12px }
+  .footer-bottom { flex-direction:column; gap:16px; align-items:flex-start }
   .legal-card { padding:22px 18px }
   .contact-type-grid { grid-template-columns:1fr 1fr }
+}
+
+@media(max-width:560px) {
+  .footer-grid { grid-template-columns:1fr }
 }
 
 /* ════════════════════════════════════════════════════

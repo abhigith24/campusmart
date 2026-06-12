@@ -116,7 +116,7 @@ export default function PostListingPage({ setPage, editListing }) {
         method:"POST",
         headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${GROQ_KEY}` },
         body: JSON.stringify({
-          model:"llama3-8b-8192",
+          model:"llama-3.1-8b-instant",
           messages:[{
             role:"user",
             content:`You are a price advisor for a college marketplace in India. Suggest a fair second-hand price in INR for: "${title}" (condition: ${condition}). Reply with just 1-2 sentences with a price range.`

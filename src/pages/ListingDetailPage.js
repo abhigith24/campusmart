@@ -9,9 +9,11 @@ import { useToast } from "../context/ToastContext";
 import { useWishlist } from "../context/WishlistContext";
 import RatingModal from "../components/RatingModal";
 
-const CONDITIONS = {
-  New:"condition-New", Good:"condition-Good",
-  Fair:"condition-Fair", Old:"condition-Old"
+const COND_META = {
+  New:  { label: "Brand New",    bg: "#dcfce7", color: "#15803d" },
+  Good: { label: "Good Condition", bg: "#dbeafe", color: "#1d4ed8" },
+  Fair: { label: "Fair Condition", bg: "#fef9c3", color: "#a16207" },
+  Old:  { label: "Heavily Used", bg: "#fee2e2", color: "#b91c1c" },
 };
 
 export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith }) {
@@ -226,11 +228,15 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : listing.listingType==="rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
             </div>
 
-            <div className="detail-badges">
-              <span className={`badge ${CONDITIONS[listing.condition]||""}`}>{listing.condition}</span>
-              {listing.isFree && <span className="badge" style={{ background:"#f0fdf4", color:"#15803d" }}>Free</span>}
-              {isSold && <span className="badge" style={{ background:"#f0fdf4", color:"#15803d" }}>Sold</span>}
-              <span className="badge">{listing.category}</span>
+            <div className="detail-badges" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+              {COND_META[listing.condition] && (
+                <span className="badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color, border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                  {COND_META[listing.condition].label}
+                </span>
+              )}
+              {listing.isFree && <span className="badge" style={{ background: "#dcfce7", color: "#15803d", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Free</span>}
+              {isSold && <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Sold</span>}
+              <span className="badge" style={{ background: "var(--light)", color: "var(--txt-2)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{listing.category}</span>
             </div>
 
             {/* Seller info */}
