@@ -85,7 +85,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
       collection(db, "listings"),
       where("status","==","active"),
       orderBy("createdAt","desc"),
-      limit(80)
+      limit(500)
     );
     const unsub = onSnapshot(q, snap => {
       setListings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
