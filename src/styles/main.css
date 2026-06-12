@@ -512,6 +512,8 @@ input,textarea,select { font-family:inherit }
 .listing-card:hover .card-img img { transform:scale(1.07) }
 .card-img-placeholder { font-size:48px; opacity:.35; transition:transform .3s var(--ease) }
 .listing-card:hover .card-img-placeholder { transform:scale(1.1) }
+.card-img-placeholder-img { width:100%; height:100%; object-fit:cover; transition:transform .5s var(--ease); opacity:.92; }
+.listing-card:hover .card-img-placeholder-img { transform:scale(1.07) }
 .free-badge {
   position:absolute; top:10px; left:10px;
   background:linear-gradient(135deg,#22c55e,#4ade80); color:#fff;

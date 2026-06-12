@@ -6,6 +6,17 @@ const CAT_ICONS = {
   Textbooks:"Textbook", Notes:"Note", "Lab Equipment":"Lab",
   Electronics:"Tech", Stationery:"Pen", Girls:"Girls", Misc:"Item"
 };
+
+// Category-specific placeholder images (served from /public)
+const CAT_IMAGES = {
+  Textbooks:      "/placeholder_textbooks.png",
+  Notes:          "/placeholder_notes.png",
+  "Lab Equipment":"/placeholder_lab.png",
+  Electronics:    "/placeholder_electronics.png",
+  Stationery:     "/placeholder_stationery.png",
+  Girls:          "/placeholder_girls.png",
+  Misc:           "/placeholder_misc.png",
+};
 const COND_META = {
   New:  { label:"New",  dot:"#10b981", bg:"#dcfce7", color:"#166534" },
   Good: { label:"Good", dot:"#3b82f6", bg:"#dbeafe", color:"#1d4ed8" },
@@ -50,7 +61,9 @@ export default function ListingCard({ listing, onClick }) {
       <div className="card-img">
         {images?.[0]
           ? <img src={images[0]} alt={title} loading="lazy" />
-          : <div className="card-img-placeholder">{icon}</div>}
+          : CAT_IMAGES[category]
+            ? <img src={CAT_IMAGES[category]} alt={category} loading="lazy" className="card-img-placeholder-img" />
+            : <div className="card-img-placeholder">{icon}</div>}
 
         {isFree && !isSold && <span className="free-badge">FREE</span>}
         {isRent && !isSold && <span className="rent-badge">RENT</span>}

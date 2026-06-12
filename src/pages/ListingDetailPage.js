@@ -17,6 +17,16 @@ const COND_META = {
   Old:  { label: "Heavily Used", bg: "#fee2e2", color: "#b91c1c" },
 };
 
+const CAT_IMAGES = {
+  Textbooks:      "/placeholder_textbooks.png",
+  Notes:          "/placeholder_notes.png",
+  "Lab Equipment":"/placeholder_lab.png",
+  Electronics:    "/placeholder_electronics.png",
+  Stationery:     "/placeholder_stationery.png",
+  Girls:          "/placeholder_girls.png",
+  Misc:           "/placeholder_misc.png",
+};
+
 export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith, requireAuth }) {
   const { currentUser, userProfile } = useAuth();
   const toast   = useToast();
@@ -227,7 +237,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           >
             {images
               ? <img src={images[activeImg]} alt={listing.title} />
-              : <span style={{ fontSize:64 }}>📦</span>}
+              : CAT_IMAGES[listing.category]
+                ? <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                : <span style={{ fontSize:64 }}>📦</span>}
             {isSold && (
               <div style={{
                 position:"absolute", inset:0, background:"rgba(0,0,0,.45)",
