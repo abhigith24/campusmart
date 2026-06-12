@@ -68,7 +68,7 @@ function SkeletonCard() {
   );
 }
 
-export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
+export default function HomePage({ setPage, setSelectedListing, searchQuery, requireAuth }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
@@ -166,7 +166,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
             ))}
           </div>
           <div className="hero-cta-row">
-            <button className="btn btn-primary btn-lg" onClick={() => setPage("post")}>List an Item</button>
+            <button className="btn btn-primary btn-lg" onClick={() => requireAuth("post")}>List an Item</button>
             <button className="btn btn-outline btn-lg" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
               Browse Listings
             </button>

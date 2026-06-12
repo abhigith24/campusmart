@@ -16,6 +16,36 @@ export default function ChatPage({ initialChatWith, setPage }) {
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [activeTab,      setActiveTab]      = useState("buying"); // "buying" | "selling"
 
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndX = useRef(0);
+  const touchEndY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    if (Math.abs(diffX) > 60 && Math.abs(diffY) < 40) {
+      if (diffX > 0 && activeTab === "buying") {
+        setActiveTab("selling");
+      } else if (diffX < 0 && activeTab === "selling") {
+        setActiveTab("buying");
+      }
+    }
+  };
+
   const buyingChats  = chats.filter(c => c.buyerId === currentUser?.uid || (!c.buyerId && !c.sellerId));
   const sellingChats = chats.filter(c => c.sellerId === currentUser?.uid);
   const displayedChats = activeTab === "buying" ? buyingChats : sellingChats;
@@ -197,7 +227,13 @@ export default function ChatPage({ initialChatWith, setPage }) {
   return (
     <div className="chat-page">
       {/* ── Sidebar ── */}
-      <div className={`chat-sidebar ${mobileChatOpen ? "sidebar-hidden" : ""}`}>
+      <div
+        className={`chat-sidebar ${mobileChatOpen ? "sidebar-hidden" : ""}`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: "pan-y" }}
+      >
         <div className="chat-sidebar-header">
           <button className="chat-back-home" onClick={() => setPage("home")} title="Back">
             ←

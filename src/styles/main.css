@@ -2132,3 +2132,37 @@ input,textarea,select { font-family:inherit }
 .status-badge.active  { background: #dcfce7; color: #15803d; }
 .status-badge.sold    { background: #ede9fe; color: #5b21b6; }
 .status-badge.deleted { background: var(--red-light); color: var(--red); }
+
+/* AUTH & GESTURE NAVIGATION ENHANCEMENTS */
+.auth-terms-link {
+  color: var(--p);
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  display: inline;
+}
+.auth-terms-link:hover {
+  color: var(--p-dark);
+}
+
+.gallery-dots {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 5px 10px;
+  border-radius: 12px;
+}
+.gallery-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.2s;
+}
+.gallery-dot.active {
+  background: #fff;
+}

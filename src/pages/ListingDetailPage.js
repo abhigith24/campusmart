@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   doc, getDoc, updateDoc, increment, serverTimestamp,
   addDoc, collection, setDoc, query, where, getDocs
@@ -16,7 +16,7 @@ const COND_META = {
   Old:  { label: "Heavily Used", bg: "#fee2e2", color: "#b91c1c" },
 };
 
-export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith }) {
+export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith, requireAuth }) {
   const { currentUser, userProfile } = useAuth();
   const toast   = useToast();
   const { isWishlisted, toggleWishlist } = useWishlist();
@@ -29,6 +29,39 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const [buyLoading,     setBuyLoading]     = useState(false);
   const [isEligibleBuyer,setIsEligibleBuyer]= useState(false);
   const [alreadyRated,   setAlreadyRated]   = useState(false);
+
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndX = useRef(0);
+  const touchEndY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!images || images.length <= 1) return;
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
+
+    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
+      if (diffX > 0) {
+        // Swipe left -> Next image
+        setActiveImg((prev) => (prev + 1) % images.length);
+      } else {
+        // Swipe right -> Prev image
+        setActiveImg((prev) => (prev - 1 + images.length) % images.length);
+      }
+    }
+  };
 
   const isOwner    = currentUser?.uid === listing.sellerId;
   const isSold     = listing.status === "sold";
@@ -181,7 +214,13 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       <div className="detail-grid">
         {/* ── Left: Images + description ── */}
         <div>
-          <div className="detail-imgs" style={{ position:"relative" }}>
+          <div
+            className="detail-imgs"
+            style={{ position:"relative", touchAction: "pan-y" }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {images
               ? <img src={images[activeImg]} alt={listing.title} />
               : <span style={{ fontSize:64 }}>📦</span>}
@@ -194,6 +233,20 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 <span style={{ color:"#fff", fontSize:22, fontWeight:900, background:"#22c55e", padding:"8px 24px", borderRadius:30 }}>
                   ✅ SOLD
                 </span>
+              </div>
+            )}
+            {images && images.length > 1 && (
+              <div className="gallery-dots" style={{
+                position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+                display: "flex", gap: 6, zIndex: 10, background: "rgba(0,0,0,0.35)", padding: "5px 10px", borderRadius: 12
+              }}>
+                {images.map((_, i) => (
+                  <span key={i} className={`gallery-dot ${activeImg===i?"active":""}`} style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: activeImg === i ? "#fff" : "rgba(255,255,255,0.4)",
+                    transition: "background 0.2s"
+                  }} />
+                ))}
               </div>
             )}
           </div>
@@ -308,27 +361,27 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                         ✅ You've already reviewed this seller
                       </div>
                     ) : (
-                      <button className="btn btn-primary" onClick={() => setShowRating(true)}>
+                      <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowRating(true))}>
                         ⭐ Rate Seller
                       </button>
                     )
                   )}
 
                   {/* Chat always available */}
-                  <button className="btn btn-outline" onClick={openChat} disabled={contactLoading}>
+                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading}>
                     💬 {contactLoading ? "Opening..." : "View Chat"}
                   </button>
                 </>
               ) : (
                 /* ACTIVE — buyer actions */
                 <>
-                  <button className="btn btn-primary" onClick={() => setShowBuyModal(true)}>🛒 Buy Now</button>
+                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowBuyModal(true))}>🛒 Buy Now</button>
                   <button
                     className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
-                    onClick={() => toggleWishlist(listing.id)}>
+                    onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}>
                     {wishlisted ? "❤️ Remove from Wishlist" : "🤍 Add to Wishlist"}
                   </button>
-                  <button className="btn btn-outline" onClick={openChat} disabled={contactLoading}>
+                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading}>
                     💬 {contactLoading ? "Opening..." : "Message Seller"}
                   </button>
                 </>

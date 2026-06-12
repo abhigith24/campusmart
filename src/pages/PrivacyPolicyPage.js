@@ -4,7 +4,13 @@ export default function PrivacyPolicyPage({ setPage }) {
   return (
     <div className="container legal-page">
       <div className="legal-header">
-        <button className="btn btn-ghost" onClick={() => setPage("home")}>← Back</button>
+        <button className="btn btn-ghost" onClick={() => {
+          if (window.history.state && window.history.state.page) {
+            window.history.back();
+          } else {
+            setPage("home");
+          }
+        }}>← Back</button>
         <div className="legal-badge">Legal</div>
         <h1>Privacy Policy</h1>
         <p>Last updated: June 2025 · Effective immediately</p>

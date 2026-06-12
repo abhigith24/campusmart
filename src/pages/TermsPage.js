@@ -4,7 +4,13 @@ export default function TermsPage({ setPage }) {
   return (
     <div className="container legal-page">
       <div className="legal-header">
-        <button className="btn btn-ghost" onClick={() => setPage("home")}>← Back</button>
+        <button className="btn btn-ghost" onClick={() => {
+          if (window.history.state && window.history.state.page) {
+            window.history.back();
+          } else {
+            setPage("home");
+          }
+        }}>← Back</button>
         <div className="legal-badge">Legal</div>
         <h1>Terms & Conditions</h1>
         <p>Last updated: June 2025 · By using CampusMart, you agree to these terms.</p>
