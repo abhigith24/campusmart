@@ -19,6 +19,7 @@ import PrivacyPolicyPage                 from "./pages/PrivacyPolicyPage";
 import TermsPage                         from "./pages/TermsPage";
 import ContactPage                       from "./pages/ContactPage";
 import AuthModal                         from "./components/AuthModal";
+import { trackPageView }                 from "./utils/analytics";
 import "./styles/main.css";
 import "./styles/modern.css";
 
@@ -115,6 +116,30 @@ function Main() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // Track page views in GA4 on every SPA navigation
+  const PAGE_TITLES = {
+    home:              "Home — Browse Listings",
+    listing:           "Listing Detail",
+    post:              "Post a Listing",
+    edit:              "Edit Listing",
+    chat:              "Messages",
+    profile:           "My Profile",
+    "my-listings":     "My Listings",
+    wishlist:          "Wishlist",
+    notifications:     "Notifications",
+    "purchase-requests": "Purchase Requests",
+    admin:             "Admin Dashboard",
+    privacy:           "Privacy Policy",
+    terms:             "Terms of Service",
+    contact:           "Contact Us",
+    auth:              "Sign In / Sign Up",
+  };
+
+  useEffect(() => {
+    trackPageView(page, PAGE_TITLES[page] || page);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   // Sync protected pages access
   useEffect(() => {

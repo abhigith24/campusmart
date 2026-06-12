@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useWishlist } from "../context/WishlistContext";
 import RatingModal from "../components/RatingModal";
+import { trackListingView, trackInitiatePurchase } from "../utils/analytics";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "#dcfce7", color: "#15803d" },
@@ -75,6 +76,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
       // Increment view count (ignore errors)
       updateDoc(doc(db, "listings", listing.id), { views: increment(1) }).catch(() => {});
+
+      // Track listing view in GA4
+      trackListingView(listing);
 
       // If listing is sold and current user is not owner → check if eligible buyer
       if (isSold && currentUser && !isOwner) {
@@ -375,7 +379,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               ) : (
                 /* ACTIVE — buyer actions */
                 <>
-                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowBuyModal(true))}>🛒 Buy Now</button>
+                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })}>🛒 Buy Now</button>
                   <button
                     className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
                     onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}>

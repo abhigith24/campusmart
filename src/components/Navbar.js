@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useNotifications } from "../context/NotificationsContext";
+import { trackSearch } from "../utils/analytics";
 
 export default function Navbar({ page, setPage, searchQuery, setSearchQuery, requireAuth }) {
   const { currentUser, userProfile, logout } = useAuth();
@@ -57,6 +58,8 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
               placeholder="Search textbooks, notes, equipment..."
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setPage("home"); }}
+              onKeyDown={e => { if (e.key === "Enter" && searchQuery.trim()) trackSearch(searchQuery); }}
+              onBlur={() => { if (searchQuery.trim()) trackSearch(searchQuery); }}
               aria-label="Search listings"
             />
           </div>

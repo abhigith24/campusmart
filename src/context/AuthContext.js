@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
+import { trackSignUp, trackLogin } from "../utils/analytics";
 
 const AuthContext = createContext();
 
@@ -24,8 +25,11 @@ export function AuthProvider({ children }) {
 
   async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
+    const isNew = result._tokenResponse?.isNewUser;
     await createOrUpdateProfile(result.user);
     await fetchProfile(result.user.uid);
+    if (isNew) trackSignUp("google");
+    else        trackLogin("google");
     return result;
   }
 
@@ -34,11 +38,14 @@ export function AuthProvider({ children }) {
     await updateProfile(result.user, { displayName: name });
     await createOrUpdateProfile(result.user, { college, branch, year });
     await fetchProfile(result.user.uid);
+    trackSignUp("email");
     return result;
   }
 
   async function loginWithEmail(email, password) {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    trackLogin("email");
+    return result;
   }
 
   async function resetPassword(email) {
