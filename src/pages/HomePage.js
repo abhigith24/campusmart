@@ -54,6 +54,117 @@ function DropdownBtn({ label, options, selected, onSelect }) {
   );
 }
 
+function CollegeDropdown({ label, options, selected, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    function h(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setSearch("");
+      }
+    }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      setSearch("");
+    }
+  }, [open]);
+
+  const filtered = options.filter(opt =>
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="dd-wrap" ref={ref}>
+      <button
+        className={`dd-btn ${open ? "dd-open" : ""} ${selected !== "All" ? "dd-active" : ""}`}
+        onClick={() => setOpen(o => !o)}
+        type="button"
+      >
+        {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>v</span>
+      </button>
+      {open && (
+        <div className="dd-menu" style={{ minWidth: 230 }}>
+          {/* Search box */}
+          <div style={{ padding: "8px 8px 6px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: "var(--light)", border: "1.5px solid var(--bdr)",
+              borderRadius: "var(--r-full)", padding: "6px 12px",
+              transition: "all .15s"
+            }}
+              onFocus={e => e.currentTarget.style.borderColor = "var(--p)"}
+              onBlur={e => e.currentTarget.style.borderColor = "var(--bdr)"}
+            >
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2"
+                viewBox="0 0 24 24" style={{ flexShrink: 0, color: "var(--muted-2)" }}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search college..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  border: "none", background: "transparent", outline: "none",
+                  fontSize: 13, width: "100%", color: "var(--txt)", fontWeight: 500,
+                  fontFamily: "inherit"
+                }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  style={{
+                    border: "none", background: "none", cursor: "pointer",
+                    color: "var(--muted-2)", fontSize: 14, lineHeight: 1,
+                    padding: 0, flexShrink: 0
+                  }}
+                >×</button>
+              )}
+            </div>
+          </div>
+          <div className="dd-divider-line" />
+          {/* Options list */}
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
+                No colleges found
+              </div>
+            ) : (
+              filtered.map(opt => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
+                  onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); }}
+                >
+                  <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2"
+                    viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: .5 }}>
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  </svg>
+                  {opt.label}
+                  {selected === opt.val && <span className="dd-check">✓</span>}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SkeletonCard() {
   return (
     <div className="listing-card skeleton-card">
@@ -197,7 +308,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
           <DropdownBtn label={condLabel} options={CONDITIONS.map(c => ({ val:c, label:c === "All" ? "All conditions" : c }))} selected={condition} onSelect={setCondition} />
           {collegeOptions.length > 1 && (
-            <DropdownBtn label={collegeLabel} options={collegeOptions} selected={college} onSelect={setCollege} />
+            <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={setCollege} />
           )}
 
           <div className="dd-wrap" ref={priceRef} style={{ position:"relative" }}>
