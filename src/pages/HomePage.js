@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { collection, query, where, orderBy, onSnapshot, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import ListingCard from "../components/ListingCard";
@@ -73,6 +73,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
+  const [college, setCollege] = useState("All");
   const [freeOnly, setFreeOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [priceMin, setPriceMin] = useState("");
@@ -108,6 +109,19 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
 
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
+  // Build dynamic college list from loaded listings
+  const collegeOptions = useMemo(() => {
+    const seen = new Set();
+    const opts = [{ val: "All", label: "All colleges" }];
+    listings.forEach(l => {
+      if (l.sellerCollege && !seen.has(l.sellerCollege)) {
+        seen.add(l.sellerCollege);
+        opts.push({ val: l.sellerCollege, label: l.sellerCollege });
+      }
+    });
+    return opts;
+  }, [listings]);
+
   let filtered = listings;
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -119,6 +133,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   }
   if (category !== "All") filtered = filtered.filter(l => l.category === category);
   if (condition !== "All") filtered = filtered.filter(l => l.condition === condition);
+  if (college !== "All") filtered = filtered.filter(l => l.sellerCollege === college);
   if (freeOnly) filtered = filtered.filter(l => l.isFree);
   if (priceMin !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) >= Number(priceMin));
   if (priceMax !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) <= Number(priceMax));
@@ -130,12 +145,14 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const catLabel = category === "All" ? "All categories" : category;
   const sortLabel = SORT_OPTS.find(o => o.val === sortBy)?.label || "Newest first";
   const condLabel = condition === "All" ? "Condition" : condition;
+  const collegeLabel = college === "All" ? "College" : (college.length > 18 ? college.slice(0, 16) + "…" : college);
   const priceFilterActive = priceMin !== "" || priceMax !== "";
-  const activeFilters = (category !== "All" ? 1 : 0) + (condition !== "All" ? 1 : 0) + (freeOnly ? 1 : 0) + (sortBy !== "newest" ? 1 : 0) + (priceFilterActive ? 1 : 0);
+  const activeFilters = (category !== "All" ? 1 : 0) + (condition !== "All" ? 1 : 0) + (college !== "All" ? 1 : 0) + (freeOnly ? 1 : 0) + (sortBy !== "newest" ? 1 : 0) + (priceFilterActive ? 1 : 0);
 
   function clearAllFilters() {
     setCategory("All");
     setCondition("All");
+    setCollege("All");
     setFreeOnly(false);
     setSortBy("newest");
     setPriceMin("");
@@ -179,6 +196,9 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           <DropdownBtn label={catLabel} options={CATEGORIES.map(c => ({ val:c, label:c === "All" ? "All categories" : c }))} selected={category} onSelect={setCategory} />
           <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
           <DropdownBtn label={condLabel} options={CONDITIONS.map(c => ({ val:c, label:c === "All" ? "All conditions" : c }))} selected={condition} onSelect={setCondition} />
+          {collegeOptions.length > 1 && (
+            <DropdownBtn label={collegeLabel} options={collegeOptions} selected={college} onSelect={setCollege} />
+          )}
 
           <div className="dd-wrap" ref={priceRef} style={{ position:"relative" }}>
             <button
