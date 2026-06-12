@@ -107,6 +107,13 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
       const allQ    = query(collection(db, "ratings"), where("sellerId", "==", sellerId));
       const allSnap = await getDocs(allQ);
       const allStars = allSnap.docs.map(d => d.data().stars).filter(Boolean);
+      
+      // Prevent race condition if newly added rating hasn't propagated to query snapshot yet
+      const containsNew = allSnap.docs.some(d => d.data().listingId === listingId && d.data().buyerId === currentUser.uid);
+      if (!containsNew) {
+        allStars.push(rating);
+      }
+
       const avg      = allStars.length > 0
         ? allStars.reduce((s, n) => s + n, 0) / allStars.length
         : rating;

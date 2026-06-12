@@ -14,6 +14,25 @@ export default function ChatPage({ initialChatWith, setPage }) {
   const [input,          setInput]          = useState("");
   const [sending,        setSending]        = useState(false);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [activeTab,      setActiveTab]      = useState("buying"); // "buying" | "selling"
+
+  const buyingChats  = chats.filter(c => c.buyerId === currentUser?.uid || (!c.buyerId && !c.sellerId));
+  const sellingChats = chats.filter(c => c.sellerId === currentUser?.uid);
+  const displayedChats = activeTab === "buying" ? buyingChats : sellingChats;
+
+  const hasUnread = (chat) => chat[`unread_${currentUser?.uid}`] === true;
+  const unreadBuying  = buyingChats.filter(hasUnread).length;
+  const unreadSelling = sellingChats.filter(hasUnread).length;
+
+  // ── Auto-switch tab to match active chat ───────────────────────────────────
+  useEffect(() => {
+    if (!activeChat) return;
+    if (activeChat.sellerId === currentUser?.uid) {
+      setActiveTab("selling");
+    } else if (activeChat.buyerId === currentUser?.uid) {
+      setActiveTab("buying");
+    }
+  }, [activeChat, currentUser?.uid]);
   const bottomRef  = useRef(null);
   const inputRef   = useRef(null);
   const unsubMsgRef = useRef(null);
@@ -29,8 +48,8 @@ export default function ChatPage({ initialChatWith, setPage }) {
       const list = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
-          const ta = a.lastMessageTime?.seconds || 0;
-          const tb = b.lastMessageTime?.seconds || 0;
+          const ta = a.lastMessageTime?.seconds || a.lastMessageTime?.toMillis?.() / 1000 || Date.now() / 1000;
+          const tb = b.lastMessageTime?.seconds || b.lastMessageTime?.toMillis?.() / 1000 || Date.now() / 1000;
           return tb - ta;
         });
       setChats(list);
@@ -44,6 +63,30 @@ export default function ChatPage({ initialChatWith, setPage }) {
     }, err => console.error("Chats listener error:", err));
     return unsub;
   }, [currentUser]);
+
+  // ── Self-healing migration for legacy chats ────────────────────────────────
+  useEffect(() => {
+    if (chats.length === 0) return;
+    chats.forEach(async (chat) => {
+      if (!chat.buyerId || !chat.sellerId) {
+        try {
+          const listingSnap = await getDoc(doc(db, "listings", chat.listingId));
+          if (listingSnap.exists()) {
+            const sId = listingSnap.data().sellerId;
+            const bId = chat.participants?.find(uid => uid !== sId) || "";
+            if (sId && bId) {
+              await updateDoc(doc(db, "chats", chat.id), {
+                buyerId: bId,
+                sellerId: sId
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Chat migration failed for", chat.id, err);
+        }
+      }
+    });
+  }, [chats]);
 
   // ── Open chat from listing detail ──────────────────────────────────────────
   useEffect(() => {
@@ -74,8 +117,8 @@ export default function ChatPage({ initialChatWith, setPage }) {
       const msgs = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
-          const ta = a.createdAt?.seconds || a.createdAt?.toMillis?.() / 1000 || 0;
-          const tb = b.createdAt?.seconds || b.createdAt?.toMillis?.() / 1000 || 0;
+          const ta = a.createdAt?.seconds || a.createdAt?.toMillis?.() / 1000 || Date.now() / 1000;
+          const tb = b.createdAt?.seconds || b.createdAt?.toMillis?.() / 1000 || Date.now() / 1000;
           return ta - tb;
         });
       setMessages(msgs);
@@ -140,9 +183,6 @@ export default function ChatPage({ initialChatWith, setPage }) {
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   }
 
-  function hasUnread(chat) {
-    return chat[`unread_${currentUser.uid}`] === true;
-  }
 
   async function openChat(chat) {
     setActiveChat(chat);
@@ -165,15 +205,55 @@ export default function ChatPage({ initialChatWith, setPage }) {
           <span>Messages</span>
         </div>
 
-        {chats.length === 0 ? (
+        {/* Tabs segment control */}
+        <div className="chat-tabs-nav" style={{ display: "flex", borderBottom: "1px solid var(--bdr)", padding: "4px 8px", gap: 6, background: "#fff" }}>
+          <button
+            type="button"
+            className={`chat-tab-btn ${activeTab === "buying" ? "active" : ""}`}
+            onClick={() => setActiveTab("buying")}
+            style={{
+              flex: 1, padding: "8px 12px", border: "none", background: activeTab === "buying" ? "var(--p-light)" : "transparent",
+              color: activeTab === "buying" ? "var(--p-dark)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s"
+            }}
+          >
+            🛍️ Buying
+            {unreadBuying > 0 && (
+              <span className="notif-badge-inline" style={{ marginLeft: 0, padding: "0 5px", minWidth: 16, height: 16, fontSize: 9 }}>
+                {unreadBuying}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={`chat-tab-btn ${activeTab === "selling" ? "active" : ""}`}
+            onClick={() => setActiveTab("selling")}
+            style={{
+              flex: 1, padding: "8px 12px", border: "none", background: activeTab === "selling" ? "var(--p-light)" : "transparent",
+              color: activeTab === "selling" ? "var(--p-dark)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s"
+            }}
+          >
+            🏪 Selling
+            {unreadSelling > 0 && (
+              <span className="notif-badge-inline" style={{ marginLeft: 0, padding: "0 5px", minWidth: 16, height: 16, fontSize: 9 }}>
+                {unreadSelling}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {displayedChats.length === 0 ? (
           <div className="chat-empty-sidebar">
             <div style={{ fontSize: 40 }}>💬</div>
             <div style={{ fontWeight: 800, marginTop: 10 }}>No chats yet</div>
-            <div style={{ fontSize: 13, marginTop: 4, color: "var(--muted)" }}>
-              Contact a seller to start
+            <div style={{ fontSize: 13, marginTop: 4, color: "var(--muted)", lineHeight: 1.5 }}>
+              {activeTab === "buying"
+                ? "Browse listings and message a seller to start buying!"
+                : "Your inquiries from buyers will appear here."}
             </div>
           </div>
-        ) : chats.map(chat => (
+        ) : displayedChats.map(chat => (
           <div
             key={chat.id}
             className={`chat-item ${activeChat?.id === chat.id ? "active" : ""} ${hasUnread(chat) ? "has-unread" : ""}`}

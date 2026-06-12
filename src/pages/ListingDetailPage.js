@@ -84,6 +84,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       if (!existing.exists()) {
         await setDoc(chatRef, {
           participants:     [currentUser.uid, listing.sellerId],
+          buyerId:          currentUser.uid,
+          sellerId:         listing.sellerId,
           participantNames: {
             [currentUser.uid]:  userProfile?.name || currentUser.displayName || "Student",
             [listing.sellerId]: listing.sellerName || "Seller"

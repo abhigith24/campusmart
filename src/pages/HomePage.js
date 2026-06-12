@@ -106,6 +106,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
+
   let filtered = listings;
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -118,11 +120,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery }) {
   if (category !== "All") filtered = filtered.filter(l => l.category === category);
   if (condition !== "All") filtered = filtered.filter(l => l.condition === condition);
   if (freeOnly) filtered = filtered.filter(l => l.isFree);
-  if (priceMin !== "") filtered = filtered.filter(l => !l.isFree && (l.price || 0) >= Number(priceMin));
-  if (priceMax !== "") filtered = filtered.filter(l => !l.isFree && (l.price || 0) <= Number(priceMax));
+  if (priceMin !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) >= Number(priceMin));
+  if (priceMax !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) <= Number(priceMax));
 
-  if (sortBy === "price-low") filtered = [...filtered].sort((a,b) => (a.price||0)-(b.price||0));
-  if (sortBy === "price-high") filtered = [...filtered].sort((a,b) => (b.price||0)-(a.price||0));
+  if (sortBy === "price-low") filtered = [...filtered].sort((a,b) => getPrice(a) - getPrice(b));
+  if (sortBy === "price-high") filtered = [...filtered].sort((a,b) => getPrice(b) - getPrice(a));
   if (sortBy === "most-viewed") filtered = [...filtered].sort((a,b) => (b.views||0)-(a.views||0));
 
   const catLabel = category === "All" ? "All categories" : category;
