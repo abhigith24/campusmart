@@ -32,7 +32,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const LISTINGS_COUNT = 100;
+const LISTINGS_COUNT = 220;
+const START_INDEX = 101;
 
 const MOCK_ITEMS = [
   // Textbooks
@@ -114,7 +115,7 @@ async function seedListings() {
     const createdAtDate = new Date();
     createdAtDate.setDate(createdAtDate.getDate() - daysAgo);
     
-    const listingId = `test_listing_${i + 1}`;
+    const listingId = `test_listing_${i + START_INDEX}`;
     const listingRef = doc(db, "listings", listingId);
     
     const baseData = {
