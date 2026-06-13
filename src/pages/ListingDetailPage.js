@@ -41,6 +41,15 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const [isEligibleBuyer,setIsEligibleBuyer]= useState(false);
   const [alreadyRated,   setAlreadyRated]   = useState(false);
 
+  // Scroll to top when detail page opens (ensures page starts at the listed item photo at the top)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    const t = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [listing.id]);
+
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const touchEndX = useRef(0);

@@ -21,7 +21,6 @@ import ContactPage                       from "./pages/ContactPage";
 import AuthModal                         from "./components/AuthModal";
 import { trackPageView }                 from "./utils/analytics";
 import "./styles/main.css";
-import "./styles/modern.css";
 
 // Pages that should NOT show Footer
 const NO_FOOTER = ["chat"];
@@ -70,6 +69,8 @@ function Main() {
 
   const navigateTo = (nextPage) => {
     setPage(nextPage);
+    // Always scroll to top on page navigation
+    window.scrollTo({ top: 0, behavior: "instant" });
     let path = "/";
     if (nextPage === "terms") path = "/terms-of-service";
     else if (nextPage === "privacy") path = "/privacy-policy";
@@ -90,6 +91,7 @@ function Main() {
       window.history.pushState({ page: nextPage }, "", path);
     }
   };
+
 
   const requireAuth = (targetPage, callback = null) => {
     if (currentUser) {

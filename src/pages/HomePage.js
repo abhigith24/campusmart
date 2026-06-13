@@ -15,6 +15,7 @@ const SORT_OPTS = [
 function DropdownBtn({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const [alignRight, setAlignRight] = useState(false);
 
   useEffect(() => {
     function h(e) {
@@ -23,6 +24,17 @@ function DropdownBtn({ label, options, selected, onSelect }) {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useEffect(() => {
+    if (open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      if (rect.left + rect.width / 2 > window.innerWidth / 2) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+  }, [open]);
 
   return (
     <div className="dd-wrap" ref={ref}>
@@ -34,7 +46,7 @@ function DropdownBtn({ label, options, selected, onSelect }) {
         {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>v</span>
       </button>
       {open && (
-        <div className="dd-menu">
+        <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`}>
           {options.map((opt) => (
             <React.Fragment key={opt.val}>
               {opt.divider && <div className="dd-divider-line" />}
@@ -44,7 +56,6 @@ function DropdownBtn({ label, options, selected, onSelect }) {
                 onClick={() => { onSelect(opt.val); setOpen(false); }}
               >
                 {opt.label}
-                {selected === opt.val && <span className="dd-check">Selected</span>}
               </button>
             </React.Fragment>
           ))}
@@ -59,6 +70,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
   const [search, setSearch] = useState("");
   const ref = useRef(null);
   const inputRef = useRef(null);
+  const [alignRight, setAlignRight] = useState(false);
 
   useEffect(() => {
     function h(e) {
@@ -79,6 +91,17 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      if (rect.left + rect.width / 2 > window.innerWidth / 2) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+  }, [open]);
+
   const filtered = options.filter(opt =>
     opt.label.toLowerCase().includes(search.toLowerCase())
   );
@@ -93,7 +116,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
         {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>v</span>
       </button>
       {open && (
-        <div className="dd-menu" style={{ minWidth: 230 }}>
+        <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`} style={{ minWidth: 230 }}>
           {/* Search box */}
           <div style={{ padding: "8px 8px 6px" }}>
             <div style={{
@@ -154,7 +177,6 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                   </svg>
                   {opt.label}
-                  {selected === opt.val && <span className="dd-check">✓</span>}
                 </button>
               ))
             )}
@@ -191,6 +213,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [priceMax, setPriceMax] = useState("");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const priceRef = useRef(null);
+  const [priceAlignRight, setPriceAlignRight] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -217,6 +240,17 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useEffect(() => {
+    if (showPriceFilter && priceRef.current) {
+      const rect = priceRef.current.getBoundingClientRect();
+      if (rect.left + rect.width / 2 > window.innerWidth / 2) {
+        setPriceAlignRight(true);
+      } else {
+        setPriceAlignRight(false);
+      }
+    }
+  }, [showPriceFilter]);
 
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
@@ -320,7 +354,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
               {priceFilterActive ? `Rs ${priceMin||"0"} - Rs ${priceMax||"any"}` : "Price"} <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>v</span>
             </button>
             {showPriceFilter && (
-              <div className="dd-menu" style={{ width: 220, padding: "12px 14px" }}>
+              <div className={`dd-menu price-dd-menu ${priceAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px" }}>
                 <div style={{ fontSize:12, fontWeight:600, color:"var(--muted)", marginBottom:10 }}>Price Range (Rs)</div>
                 <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                   <input type="number" min="0" placeholder="Min" value={priceMin} onChange={e => setPriceMin(e.target.value)}
@@ -350,7 +384,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           </div>
 
           <button type="button" className={`dd-btn ${freeOnly ? "dd-active" : ""}`} onClick={() => setFreeOnly(f => !f)}>
-            Free only {freeOnly && "Selected"}
+            Free only
           </button>
 
           {activeFilters > 0 && (
@@ -359,7 +393,9 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </button>
           )}
 
-          <span className="filter-count">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
+          {(activeFilters > 0 || !!searchQuery) && (
+            <span className="filter-count">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
+          )}
         </div>
 
         {loading ? (
