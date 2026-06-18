@@ -18,8 +18,22 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+
+function SkeletonNotificationItem() {
+  return (
+    <div className="notif-item skeleton-shimmer" style={{ background: "#fff", cursor: "default", display: "flex", gap: "12px", padding: "16px", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)" }}>
+      <div className="skeleton" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
+      <div className="notif-body" style={{ flex: 1, minWidth: 0 }}>
+        <div className="skeleton" style={{ height: 14, width: "30%", marginBottom: 6 }} />
+        <div className="skeleton" style={{ height: 12, width: "80%", marginBottom: 4 }} />
+        <div className="skeleton" style={{ height: 10, width: "20%" }} />
+      </div>
+    </div>
+  );
+}
+
 export default function NotificationsPage({ setPage, setSelectedListing }) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
 
   async function handleClick(n) {
     await markAsRead(n.id);
@@ -56,11 +70,20 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
         </div>
       </div>
 
-      {notifications.length === 0 ? (
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {Array(3).fill(0).map((_, i) => <SkeletonNotificationItem key={i} />)}
+        </div>
+      ) : notifications.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">🔔</div>
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--muted-2)", marginBottom: 16 }}>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            <line x1="1" y1="1" x2="23" y2="23" stroke="var(--muted-2)" strokeWidth="1.5"/>
+          </svg>
           <h3>No notifications yet</h3>
           <p>You'll be notified when someone wants to buy your items or when sellers respond.</p>
+          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("home")}>Browse Marketplace</button>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

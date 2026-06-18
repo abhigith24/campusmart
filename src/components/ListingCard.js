@@ -77,13 +77,25 @@ export default function ListingCard({ listing, onClick }) {
           aria-label={wishlisted ? "Remove from wishlist" : "Save listing"}
           type="button"
         >
-          {wishlisted ? "Saved" : "Save"}
+          <svg width="16" height="16" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
         </button>
       </div>
 
       <div className="card-body">
         <div className="card-top-row">
-          <span className="card-cat">{category}</span>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <span className="card-cat">{category}</span>
+            {isVerified && (
+              <span className="card-verified-badge" title="Verified Student">
+                <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style={{ marginRight: 2 }}>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                Verified
+              </span>
+            )}
+          </div>
           {cond && !isSold && (
             <span className="card-cond-badge" style={{ background:cond.bg, color:cond.color }}>
               <span className="card-cond-dot" style={{ background:cond.dot }} />
@@ -96,10 +108,10 @@ export default function ListingCard({ listing, onClick }) {
 
         {sellerCollege && (
           <div className="card-college">
-            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink:0 }}>
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink:0, color: "var(--muted)" }}>
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             </svg>
-            {sellerCollege}
+            <span>{sellerCollege}</span>
           </div>
         )}
 
@@ -110,12 +122,17 @@ export default function ListingCard({ listing, onClick }) {
             )}
           </div>
           <div className="card-seller-info">
-            <div className="card-seller-avatar">{(sellerName || "?")[0].toUpperCase()}</div>
-            {sellerRating > 0 && <span className="card-rating">{sellerRating.toFixed(1)}</span>}
-            {isVerified && <span className="card-verified-dot" title="Verified Seller" />}
+            <div className="card-seller-avatar" title={sellerName}>{(sellerName || "?")[0].toUpperCase()}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+              <span className="card-seller-name-inline">{sellerName}</span>
+              {sellerRating > 0 && (
+                <span className="card-rating">
+                  ★ {sellerRating.toFixed(1)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="card-seller-name">{sellerName}</div>
       </div>
     </div>
   );

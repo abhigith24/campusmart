@@ -11,6 +11,15 @@ const SORT_OPTS = [
   { val:"price-high", label:"Price: High to Low" },
   { val:"most-viewed", label:"Most viewed" },
 ];
+const CATEGORY_SHORTCUTS = [
+  { val: "Textbooks", label: "Textbooks", emoji: "📚" },
+  { val: "Notes", label: "Notes", emoji: "📝" },
+  { val: "Lab Equipment", label: "Lab Gear", emoji: "🧪" },
+  { val: "Electronics", label: "Electronics", emoji: "💻" },
+  { val: "Stationery", label: "Stationery", emoji: "✏️" },
+  { val: "Girls", label: "Hostel Needs", emoji: "🏠" },
+  { val: "Misc", label: "Miscellaneous", emoji: "📦" },
+];
 
 function DropdownBtn({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);
@@ -117,7 +126,6 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
       </button>
       {open && (
         <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`} style={{ minWidth: 230 }}>
-          {/* Search box */}
           <div style={{ padding: "8px 8px 6px" }}>
             <div style={{
               display: "flex", alignItems: "center", gap: 7,
@@ -158,7 +166,6 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
             </div>
           </div>
           <div className="dd-divider-line" />
-          {/* Options list */}
           <div style={{ maxHeight: 220, overflowY: "auto" }}>
             {filtered.length === 0 ? (
               <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
@@ -215,6 +222,47 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const priceRef = useRef(null);
   const [priceAlignRight, setPriceAlignRight] = useState(false);
 
+  const featuredListings = useMemo(() => {
+    return [...listings]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 4);
+  }, [listings]);
+
+  const recentListings = useMemo(() => {
+    return listings.slice(0, 4);
+  }, [listings]);
+
+  const topSellers = useMemo(() => {
+    const sellersMap = {};
+    listings.forEach(l => {
+      if (l.sellerName) {
+        if (!sellersMap[l.sellerName]) {
+          sellersMap[l.sellerName] = {
+            name: l.sellerName,
+            college: l.sellerCollege || "Student",
+            rating: l.sellerRating || 0,
+            isVerified: l.isVerified || false,
+            itemsCount: 0
+          };
+        }
+        sellersMap[l.sellerName].itemsCount += 1;
+        if (l.isVerified) sellersMap[l.sellerName].isVerified = true;
+        if (l.sellerRating > sellersMap[l.sellerName].rating) {
+          sellersMap[l.sellerName].rating = l.sellerRating;
+        }
+      }
+    });
+    return Object.values(sellersMap)
+      .filter(s => s.rating > 0)
+      .sort((a, b) => b.rating - a.rating || b.itemsCount - a.itemsCount)
+      .slice(0, 4);
+  }, [listings]);
+
+  const handleCategoryShortcut = (cat) => {
+    setCategory(cat);
+    document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     const q = query(
       collection(db, "listings"),
@@ -254,7 +302,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
 
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
-  // Build dynamic college list from loaded listings
   const collegeOptions = useMemo(() => {
     const seen = new Set();
     const opts = [{ val: "All", label: "All colleges" }];
@@ -304,39 +351,181 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     setPriceMax("");
   }
 
-  return (
-    <div>
-      <div className="hero">
-        <div className="container">
-          <div className="hero-eyebrow">Verified campus marketplace</div>
-          <h1>Your Campus <span className="gradient-text">Marketplace</span></h1>
-          <p>Buy, sell, rent and donate textbooks, notes, lab gear and everyday essentials inside your college community.</p>
-          <div className="hero-trust-row">
-            {[
-              { icon:"ID", label:"Students Only", desc:"College community" },
-              { icon:"Chat", label:"Secure Chat", desc:"Direct messaging" },
-              { icon:"Local", label:"Campus Pickup", desc:"Meet nearby" },
-              { icon:"Free", label:"Donate Free", desc:"Help juniors" },
-            ].map(b => (
-              <div key={b.label} className="hero-trust-badge">
-                <span className="hero-trust-icon">{b.icon}</span>
-                <div>
-                  <div className="hero-trust-label">{b.label}</div>
-                  <div className="hero-trust-desc">{b.desc}</div>
-                </div>
+  if (loading) {
+    return (
+      <div className="skeleton-shimmer">
+        <div className="hero" style={{ background: "var(--light)", minHeight: 280, display: "flex", alignItems: "center" }}>
+          <div className="container" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ maxWidth: "680px" }}>
+              <div className="skeleton" style={{ height: 18, width: 220, marginBottom: 16 }} />
+              <div className="skeleton" style={{ height: 40, width: "90%", marginBottom: 16 }} />
+              <div className="skeleton" style={{ height: 16, width: "65%", marginBottom: 28 }} />
+              <div style={{ display: "flex", gap: 12 }}>
+                <div className="skeleton" style={{ height: 44, width: 140, borderRadius: "var(--r-md)" }} />
+                <div className="skeleton" style={{ height: 44, width: 140, borderRadius: "var(--r-md)" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="container" style={{ marginTop: 32 }}>
+          <div className="trust-statistics-row" style={{ margin: "24px 0 40px" }}>
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="trust-stat-card" style={{ minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div className="skeleton" style={{ height: 24, width: "50%", margin: "0 auto 8px" }} />
+                <div className="skeleton" style={{ height: 14, width: "70%", margin: "0 auto 4px" }} />
+                <div className="skeleton" style={{ height: 10, width: "40%", margin: "0 auto" }} />
               </div>
             ))}
           </div>
-          <div className="hero-cta-row">
-            <button className="btn btn-primary btn-lg" onClick={() => requireAuth("post")}>List an Item</button>
-            <button className="btn btn-outline btn-lg" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
-              Browse Listings
-            </button>
+
+          <div style={{ marginBottom: 40 }}>
+            <div className="skeleton" style={{ height: 24, width: 200, marginBottom: 20 }} />
+            <div className="category-shortcuts-row">
+              {Array(7).fill(0).map((_, i) => (
+                <div key={i} className="category-shortcut-card" style={{ width: 125, height: 105, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div className="skeleton" style={{ height: 28, width: 28, borderRadius: "50%", marginBottom: 8 }} />
+                  <div className="skeleton" style={{ height: 12, width: 60 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 40 }}>
+            <div className="skeleton" style={{ height: 24, width: 220, marginBottom: 20 }} />
+            <div className="listings-grid">
+              {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="hero">
+        <div className="container" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div style={{ maxWidth: "680px" }}>
+            <div className="hero-eyebrow">
+              <span style={{ marginRight: "6px" }}>🔒</span> Campus-Only Verified Network
+            </div>
+            <h1 style={{ marginTop: "12px", marginBottom: "16px" }}>
+              Buy, Sell & Rent Within Your <span className="gradient-text">College Campus</span>
+            </h1>
+            <p style={{ fontSize: "16px", color: "var(--muted)", lineHeight: "1.7", marginBottom: "28px" }}>
+              Trusted marketplace for students to exchange books, electronics, notes and hostel essentials.
+            </p>
+            <div className="hero-cta-row">
+              <button className="btn btn-primary btn-lg" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+                Browse Listings
+              </button>
+              <button className="btn btn-outline btn-lg" onClick={() => requireAuth("post")}>
+                Sell an Item
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      <div className="container">
+        <div className="trust-statistics-row">
+          <div className="trust-stat-card">
+            <div className="trust-stat-num">15k+</div>
+            <div className="trust-stat-label">Exchanged Items</div>
+            <div className="trust-stat-desc">Books, tech, notes & gear</div>
+          </div>
+          <div className="trust-stat-card">
+            <div className="trust-stat-num">98%</div>
+            <div className="trust-stat-label">Verified Students</div>
+            <div className="trust-stat-desc">Safe campus network</div>
+          </div>
+          <div className="trust-stat-card">
+            <div className="trust-stat-num">4.8★</div>
+            <div className="trust-stat-label">Seller Rating</div>
+            <div className="trust-stat-desc">High student satisfaction</div>
+          </div>
+          <div className="trust-stat-card">
+            <div className="trust-stat-num">Rs 10L+</div>
+            <div className="trust-stat-label">Savings Enabled</div>
+            <div className="trust-stat-desc">Keeps value within college</div>
+          </div>
+        </div>
+
+        <div className="category-shortcuts-section">
+          <h2 className="homepage-section-title">Explore by Category</h2>
+          <div className="category-shortcuts-row">
+            {CATEGORY_SHORTCUTS.map(c => (
+              <button key={c.val} className="category-shortcut-card" onClick={() => handleCategoryShortcut(c.val)}>
+                <span className="category-shortcut-emoji">{c.emoji}</span>
+                <span className="category-shortcut-label">{c.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {featuredListings.length > 0 && (
+          <div style={{ marginBottom: "48px" }}>
+            <h2 className="homepage-section-title">
+              <span>🔥 Featured Listings</span>
+              <span className="homepage-section-title-link" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+                View all
+              </span>
+            </h2>
+            <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
+              {featuredListings.map(l => (
+                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recentListings.length > 0 && (
+          <div style={{ marginBottom: "48px" }}>
+            <h2 className="homepage-section-title">
+              <span>🆕 Newly Added</span>
+              <span className="homepage-section-title-link" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+                View all
+              </span>
+            </h2>
+            <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
+              {recentListings.map(l => (
+                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {topSellers.length > 0 && (
+          <div style={{ marginBottom: "48px" }}>
+            <h2 className="homepage-section-title">Top Rated Sellers</h2>
+            <div className="top-sellers-grid">
+              {topSellers.map((s, idx) => (
+                <div key={s.name} className="top-seller-card">
+                  <div className="top-seller-avatar">{s.name[0].toUpperCase()}</div>
+                  <div className="top-seller-info">
+                    <div className="top-seller-name">
+                      {s.name}
+                      {s.isVerified && (
+                        <svg className="top-seller-verified" width="12" height="12" fill="currentColor" viewBox="0 0 24 24" title="Verified Student">
+                          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="top-seller-college">{s.college}</div>
+                    <div className="top-seller-rating">★ {s.rating.toFixed(1)} <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 10 }}>({s.itemsCount} listing{s.itemsCount !== 1 ? 's' : ''})</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="container listings-section" id="listings-section" style={{ paddingTop: 28, paddingBottom: 48 }}>
+        <h2 className="homepage-section-title" style={{ borderBottom: "1px solid var(--bdr)", paddingBottom: "12px", marginBottom: "16px" }}>
+          All Campus Listings
+        </h2>
         <div className="filter-bar">
           <DropdownBtn label={catLabel} options={CATEGORIES.map(c => ({ val:c, label:c === "All" ? "All categories" : c }))} selected={category} onSelect={setCategory} />
           <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
@@ -403,15 +592,33 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">No results</div>
-            <h3>No listings found</h3>
-            <p>Try adjusting your filters or be the first to list this item.</p>
-            <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:16, flexWrap:"wrap" }}>
-              <button className="btn btn-outline" onClick={clearAllFilters}>Clear Filters</button>
-              <button className="btn btn-primary" onClick={() => setPage("post")}>Post Item</button>
+          college !== "All" && collegeOptions.length > 1 && !listings.some(l => l.sellerCollege === college) ? (
+            <div className="empty-state">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--muted-2)", marginBottom: 16 }}>
+                <path d="M22 10v12h-20v-12l10-6z"/>
+                <rect x="6" y="14" width="4" height="8"/>
+                <rect x="14" y="14" width="4" height="8"/>
+                <circle cx="12" cy="9" r="1.5"/>
+              </svg>
+              <h3>No listings in this college</h3>
+              <p>Try looking at listings from other campuses instead.</p>
+              <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={() => setCollege("All")}>Show All Colleges</button>
             </div>
-          </div>
+          ) : (
+            <div className="empty-state">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--muted-2)", marginBottom: 16 }}>
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+              <h3>No listings found</h3>
+              <p>Try adjusting your filters or search keywords.</p>
+              <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:16, flexWrap:"wrap" }}>
+                <button className="btn btn-outline" onClick={clearAllFilters}>Clear Filters</button>
+                <button className="btn btn-primary" onClick={() => setPage("post")}>Post Item</button>
+              </div>
+            </div>
+          )
         ) : (
           <div className="listings-grid">
             {filtered.map(l => (

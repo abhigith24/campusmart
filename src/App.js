@@ -61,6 +61,7 @@ function Main() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedListing, setSelectedListing] = useState(null);
   const [chatWith, setChatWith] = useState(null);
+  const [viewProfileUserId, setViewProfileUserId] = useState(null);
 
   // Auth Modal states
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -69,6 +70,7 @@ function Main() {
 
   const navigateTo = (nextPage) => {
     setPage(nextPage);
+    if (nextPage !== "profile") setViewProfileUserId(null);
     // Always scroll to top on page navigation
     window.scrollTo({ top: 0, behavior: "instant" });
     let path = "/";
@@ -195,6 +197,7 @@ function Main() {
             listing={selectedListing} setPage={navigateTo}
             setSelectedListing={setSelectedListing} setChatWith={setChatWith}
             requireAuth={requireAuth}
+            setViewProfileUserId={setViewProfileUserId}
           />
         )}
         {page === "chat" && <ChatPage initialChatWith={chatWith} setPage={navigateTo} />}
@@ -202,6 +205,7 @@ function Main() {
           <ProfilePage
             setPage={navigateTo} setSelectedListing={setSelectedListing}
             initialTab={page === "wishlist" ? "wishlist" : page === "my-listings" ? "active" : "active"}
+            viewUserId={viewProfileUserId}
           />
         )}
         {page === "notifications" && (
