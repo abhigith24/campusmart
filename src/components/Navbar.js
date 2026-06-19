@@ -22,7 +22,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  useEffect(() => { setDrawerOpen(false); }, [page]);
+  useEffect(() => { setDrawerOpen(false); setShowMobileSearchOverlay(false); }, [page]);
 
   async function handleLogout() {
     await logout();
@@ -35,10 +35,14 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const [allListingTitles, setAllListingTitles] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showMobileSearchDropdown, setShowMobileSearchDropdown] = useState(false);
+  const [showMobileSearchOverlay, setShowMobileSearchOverlay] = useState(false);
+  const [showOverlayDropdown, setShowOverlayDropdown] = useState(false);
   const searchRef = useRef(null);
   const mobileSearchRef = useRef(null);
+  const mobileOverlaySearchRef = useRef(null);
 
   const TRENDING_TAGS = ["Calculator", "Lab coat", "HCV", "Notes", "Mattress", "Kettle"];
+  const CATEGORIES = ["Textbooks", "Notes", "Lab Equipment", "Electronics", "Stationery", "Girls", "Misc"];
 
   useEffect(() => {
     try {
@@ -84,6 +88,10 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     setPage("home");
     setShowSearchDropdown(false);
     setShowMobileSearchDropdown(false);
+    setShowMobileSearchOverlay(false);
+    setTimeout(() => {
+      document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
+    }, 150);
   };
 
   useEffect(() => {
@@ -94,18 +102,28 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
       if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
         setShowMobileSearchDropdown(false);
       }
+      if (mobileOverlaySearchRef.current && !mobileOverlaySearchRef.current.contains(e.target)) {
+        setShowOverlayDropdown(false);
+      }
     }
     document.addEventListener("mousedown", clickOutside);
     return () => document.removeEventListener("mousedown", clickOutside);
   }, []);
 
-  const filteredSuggestions = searchQuery.trim() === "" ? [] : allListingTitles.filter(t =>
-    t.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
+  const getKeywordSuggestions = () => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    const matchingCats = CATEGORIES.filter(cat => cat.toLowerCase().includes(q))
+      .map(cat => ({ term: cat, type: "category", label: `Category: ${cat}` }));
+    const matchingTitles = allListingTitles.filter(t => t.toLowerCase().includes(q))
+      .slice(0, 5).map(title => ({ term: title, type: "listing", label: title }));
+    return [...matchingCats, ...matchingTitles].slice(0, 6);
+  };
 
   const renderDropdownContent = (isOpen, setOpen) => {
     if (!isOpen) return null;
     const isQueryEmpty = searchQuery.trim() === "";
+    const suggestions = getKeywordSuggestions();
 
     return (
       <div className="search-suggestions-dropdown">
@@ -139,16 +157,16 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
         ) : (
           <div className="search-dropdown-section">
             <div className="search-dropdown-title">Suggestions</div>
-            {filteredSuggestions.length === 0 ? (
+            {suggestions.length === 0 ? (
               <div className="no-suggestions-item">
                 🔍 Press Enter to search for "{searchQuery}"
               </div>
             ) : (
               <div className="suggestions-list">
-                {filteredSuggestions.map((term, i) => (
-                  <div key={i} className="suggestion-item" onClick={() => handleSelectSearch(term)}>
-                    <span className="suggestion-icon">🔍</span>
-                    <span className="suggestion-term">{term}</span>
+                {suggestions.map((item, i) => (
+                  <div key={i} className="suggestion-item" onClick={() => handleSelectSearch(item.term)}>
+                    <span className="suggestion-icon">{item.type === "category" ? "🏷️" : "🔍"}</span>
+                    <span className="suggestion-term">{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -243,6 +261,10 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   trackSearch(searchQuery);
                   addRecentSearch(searchQuery);
                   setShowSearchDropdown(false);
+                  setPage("home");
+                  setTimeout(() => {
+                    document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
+                  }, 150);
                 }
               }}
               aria-label="Search listings"
@@ -318,6 +340,18 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             )}
           </div>
 
+          {/* Mobile search toggle button */}
+          <button 
+            className="nav-mobile-search-toggle" 
+            onClick={() => setShowMobileSearchOverlay(o => !o)}
+            aria-label="Toggle search"
+            type="button"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+
           <button
             className="nav-hamburger"
             onClick={() => setDrawerOpen(o => !o)}
@@ -361,6 +395,10 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   addRecentSearch(searchQuery);
                   setShowMobileSearchDropdown(false);
                   setDrawerOpen(false);
+                  setPage("home");
+                  setTimeout(() => {
+                    document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
+                  }, 150);
                 }
               }}
               aria-label="Search"
@@ -422,6 +460,44 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
               Sign In
             </button>
           )}
+        </div>
+      )}
+
+      {showMobileSearchOverlay && (
+        <div className="mobile-search-overlay">
+          <div className="mobile-search-overlay-inner" ref={mobileOverlaySearchRef}>
+            <button className="mobile-search-back-btn" onClick={() => setShowMobileSearchOverlay(false)} type="button">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <div className="nav-search" style={{ margin: 0 }}>
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                placeholder="Search CampusMart..."
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setPage("home"); }}
+                onFocus={() => setShowOverlayDropdown(true)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    trackSearch(searchQuery);
+                    addRecentSearch(searchQuery);
+                    setShowOverlayDropdown(false);
+                    setShowMobileSearchOverlay(false);
+                    setPage("home");
+                    setTimeout(() => {
+                      document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
+                    }, 150);
+                  }
+                }}
+                autoFocus
+                aria-label="Search"
+              />
+              {renderDropdownContent(showOverlayDropdown, setShowOverlayDropdown)}
+            </div>
+          </div>
         </div>
       )}
     </>
