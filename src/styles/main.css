@@ -3707,6 +3707,30 @@ button {
     font-size: 11.5px;
     box-shadow: var(--s2);
   }
+  .top-sellers-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 32px !important;
+  }
+  .top-seller-card {
+    padding: 10px 8px !important;
+    gap: 8px !important;
+    border-radius: var(--r-md) !important;
+  }
+  .top-seller-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+  }
+  .top-seller-name {
+    font-size: 11.5px !important;
+  }
+  .top-seller-college {
+    font-size: 9.5px !important;
+  }
+  .top-seller-rating {
+    font-size: 9.5px !important;
+  }
 }
 
 /* Scroll to Top FAB */
