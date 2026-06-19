@@ -44,8 +44,9 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
       const { db } = await import("../firebase");
       const snap = await getDoc(doc(db, "listings", n.listingId));
       if (snap.exists()) {
-        setSelectedListing({ id: snap.id, ...snap.data() });
-        setPage("listing");
+        const listingData = { id: snap.id, ...snap.data() };
+        setSelectedListing(listingData);
+        setPage("listing", listingData);
       }
     }
   }

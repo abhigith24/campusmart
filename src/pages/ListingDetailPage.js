@@ -330,7 +330,13 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   return (
     <div className="container detail-page">
-      <button className="btn btn-ghost" onClick={() => setPage("home")} style={{ marginBottom:20 }}>
+      <button className="btn btn-ghost" onClick={() => {
+        if (window.history.state && window.history.state.page) {
+          window.history.back();
+        } else {
+          setPage("home");
+        }
+      }} style={{ marginBottom:20 }}>
         ← Back to listings
       </button>
 
@@ -349,6 +355,23 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               : CAT_IMAGES[listing.category]
                 ? <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <span style={{ fontSize:64 }}>📦</span>}
+            {!isSold && (
+              <button
+                className={`heart-btn ${wishlisted ? "wishlisted" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  requireAuth(null, () => toggleWishlist(listing.id));
+                }}
+                title={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                type="button"
+                style={{ width: "36px", height: "36px", top: "12px", right: "12px" }}
+              >
+                <svg width="18" height="18" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </button>
+            )}
             {isSold && (
               <div style={{
                 position:"absolute", inset:0, background:"rgba(0,0,0,.45)",
@@ -628,7 +651,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           <h3 className="homepage-section-title">✨ You May Also Like</h3>
           <div className="listings-grid" style={{ padding: "10px 0 20px" }}>
             {similarListings.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); }} />
+              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
             ))}
           </div>
         </div>
@@ -640,7 +663,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           <h3 className="homepage-section-title">⏱️ Recently Viewed</h3>
           <div className="listings-grid" style={{ padding: "10px 0 20px" }}>
             {recentlyViewed.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); }} />
+              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
             ))}
           </div>
         </div>

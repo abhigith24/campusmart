@@ -34,7 +34,7 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day:"numeric", month:"short" });
 }
 
-export default function ListingCard({ listing, onClick }) {
+export default function ListingCard({ listing, onClick, requireAuth }) {
   const { currentUser } = useAuth();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const {
@@ -52,8 +52,12 @@ export default function ListingCard({ listing, onClick }) {
 
   function handleHeart(e) {
     e.stopPropagation();
-    if (!currentUser) return;
-    toggleWishlist(id);
+    if (requireAuth) {
+      requireAuth(null, () => toggleWishlist(id));
+    } else {
+      if (!currentUser) return;
+      toggleWishlist(id);
+    }
   }
 
   return (

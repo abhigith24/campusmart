@@ -20,6 +20,8 @@ import TermsPage                         from "./pages/TermsPage";
 import ContactPage                       from "./pages/ContactPage";
 import AuthModal                         from "./components/AuthModal";
 import { trackPageView }                 from "./utils/analytics";
+import { db }                            from "./firebase";
+import { doc, getDoc }                   from "firebase/firestore";
 import "./styles/main.css";
 
 // Pages that should NOT show Footer
@@ -54,6 +56,15 @@ function Main() {
     if (path === "/privacy-policy" || path === "/privacy") return "privacy";
     if (path === "/contact") return "contact";
     if (path === "/auth") return "auth";
+    if (path === "/post") return "post";
+    if (path === "/chat") return "chat";
+    if (path === "/profile") return "profile";
+    if (path === "/my-listings") return "my-listings";
+    if (path === "/wishlist") return "wishlist";
+    if (path === "/notifications") return "notifications";
+    if (path === "/purchase-requests") return "purchase-requests";
+    if (path === "/admin") return "admin";
+    if (path.startsWith("/listing/")) return "listing";
     return "home";
   };
 
@@ -68,11 +79,35 @@ function Main() {
   const [authRedirectPage, setAuthRedirectPage] = useState(null);
   const [authSuccessCallback, setAuthSuccessCallback] = useState(null);
 
-  const navigateTo = (nextPage) => {
+  // Scroll to Top state
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const loadListingById = async (id) => {
+    if (!id) return;
+    try {
+      const docRef = doc(db, "listings", id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setSelectedListing({ id: docSnap.id, ...docSnap.data() });
+        setPage("listing");
+      } else {
+        navigateTo("home");
+      }
+    } catch (error) {
+      console.error("Error fetching listing:", error);
+      navigateTo("home");
+    }
+  };
+
+  const navigateTo = (nextPage, extraData = null) => {
+    if (nextPage === "listing" && extraData) {
+      setSelectedListing(extraData);
+    }
     setPage(nextPage);
     if (nextPage !== "profile") setViewProfileUserId(null);
     // Always scroll to top on page navigation
     window.scrollTo({ top: 0, behavior: "instant" });
+    
     let path = "/";
     if (nextPage === "terms") path = "/terms-of-service";
     else if (nextPage === "privacy") path = "/privacy-policy";
@@ -87,13 +122,15 @@ function Main() {
     else if (nextPage === "admin") path = "/admin";
     else if (nextPage === "contact") path = "/contact";
     else if (nextPage === "auth") path = "/auth";
-    else if (nextPage === "listing") path = "/listing";
+    else if (nextPage === "listing") {
+      const listingObj = extraData || selectedListing;
+      path = listingObj ? `/listing/${listingObj.id}` : "/listing";
+    }
     
     if (window.location.pathname !== path) {
-      window.history.pushState({ page: nextPage }, "", path);
+      window.history.pushState({ page: nextPage, listingId: extraData?.id || selectedListing?.id }, "", path);
     }
   };
-
 
   const requireAuth = (targetPage, callback = null) => {
     if (currentUser) {
@@ -110,16 +147,71 @@ function Main() {
   useEffect(() => {
     const handlePopState = (event) => {
       const path = window.location.pathname;
+      window.scrollTo({ top: 0, behavior: "instant" });
+      
       if (path === "/terms-of-service" || path === "/terms") setPage("terms");
       else if (path === "/privacy-policy" || path === "/privacy") setPage("privacy");
       else if (path === "/contact") setPage("contact");
       else if (path === "/auth") setPage("auth");
-      else if (event.state && event.state.page) setPage(event.state.page);
-      else setPage("home");
+      else if (path === "/post") setPage("post");
+      else if (path === "/chat") setPage("chat");
+      else if (path === "/profile") setPage("profile");
+      else if (path === "/my-listings") setPage("my-listings");
+      else if (path === "/wishlist") setPage("wishlist");
+      else if (path === "/notifications") setPage("notifications");
+      else if (path === "/purchase-requests") setPage("purchase-requests");
+      else if (path === "/admin") setPage("admin");
+      else if (path.startsWith("/listing/")) {
+        const id = path.split("/")[2];
+        if (id) {
+          loadListingById(id);
+        } else {
+          setPage("home");
+        }
+      }
+      else if (event.state && event.state.page) {
+        setPage(event.state.page);
+      }
+      else {
+        setPage("home");
+      }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedListing]);
+
+  // Initial load check for listing path
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith("/listing/")) {
+      const id = path.split("/")[2];
+      if (id) {
+        loadListingById(id);
+      }
+    }
+    if (!window.history.state) {
+      window.history.replaceState({ page: getInitialPage() }, "", window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Track scroll position to show/hide back-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Track page views in GA4 on every SPA navigation
   const PAGE_TITLES = {
@@ -158,6 +250,7 @@ function Main() {
     if (currentUser && page === "auth") {
       navigateTo("home");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, page]);
 
   const handleAuthSuccess = () => {
@@ -192,13 +285,20 @@ function Main() {
         {page === "edit" && selectedListing && (
           <PostListingPage setPage={navigateTo} editListing={selectedListing} />
         )}
-        {page === "listing" && selectedListing && (
-          <ListingDetailPage
-            listing={selectedListing} setPage={navigateTo}
-            setSelectedListing={setSelectedListing} setChatWith={setChatWith}
-            requireAuth={requireAuth}
-            setViewProfileUserId={setViewProfileUserId}
-          />
+        {page === "listing" && (
+          selectedListing && window.location.pathname.includes(selectedListing.id) ? (
+            <ListingDetailPage
+              listing={selectedListing} setPage={navigateTo}
+              setSelectedListing={setSelectedListing} setChatWith={setChatWith}
+              requireAuth={requireAuth}
+              setViewProfileUserId={setViewProfileUserId}
+            />
+          ) : (
+            <div className="container" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "60vh" }}>
+              <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }}></div>
+              <div style={{ color: "var(--muted)", fontWeight: 600 }}>Loading listing details...</div>
+            </div>
+          )
         )}
         {page === "chat" && <ChatPage initialChatWith={chatWith} setPage={navigateTo} />}
         {(page === "profile" || page === "my-listings" || page === "wishlist") && (
@@ -206,6 +306,7 @@ function Main() {
             setPage={navigateTo} setSelectedListing={setSelectedListing}
             initialTab={page === "wishlist" ? "wishlist" : page === "my-listings" ? "active" : "active"}
             viewUserId={viewProfileUserId}
+            requireAuth={requireAuth}
           />
         )}
         {page === "notifications" && (
@@ -220,8 +321,19 @@ function Main() {
         {page === "contact" && <ContactPage setPage={navigateTo} />}
       </div>
 
-      {showFooter && <Footer setPage={navigateTo} />}
+       {showFooter && <Footer setPage={navigateTo} />}
       <CookieConsent />
+
+      {showScrollTop && (
+        <button
+          className="scroll-top-btn"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          type="button"
+        >
+          ▲ Back to Top
+        </button>
+      )}
 
       {showAuthModal && (
         <AuthModal

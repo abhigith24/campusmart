@@ -218,6 +218,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [sortBy, setSortBy] = useState("newest");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [displayLimit, setDisplayLimit] = useState(40);
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const priceRef = useRef(null);
   const [priceAlignRight, setPriceAlignRight] = useState(false);
@@ -300,6 +301,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     }
   }, [showPriceFilter]);
 
+  // Reset page limit when filters are updated
+  useEffect(() => {
+    setDisplayLimit(40);
+  }, [category, condition, college, freeOnly, sortBy, priceMin, priceMax, searchQuery]);
+
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
   const collegeOptions = useMemo(() => {
@@ -333,6 +339,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   if (sortBy === "price-low") filtered = [...filtered].sort((a,b) => getPrice(a) - getPrice(b));
   if (sortBy === "price-high") filtered = [...filtered].sort((a,b) => getPrice(b) - getPrice(a));
   if (sortBy === "most-viewed") filtered = [...filtered].sort((a,b) => (b.views||0)-(a.views||0));
+
+  const displayedListings = filtered.slice(0, displayLimit);
 
   const catLabel = category === "All" ? "All categories" : category;
   const sortLabel = SORT_OPTS.find(o => o.val === sortBy)?.label || "Newest first";
@@ -474,7 +482,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </h2>
             <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
               {featuredListings.map(l => (
-                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
               ))}
             </div>
           </div>
@@ -490,7 +498,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </h2>
             <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
               {recentListings.map(l => (
-                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
               ))}
             </div>
           </div>
@@ -620,11 +628,25 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </div>
           )
         ) : (
-          <div className="listings-grid">
-            {filtered.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
-            ))}
-          </div>
+          <>
+            <div className="listings-grid">
+              {displayedListings.map(l => (
+                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+              ))}
+            </div>
+            {filtered.length > displayLimit && (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: "24px" }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setDisplayLimit(prev => prev + 40)}
+                  style={{ padding: "10px 28px", fontSize: "14px", fontWeight: "700", borderRadius: "var(--r-md)", gap: "6px" }}
+                  type="button"
+                >
+                  Load More Items ➔
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

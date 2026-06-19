@@ -115,7 +115,7 @@ function SkeletonCard() {
   );
 }
 
-export default function ProfilePage({ setPage, setSelectedListing, initialTab, viewUserId }) {
+export default function ProfilePage({ setPage, setSelectedListing, initialTab, viewUserId, requireAuth }) {
   const { currentUser, userProfile, fetchProfile } = useAuth();
   const toast = useToast();
   const { wishlistDocs } = useWishlist();
@@ -271,7 +271,13 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   return (
     <div className="container profile-page">
       {!isSelf && (
-        <button className="btn btn-ghost" onClick={() => setPage("listing")} style={{ marginBottom:20 }}>
+        <button className="btn btn-ghost" onClick={() => {
+          if (window.history.state && window.history.state.page) {
+            window.history.back();
+          } else {
+            setPage("listing");
+          }
+        }} style={{ marginBottom:20 }}>
           ← Back to product details
         </button>
       )}
@@ -416,7 +422,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         ) : (
           <div className="listings-grid">
             {displayListings.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
             ))}
           </div>
         )
@@ -444,7 +450,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         ) : (
           <div className="listings-grid">
             {wishlistItems.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setPage("listing"); }} />
+              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
             ))}
           </div>
         )
