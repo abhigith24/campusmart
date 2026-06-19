@@ -34,11 +34,9 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     const [recentSearches, setRecentSearches] = useState([]);
   const [allListingTitles, setAllListingTitles] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [showMobileSearchDropdown, setShowMobileSearchDropdown] = useState(false);
   const [showMobileSearchOverlay, setShowMobileSearchOverlay] = useState(false);
   const [showOverlayDropdown, setShowOverlayDropdown] = useState(false);
   const searchRef = useRef(null);
-  const mobileSearchRef = useRef(null);
   const mobileOverlaySearchRef = useRef(null);
 
   const TRENDING_TAGS = ["Calculator", "Lab coat", "HCV", "Notes", "Mattress", "Kettle"];
@@ -87,7 +85,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     addRecentSearch(term);
     setPage("home");
     setShowSearchDropdown(false);
-    setShowMobileSearchDropdown(false);
     setShowMobileSearchOverlay(false);
     setTimeout(() => {
       document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
@@ -98,9 +95,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     function clickOutside(e) {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSearchDropdown(false);
-      }
-      if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
-        setShowMobileSearchDropdown(false);
       }
       if (mobileOverlaySearchRef.current && !mobileOverlaySearchRef.current.contains(e.target)) {
         setShowOverlayDropdown(false);
@@ -269,6 +263,18 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
               }}
               aria-label="Search listings"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => { setSearchQuery(""); setShowSearchDropdown(false); }}
+                aria-label="Clear search"
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
             {renderDropdownContent(showSearchDropdown, setShowSearchDropdown)}
           </div>
 
@@ -382,30 +388,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             </div>
           </div>
 
-          <div className="nav-search" ref={mobileSearchRef} style={{ maxWidth:"100%", borderRadius:10, position: "relative" }}>
-            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input
-              placeholder="Search listings..."
-              value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setPage("home"); }}
-              onFocus={() => setShowMobileSearchDropdown(true)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  trackSearch(searchQuery);
-                  addRecentSearch(searchQuery);
-                  setShowMobileSearchDropdown(false);
-                  setDrawerOpen(false);
-                  setPage("home");
-                  setTimeout(() => {
-                    document.getElementById("listings-section")?.scrollIntoView({ behavior: "smooth" });
-                  }, 150);
-                }
-              }}
-              aria-label="Search"
-            />
-            {renderDropdownContent(showMobileSearchDropdown, setShowMobileSearchDropdown)}
-          </div>
-
           <div className="drawer-nav-grid">
             {[
               {
@@ -495,6 +477,18 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                 autoFocus
                 aria-label="Search"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => { setSearchQuery(""); setShowOverlayDropdown(false); }}
+                  aria-label="Clear search"
+                >
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              )}
               {renderDropdownContent(showOverlayDropdown, setShowOverlayDropdown)}
             </div>
           </div>

@@ -99,7 +99,7 @@ input,textarea,select { font-family:inherit }
   box-shadow:0 2px 8px rgba(37,99,235,.25);
 }
 .nav-search {
-  flex:1; max-width:280px;
+  flex:1; max-width:480px;
   background:var(--light); border:1.5px solid transparent;
   border-radius:var(--r-full); padding:8px 16px;
   display:flex; align-items:center; gap:9px;
@@ -113,6 +113,15 @@ input,textarea,select { font-family:inherit }
   font-size:14px; width:100%; color:var(--txt); font-weight:500;
 }
 .nav-search input::placeholder { color:var(--muted-2) }
+.search-clear-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:50%; flex-shrink:0;
+  border:none; background:var(--bdr); color:var(--muted);
+  cursor:pointer; padding:0;
+  transition:all var(--dur) var(--ease);
+}
+.search-clear-btn:hover { background:var(--red-light); color:var(--red) }
+.search-clear-btn svg { pointer-events:none }
 .nav-links { display:flex; align-items:center; gap:4px; margin-left:auto }
 .nav-hamburger {
   display:none; background:var(--light); border:none;
@@ -2344,8 +2353,6 @@ input,textarea,select { font-family:inherit }
 /* ════════════════════════════════════════════════════
    MODERN STYLES MERGED FROM MODERN.CSS
    ════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 :root {
   --p: #0f766e;
   --p-dark: #115e59;
