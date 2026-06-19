@@ -236,7 +236,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     <>
       <nav className="navbar">
         <div className="navbar-inner">
-          <button className="nav-logo" onClick={() => setPage("home")} type="button">
+          <button className="nav-logo" onClick={() => { setPage("home"); setDrawerOpen(false); }} type="button">
             <img className="brand-logo-img" src="/logo-circular.png" alt="CampusMart" />
             <span className="logo-text">Campus<span className="logo-mart">Mart</span></span>
           </button>
