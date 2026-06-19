@@ -1,5 +1,7 @@
 import React from "react";
 import { useNotifications } from "../context/NotificationsContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 const TYPE_META = {
   purchase_request: { icon: "🛒", label: "New Purchase Request" },
@@ -40,8 +42,6 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
     // Navigate to the relevant listing if we have its id
     if (n.listingId && setSelectedListing) {
       // fetch the listing doc and navigate
-      const { doc, getDoc } = await import("firebase/firestore");
-      const { db } = await import("../firebase");
       const snap = await getDoc(doc(db, "listings", n.listingId));
       if (snap.exists()) {
         const listingData = { id: snap.id, ...snap.data() };
