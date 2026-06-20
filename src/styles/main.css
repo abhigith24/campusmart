@@ -2656,15 +2656,18 @@ button {
 }
 
 .filter-bar {
-  position: sticky;
-  top: 82px;
-  z-index: 30;
   background: rgba(255, 255, 255, .88);
   border: 1px solid rgba(216, 225, 236, .9);
   border-radius: 14px;
   padding: 12px;
   box-shadow: var(--s1);
   backdrop-filter: blur(18px);
+}
+
+.filter-bar.is-sticky {
+  position: sticky;
+  top: 82px;
+  z-index: 30;
 }
 
 .dd-btn,
@@ -3002,7 +3005,7 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .filter-bar {
+  .filter-bar.is-sticky {
     top: 78px;
   }
 }
@@ -3047,9 +3050,6 @@ button {
   }
 
   .filter-bar {
-    position: sticky !important;
-    top: 66px !important;
-    z-index: 200 !important;
     margin-bottom: 16px !important;
     display: flex !important;
     flex-wrap: wrap !important;
@@ -3058,6 +3058,12 @@ button {
     background: #ffffff !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .filter-bar.is-sticky {
+    position: sticky !important;
+    top: 66px !important;
+    z-index: 200 !important;
   }
 
   .filter-count {

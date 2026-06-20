@@ -306,6 +306,17 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     setDisplayLimit(40);
   }, [category, condition, college, freeOnly, sortBy, priceMin, priceMax, searchQuery]);
 
+  // Scroll to listings section when filters change, if currently scrolled down past it
+  useEffect(() => {
+    const section = document.getElementById("listings-section");
+    if (section) {
+      const rect = section.getBoundingClientRect();
+      if (rect.top < 60) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [category, condition, college, freeOnly, priceMin, priceMax, sortBy]);
+
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
   const collegeOptions = useMemo(() => {
@@ -534,7 +545,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
         <h2 className="homepage-section-title" style={{ borderBottom: "1px solid var(--bdr)", paddingBottom: "12px", marginBottom: "16px" }}>
           All Campus Listings
         </h2>
-        <div className="filter-bar">
+        <div className={`filter-bar ${filtered.length > 6 ? "is-sticky" : ""}`}>
           <DropdownBtn label={catLabel} options={CATEGORIES.map(c => ({ val:c, label:c === "All" ? "All categories" : c }))} selected={category} onSelect={setCategory} />
           <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
           <DropdownBtn label={condLabel} options={CONDITIONS.map(c => ({ val:c, label:c === "All" ? "All conditions" : c }))} selected={condition} onSelect={setCondition} />

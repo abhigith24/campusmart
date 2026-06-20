@@ -32,6 +32,13 @@ export default defineConfig(({ mode }) => {
       react(),
     ],
     define: envWithProcessPrefix,
+    optimizeDeps: {
+      rolldownOptions: {
+        moduleTypes: {
+          '.js': 'jsx',
+        },
+      },
+    },
     server: {
       port: 3000,
     },
