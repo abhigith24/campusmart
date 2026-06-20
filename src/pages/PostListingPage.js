@@ -58,7 +58,7 @@ export default function PostListingPage({ setPage, editListing }) {
   const fileRef = useRef();
 
   const totalImages = existingImages.length + newPreviews.length;
-  const progress = [title, description, (totalImages > 0 || isEdit)].filter(Boolean).length;
+  const progress = [title, description, totalImages > 0].filter(Boolean).length;
 
   // Sync listingType with isFree state
   function handleTypeChange(type) {
@@ -140,6 +140,7 @@ export default function PostListingPage({ setPage, editListing }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (totalImages === 0) { toast("Please upload at least one photo", "error"); return; }
     if (listingType === "sell" && !price) { toast("Please enter a price or mark as free", "error"); return; }
     if (listingType === "rent" && !rentPerDay) { toast("Please enter rent per day amount", "error"); return; }
     if (!title || !description) { toast("Please fill all required fields", "error"); return; }
@@ -230,7 +231,7 @@ export default function PostListingPage({ setPage, editListing }) {
                 <div className="post-section-header">
                   <div className="post-section-num">1</div>
                   <div>
-                    <div className="post-section-title">Photos</div>
+                    <div className="post-section-title">Photos <span className="req">*</span></div>
                     <div className="post-section-desc">Good photos = faster sale · Up to 4 images</div>
                   </div>
                   {totalImages > 0 && <span className="post-img-count">{totalImages}/4</span>}
