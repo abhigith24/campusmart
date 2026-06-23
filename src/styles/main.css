@@ -1749,6 +1749,9 @@ input,textarea,select { font-family:inherit }
 }
 .cookie-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap }
 
+.contact-grid { display:grid; grid-template-columns:1fr 320px; gap:24px }
+.settings-theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
+
 /* ════════════════════════════════════════════════════
    RESPONSIVE — Tablet ≤1024px
 ════════════════════════════════════════════════════ */
@@ -1795,6 +1798,7 @@ input,textarea,select { font-family:inherit }
   .footer-bottom { flex-direction:column; gap:16px; align-items:flex-start }
   .legal-card { padding:22px 18px }
   .contact-type-grid { grid-template-columns:1fr 1fr }
+  .contact-grid { grid-template-columns:1fr }
   /* Detail page: single column stack, image first then seller card */
   .detail-grid { grid-template-columns:1fr }
   .detail-card { position:static; top:auto }
@@ -1845,6 +1849,7 @@ input,textarea,select { font-family:inherit }
   .contact-type-grid { grid-template-columns:1fr }
   .legal-page { padding:20px 0 48px }
   .auth-right { padding:24px 18px }
+  .settings-theme-grid { grid-template-columns:1fr }
 }
 
 /* ════════════════════════════════════════════════════

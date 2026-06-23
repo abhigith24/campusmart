@@ -5,12 +5,14 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
+import { useToast } from "./ToastContext";
 
 const WishlistContext = createContext();
 export const useWishlist = () => useContext(WishlistContext);
 
 export function WishlistProvider({ children }) {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const [wishlistIds, setWishlistIds] = useState(new Set());   // Set of listingIds
   const [wishlistDocs, setWishlistDocs] = useState([]);        // [{id, listingId, ...}]
 
@@ -32,19 +34,28 @@ export function WishlistProvider({ children }) {
 
   const toggleWishlist = useCallback(async (listingId) => {
     if (!currentUser) return;
-    if (wishlistIds.has(listingId)) {
-      // Remove
-      const existing = wishlistDocs.find(d => d.listingId === listingId);
-      if (existing) await deleteDoc(doc(db, "wishlists", existing.id));
-    } else {
-      // Add
-      await addDoc(collection(db, "wishlists"), {
-        userId: currentUser.uid,
-        listingId,
-        createdAt: serverTimestamp()
-      });
+    try {
+      if (wishlistIds.has(listingId)) {
+        // Remove
+        const existing = wishlistDocs.find(d => d.listingId === listingId);
+        if (existing) {
+          await deleteDoc(doc(db, "wishlists", existing.id));
+          toast("Removed from Saved Items", "success");
+        }
+      } else {
+        // Add
+        await addDoc(collection(db, "wishlists"), {
+          userId: currentUser.uid,
+          listingId,
+          createdAt: serverTimestamp()
+        });
+        toast("Saved to Wishlist! ❤️", "success");
+      }
+    } catch (err) {
+      console.error("Wishlist toggle error:", err);
+      toast("Failed to update saved items ❌", "error");
     }
-  }, [currentUser, wishlistIds, wishlistDocs]);
+  }, [currentUser, wishlistIds, wishlistDocs, toast]);
 
   return (
     <WishlistContext.Provider value={{ wishlistIds, wishlistDocs, isWishlisted, toggleWishlist }}>

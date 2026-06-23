@@ -78,9 +78,13 @@ export function AuthProvider({ children }) {
   }
 
   async function fetchProfile(uid) {
-    const ref = doc(db, "users", uid);
-    const snap = await getDoc(ref);
-    if (snap.exists()) setUserProfile(snap.data());
+    try {
+      const ref = doc(db, "users", uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) setUserProfile(snap.data());
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+    }
   }
 
   useEffect(() => {

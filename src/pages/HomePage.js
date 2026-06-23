@@ -427,25 +427,28 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     return opts;
   }, [listings, userProfile]);
 
-  let filtered = listings;
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(l =>
-      l.title?.toLowerCase().includes(q) ||
-      l.description?.toLowerCase().includes(q) ||
-      l.category?.toLowerCase().includes(q)
-    );
-  }
-  if (category !== "All") filtered = filtered.filter(l => l.category === category);
-  if (condition !== "All") filtered = filtered.filter(l => l.condition === condition);
-  if (college !== "All") filtered = filtered.filter(l => l.sellerCollege === college);
-  if (freeOnly) filtered = filtered.filter(l => l.isFree);
-  if (priceMin !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) >= Number(priceMin));
-  if (priceMax !== "") filtered = filtered.filter(l => !l.isFree && getPrice(l) <= Number(priceMax));
+  const filtered = useMemo(() => {
+    let result = listings;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(l =>
+        l.title?.toLowerCase().includes(q) ||
+        l.description?.toLowerCase().includes(q) ||
+        l.category?.toLowerCase().includes(q)
+      );
+    }
+    if (category !== "All") result = result.filter(l => l.category === category);
+    if (condition !== "All") result = result.filter(l => l.condition === condition);
+    if (college !== "All") result = result.filter(l => l.sellerCollege === college);
+    if (freeOnly) result = result.filter(l => l.isFree);
+    if (priceMin !== "") result = result.filter(l => !l.isFree && getPrice(l) >= Number(priceMin));
+    if (priceMax !== "") result = result.filter(l => !l.isFree && getPrice(l) <= Number(priceMax));
 
-  if (sortBy === "price-low") filtered = [...filtered].sort((a,b) => getPrice(a) - getPrice(b));
-  if (sortBy === "price-high") filtered = [...filtered].sort((a,b) => getPrice(b) - getPrice(a));
-  if (sortBy === "most-viewed") filtered = [...filtered].sort((a,b) => (b.views||0)-(a.views||0));
+    if (sortBy === "price-low") result = [...result].sort((a,b) => getPrice(a) - getPrice(b));
+    if (sortBy === "price-high") result = [...result].sort((a,b) => getPrice(b) - getPrice(a));
+    if (sortBy === "most-viewed") result = [...result].sort((a,b) => (b.views||0)-(a.views||0));
+    return result;
+  }, [listings, searchQuery, category, condition, college, freeOnly, priceMin, priceMax, sortBy]);
 
   const displayedListings = filtered.slice(0, displayLimit);
 

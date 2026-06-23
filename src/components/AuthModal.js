@@ -191,7 +191,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                   <label className="form-label" style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 4 }}>College Name</label>
                   <input className="form-input" placeholder="e.g. IIT Delhi, DTU" value={college} onChange={e => setCollege(e.target.value)} required style={{ width: "100%", padding: 8, border: "1.5px solid var(--bdr)", borderRadius: 8 }} />
                 </div>
-                <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <div className="form-row">
                   <div className="form-group">
                     <label className="form-label" style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Branch</label>
                     <select className="form-input" value={branch} onChange={e => setBranch(e.target.value)} required style={{ width: "100%", padding: 8, border: "1.5px solid var(--bdr)", borderRadius: 8 }}>

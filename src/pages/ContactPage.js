@@ -73,7 +73,7 @@ export default function ContactPage({ setPage }) {
         <p>We usually respond within 24 hours on business days.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
+      <div className="contact-grid">
         {/* Form */}
         <div className="legal-card" style={{ padding: 0 }}>
           <form onSubmit={handleSubmit} style={{ padding: 28 }}>

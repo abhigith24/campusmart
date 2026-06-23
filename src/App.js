@@ -12,7 +12,16 @@ import PostListingPage                   from "./pages/PostListingPage";
 import ListingDetailPage                 from "./pages/ListingDetailPage";
 import ChatPage                          from "./pages/ChatPage";
 import ProfilePage                       from "./pages/ProfilePage";
-import AdminPage                         from "./pages/AdminPage";
+import MyListingsPage                    from "./pages/MyListingsPage";
+import WishlistPage                      from "./pages/WishlistPage";
+import CollegeVerificationPage           from "./pages/CollegeVerificationPage";
+import MySalesPage                       from "./pages/MySalesPage";
+import SavedItemsPage                    from "./pages/SavedItemsPage";
+import MyCollegeListingsPage             from "./pages/MyCollegeListingsPage";
+import AdminDashboardPage                from "./pages/AdminDashboardPage";
+import VerificationRequestsPage          from "./pages/VerificationRequestsPage";
+import UserManagementPage                from "./pages/UserManagementPage";
+import AnalyticsReportsPage              from "./pages/AnalyticsReportsPage";
 import NotificationsPage                 from "./pages/NotificationsPage";
 import PurchaseRequestsPage              from "./pages/PurchaseRequestsPage";
 import SettingsPage                      from "./pages/SettingsPage";
@@ -32,7 +41,7 @@ const NO_FOOTER = ["chat"];
 const FULL_HEIGHT = ["chat"];
 
 // Pages that require authentication
-const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings"];
+const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics"];
 
 function App() {
   return (
@@ -65,9 +74,15 @@ function Main() {
     if (path === "/profile") return "profile";
     if (path === "/my-listings") return "my-listings";
     if (path === "/wishlist") return "wishlist";
+    if (path === "/college-verification") return "college-verification";
+    if (path === "/my-sales") return "my-sales";
+    if (path === "/saved-items") return "saved-items";
+    if (path === "/my-college-listings") return "my-college-listings";
     if (path === "/notifications") return "notifications";
-    if (path === "/purchase-requests") return "purchase-requests";
     if (path === "/admin") return "admin";
+    if (path === "/admin/verifications") return "admin-verifications";
+    if (path === "/admin/users") return "admin-users";
+    if (path === "/admin/analytics") return "admin-analytics";
     if (path === "/settings") return "settings";
     if (path.startsWith("/listing/")) return "listing";
     return "home";
@@ -122,9 +137,15 @@ function Main() {
     else if (nextPage === "profile") path = "/profile";
     else if (nextPage === "my-listings") path = "/my-listings";
     else if (nextPage === "wishlist") path = "/wishlist";
+    else if (nextPage === "college-verification") path = "/college-verification";
+    else if (nextPage === "my-sales") path = "/my-sales";
+    else if (nextPage === "saved-items") path = "/saved-items";
+    else if (nextPage === "my-college-listings") path = "/my-college-listings";
     else if (nextPage === "notifications") path = "/notifications";
-    else if (nextPage === "purchase-requests") path = "/purchase-requests";
     else if (nextPage === "admin") path = "/admin";
+    else if (nextPage === "admin-verifications") path = "/admin/verifications";
+    else if (nextPage === "admin-users") path = "/admin/users";
+    else if (nextPage === "admin-analytics") path = "/admin/analytics";
     else if (nextPage === "settings") path = "/settings";
     else if (nextPage === "contact") path = "/contact";
     else if (nextPage === "auth") path = "/auth";
@@ -164,9 +185,15 @@ function Main() {
       else if (path === "/profile") setPage("profile");
       else if (path === "/my-listings") setPage("my-listings");
       else if (path === "/wishlist") setPage("wishlist");
-      else if (path === "/notifications") setPage("notifications");
+      else if (path === "/college-verification") setPage("college-verification");
+      else if (path === "/my-sales") setPage("my-sales");
+      else if (path === "/saved-items") setPage("saved-items");
+      else if (path === "/my-college-listings") setPage("my-college-listings");
       else if (path === "/purchase-requests") setPage("purchase-requests");
       else if (path === "/admin") setPage("admin");
+      else if (path === "/admin/verifications") setPage("admin-verifications");
+      else if (path === "/admin/users") setPage("admin-users");
+      else if (path === "/admin/analytics") setPage("admin-analytics");
       else if (path === "/settings") setPage("settings");
       else if (path.startsWith("/listing/")) {
         const id = path.split("/")[2];
@@ -230,9 +257,15 @@ function Main() {
     profile:           "My Profile",
     "my-listings":     "My Listings",
     wishlist:          "Wishlist",
+    "college-verification": "College Verification",
+    "my-sales":        "My Sales",
+    "saved-items":     "Saved Items",
+    "my-college-listings": "My College Listings",
     notifications:     "Notifications",
-    "purchase-requests": "Purchase Requests",
     admin:             "Admin Dashboard",
+    "admin-verifications": "Verification Requests",
+    "admin-users":       "User Management",
+    "admin-analytics":   "Analytics & Reports",
     settings:          "Account Settings",
     privacy:           "Privacy Policy",
     terms:             "Terms of Service",
@@ -309,21 +342,30 @@ function Main() {
           )
         )}
         {page === "chat" && <ChatPage initialChatWith={chatWith} setPage={navigateTo} />}
-        {(page === "profile" || page === "my-listings" || page === "wishlist") && (
+        {page === "profile" && (
           <ProfilePage
             setPage={navigateTo} setSelectedListing={setSelectedListing}
-            initialTab={page === "wishlist" ? "wishlist" : page === "my-listings" ? "active" : "active"}
+            initialTab="active"
             viewUserId={viewProfileUserId}
             requireAuth={requireAuth}
           />
         )}
+        {page === "my-listings" && <MyListingsPage setPage={navigateTo} />}
+        {page === "wishlist" && <WishlistPage setPage={navigateTo} />}
+        {page === "college-verification" && <CollegeVerificationPage setPage={navigateTo} />}
+        {page === "my-sales" && <MySalesPage setPage={navigateTo} />}
+        {page === "saved-items" && <SavedItemsPage setPage={navigateTo} />}
+        {page === "my-college-listings" && <MyCollegeListingsPage setPage={navigateTo} />}
         {page === "notifications" && (
           <NotificationsPage setPage={navigateTo} setSelectedListing={setSelectedListing} />
         )}
         {page === "purchase-requests" && (
           <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
         )}
-        {page === "admin"   && <AdminPage />}
+        {page === "admin"   && <AdminDashboardPage />}
+        {page === "admin-verifications" && <VerificationRequestsPage />}
+        {page === "admin-users" && <UserManagementPage />}
+        {page === "admin-analytics" && <AnalyticsReportsPage />}
         {page === "settings" && <SettingsPage setPage={navigateTo} />}
         {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
         {page === "terms"   && <TermsPage setPage={navigateTo} />}

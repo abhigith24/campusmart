@@ -366,7 +366,7 @@ export default function SettingsPage({ setPage }) {
           <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "6px", color: "var(--txt)" }}>🎨 Theme & Appearance</h2>
           <p style={{ fontSize: "13px", color: "var(--txt-2)", marginBottom: "16px" }}>Customize your display preferences for CampusMart</p>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+          <div className="settings-theme-grid">
             {[
               { id: "light", label: "☀️ Light Mode" },
               { id: "dark", label: "🌙 Dark Mode" },

@@ -4,12 +4,14 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
+import { useToast } from "./ToastContext";
 
 const NotifContext = createContext();
 export const useNotifications = () => useContext(NotifContext);
 
 export function NotificationsProvider({ children }) {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -41,15 +43,26 @@ export function NotificationsProvider({ children }) {
   }, [currentUser]);
 
   async function markAsRead(notifId) {
-    await updateDoc(doc(db, "notifications", notifId), { read: true });
+    try {
+      await updateDoc(doc(db, "notifications", notifId), { read: true });
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+      toast("Failed to update notification status ❌", "error");
+    }
   }
 
   async function markAllAsRead() {
-    const batch = writeBatch(db);
-    notifications.filter(n => !n.read).forEach(n => {
-      batch.update(doc(db, "notifications", n.id), { read: true });
-    });
-    await batch.commit();
+    try {
+      const batch = writeBatch(db);
+      notifications.filter(n => !n.read).forEach(n => {
+        batch.update(doc(db, "notifications", n.id), { read: true });
+      });
+      await batch.commit();
+      toast("All notifications marked as read", "success");
+    } catch (err) {
+      console.error("Error marking all notifications as read:", err);
+      toast("Failed to update notifications ❌", "error");
+    }
   }
 
   return (

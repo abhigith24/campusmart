@@ -361,7 +361,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         } else {
           setPage("home");
         }
-      }} style={{ marginBottom:20 }}>
+      }} style={{ marginBottom:20 }} aria-label="Back to listings">
         ← Back to listings
       </button>
 

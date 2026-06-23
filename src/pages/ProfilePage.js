@@ -309,14 +309,19 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
     if (!wishlistDocs.length) { setWishlistItems([]); return; }
     let cancelled = false;
     async function load() {
-      const items = [];
-      for (const w of wishlistDocs) {
-        try {
-          const snap = await getDoc(doc(db, "listings", w.listingId));
-          if (snap.exists() && !cancelled) items.push({ id: snap.id, ...snap.data() });
-        } catch {}
+      try {
+        const promises = wishlistDocs.map(w => getDoc(doc(db, "listings", w.listingId)));
+        const snaps = await Promise.all(promises);
+        if (!cancelled) {
+          const items = [];
+          snaps.forEach(snap => {
+            if (snap.exists()) items.push({ id: snap.id, ...snap.data() });
+          });
+          setWishlistItems(items);
+        }
+      } catch (err) {
+        console.error("Error loading profile wishlist:", err);
       }
-      if (!cancelled) setWishlistItems(items);
     }
     load();
     return () => { cancelled = true; };

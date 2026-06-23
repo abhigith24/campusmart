@@ -38,7 +38,7 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day:"numeric", month:"short" });
 }
 
-export default function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
+function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
   const { currentUser, userProfile } = useAuth();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const {
@@ -144,3 +144,5 @@ export default function ListingCard({ listing, onClick, requireAuth, layout = "g
     </div>
   );
 }
+
+export default React.memo(ListingCard);

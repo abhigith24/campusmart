@@ -467,7 +467,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                 <button className={`drawer-item-btn ${page === "settings" ? "active" : ""}`} onClick={() => { setPage("settings"); setDrawerOpen(false); }}>
                   <span className="drawer-item-icon">⚙️</span> Settings
                 </button>
-                <button className="drawer-item-btn" onClick={() => { setPage("profile"); setDrawerOpen(false); }}>
+                <button className={`drawer-item-btn ${page === "college-verification" ? "active" : ""}`} onClick={() => { setPage("college-verification"); setDrawerOpen(false); }}>
                   <span className="drawer-item-icon">🎓</span> College Verification
                 </button>
               </div>
@@ -479,19 +479,13 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   <button className="drawer-item-btn" style={{ padding: "7px 0" }} onClick={() => { setPage("purchase-requests"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">🛒</span> My Purchases
                   </button>
-                  <button className="drawer-item-btn" style={{ padding: "7px 0" }} onClick={() => { setPage("my-listings"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn ${page === "my-sales" ? "active" : ""}`} style={{ padding: "7px 0" }} onClick={() => { setPage("my-sales"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">💰</span> My Sales
                   </button>
-                  <button className="drawer-item-btn" style={{ padding: "7px 0" }} onClick={() => { setPage("wishlist"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn ${page === "saved-items" ? "active" : ""}`} style={{ padding: "7px 0" }} onClick={() => { setPage("saved-items"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">⭐</span> Saved Items
                   </button>
-                  <button className="drawer-item-btn" style={{ padding: "7px 0" }} onClick={() => {
-                    if (userProfile?.college) {
-                      sessionStorage.setItem("tempCollegeFilter", userProfile.college);
-                    }
-                    setPage("home");
-                    setDrawerOpen(false);
-                  }}>
+                  <button className={`drawer-item-btn ${page === "my-college-listings" ? "active" : ""}`} style={{ padding: "7px 0" }} onClick={() => { setPage("my-college-listings"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">📍</span> My College Listings
                   </button>
                 </div>
@@ -514,7 +508,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                       )}
                     </div>
                     {!(userProfile?.collegeVerified || userProfile?.isVerified) && userProfile?.verificationStatus !== "pending" && (
-                      <button className="btn btn-primary btn-sm" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setPage("profile"); setDrawerOpen(false); }}>
+                      <button className="btn btn-primary btn-sm" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setPage("college-verification"); setDrawerOpen(false); }}>
                         Verify College
                       </button>
                     )}
@@ -545,16 +539,16 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
               {userProfile?.isAdmin && (
                 <div className="drawer-section border-top admin-section-highlight">
                   <div className="drawer-section-title admin-title">⚡ Admin Control Panel</div>
-                  <button className="drawer-item-btn admin-btn" onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn admin-btn ${page === "admin" ? "active" : ""}`} onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">⚙️</span> Admin Dashboard
                   </button>
-                  <button className="drawer-item-btn admin-btn" onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn admin-btn ${page === "admin-verifications" ? "active" : ""}`} onClick={() => { setPage("admin-verifications"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">🎓</span> Verification Requests
                   </button>
-                  <button className="drawer-item-btn admin-btn" onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn admin-btn ${page === "admin-users" ? "active" : ""}`} onClick={() => { setPage("admin-users"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">👥</span> User Management
                   </button>
-                  <button className="drawer-item-btn admin-btn" onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
+                  <button className={`drawer-item-btn admin-btn ${page === "admin-analytics" ? "active" : ""}`} onClick={() => { setPage("admin-analytics"); setDrawerOpen(false); }}>
                     <span className="drawer-item-icon">📈</span> Analytics & Reports
                   </button>
                 </div>
