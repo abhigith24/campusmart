@@ -23,7 +23,7 @@ function timeAgo(ts) {
 
 function SkeletonNotificationItem() {
   return (
-    <div className="notif-item skeleton-shimmer" style={{ background: "#fff", cursor: "default", display: "flex", gap: "12px", padding: "16px", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)" }}>
+    <div className="notif-item skeleton-shimmer" style={{ background: "var(--card-bg)", cursor: "default", display: "flex", gap: "12px", padding: "16px", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)" }}>
       <div className="skeleton" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
       <div className="notif-body" style={{ flex: 1, minWidth: 0 }}>
         <div className="skeleton" style={{ height: 14, width: "30%", marginBottom: 6 }} />

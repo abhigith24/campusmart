@@ -43,9 +43,9 @@ function AnalyticsTab({ listings }) {
       <div className="analytics-stats-grid">
         {[
           { label:"Total Views",       value: totalViews,            icon:"👁",  color:"var(--p)" },
-          { label:"Active Listings",   value: activeListings.length, icon:"📦",  color:"#22c55e" },
-          { label:"Items Sold",        value: soldListings.length,   icon:"✅",  color:"#6366f1" },
-          { label:"Total Inquiries",   value: inquiries,             icon:"💬",  color:"#2563eb" },
+          { label:"Active Listings",   value: activeListings.length, icon:"📦",  color:"var(--grn)" },
+          { label:"Items Sold",        value: soldListings.length,   icon:"✅",  color:"var(--p-dark)" },
+          { label:"Total Inquiries",   value: inquiries,             icon:"💬",  color:"var(--p)" },
           { label:"Conversion Rate",   value: `${convRate}%`,        icon:"📈",  color:"var(--p-dark)" },
         ].map(s => (
           <div key={s.label} className="analytics-stat-card">
@@ -429,29 +429,41 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
           <div className="profile-avatar">
             {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
           </div>
-          <div style={{ flex:1, minWidth: "200px" }}>
+          <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
             {editing ? (
-              <div>
-                <div className="form-row" style={{ marginBottom:8 }}>
-                  <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
-                  <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div className="form-row">
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Full Name</label>
+                    <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">College / Campus</label>
+                    <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+                  </div>
                 </div>
                 <div className="form-row">
-                  <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
-                    {BRANCHES.map(b => <option key={b}>{b}</option>)}
-                  </select>
-                  <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
-                    {YEARS.map(y => <option key={y}>{y}</option>)}
-                  </select>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Branch / Major</label>
+                    <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
+                      {BRANCHES.map(b => <option key={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Year of Study</label>
+                    <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
+                      {YEARS.map(y => <option key={y}>{y}</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div style={{ display:"flex", gap:8, marginTop:10 }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                   <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
                   <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
                 </div>
               </div>
             ) : (
               <>
-                <div className="profile-name" style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {profileData?.name}
                   {(profileData?.collegeVerified || profileData?.isVerified) && (
                     <VerifiedStudentBadge size="lg" />
@@ -460,10 +472,16 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
                     <TrustedSellerBadge size="lg" />
                   )}
                 </div>
-                <div className="profile-college">
-                  {[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}
+                <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
+                  <span style={{ fontSize: "14px", opacity: 0.8 }} title="College">🎓</span>
+                  <span>{[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}</span>
                 </div>
-                {isSelf && <div className="profile-college">{currentUser?.email}</div>}
+                {isSelf && (
+                  <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", fontSize: "13px", color: "var(--muted)" }}>
+                    <span style={{ fontSize: "14px", opacity: 0.8 }} title="Email">✉️</span>
+                    <span>{currentUser?.email}</span>
+                  </div>
+                )}
                 {profileData?.rating > 0 && (
                   <div className="profile-rating-display">
                     <div className="profile-stars">
@@ -563,10 +581,10 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
 
               if (status === "pending") {
                 return (
-                  <div style={{ background: "#fef9c3", border: "1.5px solid #fef08a", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ background: "var(--status-pending-bg)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontSize: "24px" }}>🟡</span>
                     <div>
-                      <div style={{ fontWeight: "800", color: "#a16207", fontSize: "14px" }}>Verification Pending</div>
+                      <div style={{ fontWeight: "800", color: "var(--status-pending-txt)", fontSize: "14px" }}>Verification Pending</div>
                       <div style={{ fontSize: "12px", color: "var(--txt-2)", marginTop: "2px" }}>
                         Your request is currently being reviewed by our admin team. This usually takes less than 24 hours.
                       </div>
@@ -578,10 +596,10 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
               if (status === "rejected") {
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <div style={{ background: "#fee2e2", border: "1.5px solid #fecaca", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ background: "var(--status-rejected-bg)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
                       <span style={{ fontSize: "24px" }}>🔴</span>
                       <div>
-                        <div style={{ fontWeight: "800", color: "var(--red)", fontSize: "14px" }}>Verification Rejected</div>
+                        <div style={{ fontWeight: "800", color: "var(--status-rejected-txt)", fontSize: "14px" }}>Verification Rejected</div>
                         <div style={{ fontSize: "12px", color: "var(--txt-2)", marginTop: "2px" }}>
                           Your ID card was not accepted. Please ensure the image is clear and displays your name and expiration date.
                         </div>

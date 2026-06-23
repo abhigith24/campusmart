@@ -9,10 +9,10 @@ const CATEGORIES = ["Textbooks","Notes","Lab Equipment","Electronics","Stationer
 const CAT_ICONS  = { Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Girls:"👗", Misc:"📦" };
 const CONDITIONS = ["New","Good","Fair","Old"];
 const COND_META  = {
-  New:  { label:"Brand New",    color:"#15803d", bg:"#dcfce7", desc:"Unused, original packaging" },
-  Good: { label:"Good",         color:"#1d4ed8", bg:"#dbeafe", desc:"Minor wear, works perfectly" },
-  Fair: { label:"Fair",         color:"#a16207", bg:"#fef9c3", desc:"Visible wear, fully functional" },
-  Old:  { label:"Heavily Used", color:"#b91c1c", bg:"#fee2e2", desc:"Signs of heavy use" },
+  New:  { label:"Brand New",    color:"var(--cond-new-txt)", bg:"var(--cond-new-bg)", desc:"Unused, original packaging" },
+  Good: { label:"Good",         color:"var(--cond-good-txt)", bg:"var(--cond-good-bg)", desc:"Minor wear, works perfectly" },
+  Fair: { label:"Fair",         color:"var(--cond-fair-txt)", bg:"var(--cond-fair-bg)", desc:"Visible wear, fully functional" },
+  Old:  { label:"Heavily Used", color:"var(--cond-old-txt)", bg:"var(--cond-old-bg)", desc:"Signs of heavy use" },
 };
 
 const MEETUP_SPOTS = [
@@ -80,7 +80,7 @@ export default function PostListingPage({ setPage, editListing }) {
               <p className="post-subtitle">This item has been marked as sold</p>
             </div>
           </div>
-          <div style={{ background:"#fff", border:"1.5px solid var(--bdr)", borderRadius:"var(--r-lg)", padding:32, textAlign:"center", boxShadow:"var(--s1)" }}>
+          <div style={{ background:"var(--card-bg)", border:"1.5px solid var(--bdr)", borderRadius:"var(--r-lg)", padding:32, textAlign:"center", boxShadow:"var(--s1)" }}>
             <div style={{ fontSize:56, marginBottom:16 }}>🔒</div>
             <h2 style={{ fontSize:20, fontWeight:800, marginBottom:10 }}>Cannot Edit Sold Listing</h2>
             <p style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
@@ -508,7 +508,7 @@ export default function PostListingPage({ setPage, editListing }) {
                       <div style={{ fontSize:11, color:"var(--muted)", marginTop:4 }}>📍 {meetupSpot}</div>
                     )}
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:8, paddingTop:10, borderTop:"1px solid var(--bdr)" }}>
-                      <div className={`card-price ${listingType === "free" ? "free" : ""}`} style={{ fontSize:18, color: isRent ? "#2563eb" : undefined }}>
+                      <div className={`card-price ${listingType === "free" ? "free" : ""}`} style={{ fontSize:18, color: isRent ? "var(--p-dark)" : undefined }}>
                         {previewPrice}
                       </div>
                       <div className="card-seller-avatar">{(userProfile?.name || "Y")[0].toUpperCase()}</div>

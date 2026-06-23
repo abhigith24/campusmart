@@ -412,7 +412,7 @@ export default function SettingsPage({ setPage }) {
                     }}
                     style={{ opacity: 0, width: 0, height: 0 }}
                   />
-                  <span className={`slider ${item.value ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: item.value ? "var(--p)" : "#cbd5e1", transition: ".2s", borderRadius: "24px" }}>
+                  <span className={`slider ${item.value ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: item.value ? "var(--p)" : "var(--bdr-2)", transition: ".2s", borderRadius: "24px" }}>
                     <span style={{ position: "absolute", content: "", height: "16px", width: "16px", left: item.value ? "20px" : "4px", bottom: "4px", background: "white", transition: ".2s", borderRadius: "50%" }}></span>
                   </span>
                 </label>
@@ -448,7 +448,7 @@ export default function SettingsPage({ setPage }) {
                     }}
                     style={{ opacity: 0, width: 0, height: 0 }}
                   />
-                  <span className={`slider ${item.value ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: item.value ? "var(--p)" : "#cbd5e1", transition: ".2s", borderRadius: "24px" }}>
+                  <span className={`slider ${item.value ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: item.value ? "var(--p)" : "var(--bdr-2)", transition: ".2s", borderRadius: "24px" }}>
                     <span style={{ position: "absolute", content: "", height: "16px", width: "16px", left: item.value ? "20px" : "4px", bottom: "4px", background: "white", transition: ".2s", borderRadius: "50%" }}></span>
                   </span>
                 </label>

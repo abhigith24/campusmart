@@ -18,10 +18,10 @@ const CAT_IMAGES = {
   Misc:           "/placeholder_misc.png",
 };
 const COND_META = {
-  New:  { label:"New",  dot:"#10b981", bg:"#dcfce7", color:"#166534" },
-  Good: { label:"Good", dot:"#3b82f6", bg:"#dbeafe", color:"#1d4ed8" },
-  Fair: { label:"Fair", dot:"#64748b", bg:"#e2e8f0", color:"#334155" },
-  Old:  { label:"Used", dot:"#ef4444", bg:"#fee2e2", color:"#991b1b" },
+  New:  { label:"New",  dot:"var(--grn)", bg:"var(--cond-new-bg)", color:"var(--cond-new-txt)" },
+  Good: { label:"Good", dot:"var(--p)", bg:"var(--cond-good-bg)", color:"var(--cond-good-txt)" },
+  Fair: { label:"Fair", dot:"var(--text-muted)", bg:"var(--cond-fair-bg)", color:"var(--cond-fair-txt)" },
+  Old:  { label:"Used", dot:"var(--red)", bg:"var(--cond-old-bg)", color:"var(--cond-old-txt)" },
 };
 
 import VerifiedStudentBadge from "./VerifiedStudentBadge";

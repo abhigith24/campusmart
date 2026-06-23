@@ -8,9 +8,9 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const STATUS_STYLE = {
-  pending:  { bg: "#fef3c7", color: "#92400e", label: "⏳ Pending" },
-  accepted: { bg: "var(--green-light)", color: "#15803d", label: "✅ Accepted" },
-  rejected: { bg: "#fee2e2", color: "#b91c1c", label: "❌ Rejected" },
+  pending:  { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "⏳ Pending" },
+  accepted: { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "✅ Accepted" },
+  rejected: { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "❌ Rejected" },
 };
 
 function timeAgo(ts) {

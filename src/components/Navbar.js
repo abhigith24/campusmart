@@ -534,7 +534,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                       onChange={toggleTheme}
                       style={{ opacity: 0, width: 0, height: 0 }}
                     />
-                    <span className={`slider ${theme === "dark" ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: theme === "dark" ? "var(--p)" : "#cbd5e1", transition: ".2s", borderRadius: "24px" }}>
+                    <span className={`slider ${theme === "dark" ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: theme === "dark" ? "var(--p)" : "var(--bdr-2)", transition: ".2s", borderRadius: "24px" }}>
                       <span style={{ position: "absolute", content: "", height: "16px", width: "16px", left: theme === "dark" ? "20px" : "4px", bottom: "4px", background: "white", transition: ".2s", borderRadius: "50%" }}></span>
                     </span>
                   </label>

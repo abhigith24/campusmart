@@ -62,7 +62,6 @@ export default function CookieConsent() {
               <button
                 className={`toggle ${prefs.analytics ? "on" : ""}`}
                 onClick={() => setPrefs(p => ({ ...p, analytics: !p.analytics }))}
-                style={{ width: 44, height: 24, flexShrink: 0 }}
               />
             </div>
           </div>

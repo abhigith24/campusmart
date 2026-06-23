@@ -15,6 +15,22 @@
     <link rel="manifest" href="/manifest.json" />
     <title>CampusMart India — Campus Marketplace</title>
 
+    <script>
+      (function() {
+        const saved = localStorage.getItem("themeMode") || localStorage.getItem("theme");
+        let theme = "light";
+        if (saved === "dark") {
+          theme = "dark";
+        } else if (saved === "light") {
+          theme = "light";
+        } else {
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          theme = prefersDark ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQ8L66SDQF"></script>
     <script>

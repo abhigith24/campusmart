@@ -15,10 +15,10 @@ import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 
 const COND_META = {
-  New:  { label: "Brand New",    bg: "#dcfce7", color: "#15803d" },
-  Good: { label: "Good Condition", bg: "#dbeafe", color: "#1d4ed8" },
-  Fair: { label: "Fair Condition", bg: "#fef9c3", color: "#a16207" },
-  Old:  { label: "Heavily Used", bg: "#fee2e2", color: "#b91c1c" },
+  New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
+  Good: { label: "Good Condition", bg: "var(--cond-good-bg)", color: "var(--cond-good-txt)" },
+  Fair: { label: "Fair Condition", bg: "var(--cond-fair-bg)", color: "var(--cond-fair-txt)" },
+  Old:  { label: "Heavily Used", bg: "var(--cond-old-bg)", color: "var(--cond-old-txt)" },
 };
 
 const CAT_IMAGES = {
@@ -480,7 +480,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
             <div className="detail-title">{listing.title}</div>
 
-            <div className={`detail-price ${listing.isFree?"free":""}`} style={{ color: listing.listingType==="rent" ? "#2563eb" : undefined }}>
+            <div className={`detail-price ${listing.isFree?"free":""}`} style={{ color: listing.listingType==="rent" ? "var(--p-dark)" : undefined }}>
               {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : listing.listingType==="rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
             </div>
 
@@ -490,8 +490,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   {COND_META[listing.condition].label}
                 </span>
               )}
-              {listing.isFree && <span className="badge" style={{ background: "#dcfce7", color: "#15803d", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Sold</span>}
+              {listing.isFree && <span className="badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Free</span>}
+              {isSold && <span className="badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Sold</span>}
               <span className="badge" style={{ background: "var(--light)", color: "var(--txt-2)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{listing.category}</span>
               {(listing.collegeVerified || listing.isVerified) && <VerifiedStudentBadge />}
               {currentUser && userProfile?.college && listing.sellerCollege && userProfile.college.trim().toLowerCase() === listing.sellerCollege.trim().toLowerCase() && (
@@ -513,7 +513,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                       <div className="skeleton" style={{ height: 12, width: "80%" }} />
                     </div>
                   </div>
-                  <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid rgba(226,232,240,.8)", paddingTop: "10px" }}>
+                  <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
                     {Array(4).fill(0).map((_, i) => (
                       <div key={i} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div className="skeleton" style={{ height: 10, width: "40%" }} />
@@ -549,7 +549,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 </div>
               </div>
 
-              <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid rgba(226,232,240,.8)", paddingTop: "10px" }}>
+              <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
                 <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                   <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Rating</div>
                   <div className="trust-stat-val-mini" style={{ color: "var(--yel)", fontWeight: "700", fontSize: "12px" }}>
@@ -573,7 +573,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   <span style={{ fontWeight: "700", color: "var(--grn)" }}>{getResponseRate(listing.sellerId)}</span>
                 </div>
               </div>
-              <div style={{ fontSize: "11px", color: "var(--p)", fontWeight: 700, marginTop: "10px", textAlign: "center", borderTop: "1px solid rgba(226,232,240,.5)", paddingTop: "6px" }}>
+              <div style={{ fontSize: "11px", color: "var(--p)", fontWeight: 700, marginTop: "10px", textAlign: "center", borderTop: "1px solid var(--border-color)", paddingTop: "6px" }}>
                 🔍 View seller profile & history
               </div>
                 </>
@@ -591,9 +591,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                     </button>
                   ) : (
                     <div style={{
-                      background:"#fef9c3", border:"1px solid #fde047",
+                      background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
                       borderRadius:"var(--r-sm)", padding:"10px 14px",
-                      fontSize:13, color:"#a16207", fontWeight:600, lineHeight:1.5
+                      fontSize:13, color:"var(--status-pending-txt)", fontWeight:600, lineHeight:1.5
                     }}>
                       🔒 This listing has been sold and can no longer be edited.
                     </div>
@@ -607,9 +607,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 /* SOLD STATE — buyer actions */
                 <>
                   <div style={{
-                    background:"#f0fdf4", border:"1.5px solid #22c55e",
+                    background:"var(--status-accepted-bg)", border:"1.5px solid var(--grn)",
                     borderRadius:"var(--r-sm)", padding:"12px 16px",
-                    textAlign:"center", fontWeight:700, color:"#15803d"
+                    textAlign:"center", fontWeight:700, color:"var(--status-accepted-txt)"
                   }}>
                     This item has been sold 🎉
                   </div>
@@ -617,9 +617,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   {isEligibleBuyer && (
                     alreadyRated ? (
                       <div style={{
-                        background:"#f0fdf4", border:"1px solid #86efac",
+                        background:"var(--status-accepted-bg)", border:"1px solid var(--grn)",
                         borderRadius:"var(--r-sm)", padding:"10px 14px",
-                        fontSize:13, color:"#15803d", fontWeight:600, textAlign:"center"
+                        fontSize:13, color:"var(--status-accepted-txt)", fontWeight:600, textAlign:"center"
                       }}>
                         ✅ You've already reviewed this seller
                       </div>
@@ -665,14 +665,14 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
           {/* Safety Tips Card */}
           <div style={{
-            background:"#fffbeb", border:"1px solid #fef3c7",
+            background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
             borderRadius:"var(--r-md)", padding:"16px", marginTop:16,
             boxShadow: "var(--s0)"
           }}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", fontWeight: "800", color: "#b45309", fontSize: "14px", marginBottom: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", fontWeight: "800", color: "var(--status-pending-txt)", fontSize: "14px", marginBottom: "8px" }}>
               <span>🛡️</span> Safety Guidelines
             </div>
-            <ul style={{ paddingLeft: "18px", margin: 0, fontSize: "12px", color: "#78350f", lineHeight: "1.6", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <ul style={{ paddingLeft: "18px", margin: 0, fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.6", display: "flex", flexDirection: "column", gap: "6px" }}>
               <li>Always meet in a public, well-lit place on campus.</li>
               <li>Inspect the item thoroughly before making any payment.</li>
               <li>Avoid advanced online transactions; swap physically.</li>
@@ -734,7 +734,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 {listing.isFree ? "Free 💚" : `₹${listing.price}`}
               </div>
             </div>
-            <div style={{ background:"#fef9c3", border:"1px solid #fde047", borderRadius:"var(--r-xs)", padding:"10px 14px", marginBottom:16, fontSize:13, color:"#a16207" }}>
+            <div style={{ background:"var(--status-pending-bg)", border:"1px solid var(--bdr)", borderRadius:"var(--r-xs)", padding:"10px 14px", marginBottom:16, fontSize:13, color:"var(--status-pending-txt)" }}>
               ⚠️ No payment required now. Seller will contact you via chat.
             </div>
             <div style={{ display:"flex", gap:10 }}>

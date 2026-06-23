@@ -134,9 +134,9 @@ export default function ContactPage({ setPage }) {
             </div>
           ))}
 
-          <div className="legal-card" style={{ padding: "16px 18px", background: "var(--primary-light)", borderColor: "rgba(249,115,22,.2)" }}>
+          <div className="legal-card" style={{ padding: "16px 18px", background: "var(--p-light)", borderColor: "rgba(249,115,22,.2)" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--p)", marginBottom: 6 }}>⏱️ Response Times</div>
-            <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.7 }}>
               <div>🐛 Bugs: <strong>within 4 hours</strong></div>
               <div>🚨 Safety: <strong>within 1 hour</strong></div>
               <div>📧 General: <strong>within 24 hours</strong></div>

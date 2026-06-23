@@ -242,14 +242,14 @@ export default function ChatPage({ initialChatWith, setPage }) {
         </div>
 
         {/* Tabs segment control */}
-        <div className="chat-tabs-nav" style={{ display: "flex", borderBottom: "1px solid var(--bdr)", padding: "4px 8px", gap: 6, background: "#fff" }}>
+        <div className="chat-tabs-nav" style={{ display: "flex", borderBottom: "1px solid var(--bdr)", padding: "4px 8px", gap: 6, background: "var(--card-bg)" }}>
           <button
             type="button"
             className={`chat-tab-btn ${activeTab === "buying" ? "active" : ""}`}
             onClick={() => setActiveTab("buying")}
             style={{
               flex: 1, padding: "8px 12px", border: "none", background: activeTab === "buying" ? "var(--p-light)" : "transparent",
-              color: activeTab === "buying" ? "var(--p-dark)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
+              color: activeTab === "buying" ? "var(--p)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s"
             }}
           >
@@ -266,7 +266,7 @@ export default function ChatPage({ initialChatWith, setPage }) {
             onClick={() => setActiveTab("selling")}
             style={{
               flex: 1, padding: "8px 12px", border: "none", background: activeTab === "selling" ? "var(--p-light)" : "transparent",
-              color: activeTab === "selling" ? "var(--p-dark)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
+              color: activeTab === "selling" ? "var(--p)" : "var(--muted)", fontWeight: 700, borderRadius: 6, fontSize: 13,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s"
             }}
           >

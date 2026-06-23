@@ -5,14 +5,14 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const STATUS_COLORS = {
-  active:   { bg:"#dcfce7", color:"#15803d" },
-  sold:     { bg:"#dbeafe", color:"#1d4ed8" },
-  removed:  { bg:"#fee2e2", color:"#b91c1c" },
-  deleted:  { bg:"#f3f4f6", color:"#6b7280" },
-  flagged:  { bg:"#e0f2fe", color:"#0369a1" },
-  pending:  { bg:"#fef9c3", color:"#a16207" },
-  accepted: { bg:"#dcfce7", color:"#15803d" },
-  rejected: { bg:"#fee2e2", color:"#b91c1c" },
+  active:   { bg:"var(--status-accepted-bg)", color:"var(--status-accepted-txt)" },
+  sold:     { bg:"var(--status-sold-bg)", color:"var(--status-sold-txt)" },
+  removed:  { bg:"var(--status-rejected-bg)", color:"var(--status-rejected-txt)" },
+  deleted:  { bg:"var(--bg-secondary)", color:"var(--text-muted)" },
+  flagged:  { bg:"var(--status-pending-bg)", color:"var(--status-pending-txt)" },
+  pending:  { bg:"var(--status-pending-bg)", color:"var(--status-pending-txt)" },
+  accepted: { bg:"var(--status-accepted-bg)", color:"var(--status-accepted-txt)" },
+  rejected: { bg:"var(--status-rejected-bg)", color:"var(--status-rejected-txt)" },
 };
 
 function StatusBadge({ status }) {
@@ -233,15 +233,15 @@ export default function AdminPage() {
             <>
               <div className="admin-grid">
                 {[
-                  { num: stats.users,         lbl: "Students",            icon: "👤", accent:"#6366f1" },
-                  { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"#0f766e" },
-                  { num: stats.free,          lbl: "Free Items",          icon: "💚", accent:"#22c55e" },
-                  { num: stats.sold,          lbl: "Sold Products",       icon: "💸", accent:"#3b82f6" },
-                  { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"#2563eb" },
-                  { num: stats.totalChats,    lbl: "Total Chats",         icon: "💬", accent:"#8b5cf6" },
-                  { num: stats.activeSellers, lbl: "Active Sellers",      icon: "🏪", accent:"#ec4899" },
-                  { num: stats.flagged,       lbl: "Flagged",             icon: "🚩", accent:"#ef4444" },
-                  { num: stats.pendingReqs,   lbl: "Pending Requests",    icon: "⏳", accent:"#a16207" },
+                  { num: stats.users,         lbl: "Students",            icon: "👤", accent:"var(--p)" },
+                  { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"var(--p-dark)" },
+                  { num: stats.free,          lbl: "Free Items",          icon: "💚", accent:"var(--grn)" },
+                  { num: stats.sold,          lbl: "Sold Products",       icon: "💸", accent:"var(--p-dark)" },
+                  { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"var(--yel)" },
+                  { num: stats.totalChats,    lbl: "Total Chats",         icon: "💬", accent:"var(--p)" },
+                  { num: stats.activeSellers, lbl: "Active Sellers",      icon: "🏪", accent:"var(--p-dark)" },
+                  { num: stats.flagged,       lbl: "Flagged",             icon: "🚩", accent:"var(--red)" },
+                  { num: stats.pendingReqs,   lbl: "Pending Requests",    icon: "⏳", accent:"var(--yel)" },
                 ].map((s, i) => (
                   <div className="stat-card" key={i}>
                     <div style={{ fontSize:26, marginBottom:6 }}>{s.icon}</div>
@@ -250,8 +250,8 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ background:"#dcfce7", border:"1px solid #86efac", borderRadius:"var(--r-md)", padding:20, marginTop:8 }}>
-                <div style={{ fontWeight:800, color:"#15803d", marginBottom:8 }}>📊 Platform Health</div>
+              <div style={{ background:"var(--status-accepted-bg)", border:"1px solid var(--border-color)", borderRadius:"var(--r-md)", padding:20, marginTop:8 }}>
+                <div style={{ fontWeight:800, color:"var(--status-accepted-txt)", marginBottom:8 }}>📊 Platform Health</div>
                 <div style={{ display:"flex", gap:32, flexWrap:"wrap", fontSize:14, color:"var(--txt-2)" }}>
                   <div><strong>Conversion:</strong> {stats.totalListings > 0 ? `${Math.round((stats.sold/stats.totalListings)*100)}%` : "—"} items sold</div>
                   <div><strong>Free ratio:</strong> {stats.totalListings > 0 ? `${Math.round((stats.free/stats.totalListings)*100)}%` : "—"} donated</div>
@@ -302,7 +302,7 @@ export default function AdminPage() {
                       })
                       .filter(l => !listingSearch || l.title?.toLowerCase().includes(listingSearch.toLowerCase()) || l.sellerName?.toLowerCase().includes(listingSearch.toLowerCase()))
                       .map(l => (
-                        <tr key={l.id} style={{ background: l.flagged ? "#fff7ed" : "transparent" }}>
+                        <tr key={l.id} style={{ background: l.flagged ? "var(--status-pending-bg)" : "transparent" }}>
                           <td style={{ fontWeight: 700, maxWidth: 180 }}>
                             {l.flagged && <span style={{ color: "#0369a1", marginRight: 4 }}>🚩</span>}
                             {l.title}
@@ -315,7 +315,7 @@ export default function AdminPage() {
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {l.status === "active" && !l.flagged && (
                                 <>
-                                  <button className="btn btn-sm" style={{ background: "#e0f2fe", color: "#0369a1", border: "1px solid #0369a1", borderRadius: 6 }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
+                                  <button className="btn btn-sm" style={{ background: "var(--status-pending-bg)", color: "var(--status-pending-txt)", border: "1px solid var(--status-pending-txt)", borderRadius: 6 }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
                                   <button className="btn btn-danger btn-sm" onClick={() => removeListing(l.id)}>🚫 Remove</button>
                                 </>
                               )}
@@ -392,7 +392,7 @@ export default function AdminPage() {
                         u.email?.toLowerCase().includes(userSearch.toLowerCase())
                       )
                       .map(u => (
-                        <tr key={u.id} style={{ background: u.banned ? "#fff0f0" : "transparent" }}>
+                        <tr key={u.id} style={{ background: u.banned ? "var(--status-rejected-bg)" : "transparent" }}>
                           <td style={{ fontWeight: 700 }}>
                             {u.banned && <span style={{ marginRight: 4 }}>🚫</span>}
                             {u.name}
@@ -452,11 +452,11 @@ export default function AdminPage() {
                       
                       let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "Unverified" };
                       if (u.collegeVerified && u.verificationStatus === "approved") {
-                        statusBadgeColor = { bg: "var(--grn-light)", color: "var(--grn)", label: "🟢 Approved" };
+                        statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "🟢 Approved" };
                       } else if (u.verificationStatus === "pending") {
-                        statusBadgeColor = { bg: "#fef9c3", color: "#a16207", label: "🟡 Pending" };
+                        statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "🟡 Pending" };
                       } else if (u.verificationStatus === "rejected") {
-                        statusBadgeColor = { bg: "var(--red-light)", color: "var(--red)", label: "🔴 Rejected" };
+                        statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "🔴 Rejected" };
                       }
 
                       return (
