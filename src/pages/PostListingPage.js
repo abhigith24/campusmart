@@ -164,6 +164,9 @@ export default function PostListingPage({ setPage, editListing }) {
         sellerName:    userProfile?.name || currentUser.displayName || "Student",
         sellerCollege: userProfile?.college || "",
         sellerRating:  userProfile?.rating  || 0,
+        collegeVerified: userProfile?.collegeVerified || false,
+        isVerified: userProfile?.collegeVerified || false,
+        sellerSuccessfulSales: userProfile?.successfulSales || 0,
       };
 
       if (listingType === "rent") {

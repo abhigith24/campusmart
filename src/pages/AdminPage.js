@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, query, orderBy, where, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -36,6 +36,77 @@ export default function AdminPage() {
   const [listingSearch, setListingSearch] = useState("");
   const [listingFilter, setListingFilter] = useState("all");
   const [userSearch,    setUserSearch]    = useState("");
+  const [activeIdCardUrl, setActiveIdCardUrl] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  async function handleApproveVerification(uid) {
+    if (!window.confirm("Are you sure you want to APPROVE this user's college verification?")) return;
+    setActionLoading(true);
+    try {
+      // 1. Update user document
+      await updateDoc(doc(db, "users", uid), {
+        collegeVerified: true,
+        verificationStatus: "approved",
+        verifiedAt: serverTimestamp()
+      });
+
+      // 2. Update user's active listings
+      const q = query(
+        collection(db, "listings"),
+        where("sellerId", "==", uid),
+        where("status", "==", "active")
+      );
+      const snap = await getDocs(q);
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, "listings", d.id), {
+          collegeVerified: true,
+          isVerified: true
+        });
+      }
+
+      toast("College verification approved! ✅", "success");
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast("Failed to approve verification. ❌", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleRejectVerification(uid) {
+    if (!window.confirm("Are you sure you want to REJECT this user's college verification?")) return;
+    setActionLoading(true);
+    try {
+      // 1. Update user document
+      await updateDoc(doc(db, "users", uid), {
+        collegeVerified: false,
+        verificationStatus: "rejected"
+      });
+
+      // 2. Update user's active listings
+      const q = query(
+        collection(db, "listings"),
+        where("sellerId", "==", uid),
+        where("status", "==", "active")
+      );
+      const snap = await getDocs(q);
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, "listings", d.id), {
+          collegeVerified: false,
+          isVerified: false
+        });
+      }
+
+      toast("College verification rejected. ❌", "success");
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast("Failed to reject verification. ❌", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!userProfile?.isAdmin) return;
@@ -135,6 +206,7 @@ export default function AdminPage() {
     { id: "listings",  label: `📦 Listings (${stats.totalListings || 0}) ${stats.flagged > 0 ? `🚩${stats.flagged}` : ""}` },
     { id: "requests",  label: `🛒 Requests (${stats.pendingReqs || 0} pending)` },
     { id: "users",     label: `👤 Users (${stats.users || 0}) ${stats.banned > 0 ? `🚫${stats.banned}` : ""}` },
+    { id: "verifications", label: `🎓 Verifications (${users.filter(u => u.verificationStatus === "pending").length} pending)` }
   ];
 
   return (
@@ -215,7 +287,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
+              <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
                 <table className="report-table">
                   <thead>
                     <tr><th>Item</th><th>Seller</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr>
@@ -268,7 +340,7 @@ export default function AdminPage() {
 
           {/* ── Purchase Requests ── */}
           {tab === "requests" && (
-            <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
               <table className="report-table">
                 <thead>
                   <tr><th>Item</th><th>Buyer</th><th>Seller</th><th>Price</th><th>Status</th><th>Date</th></tr>
@@ -308,7 +380,7 @@ export default function AdminPage() {
                   {users.length} students registered
                 </div>
               </div>
-              <div style={{ background: "white", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
+              <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
                 <table className="report-table">
                   <thead>
                     <tr><th>Name</th><th>Email</th><th>College</th><th>Year</th><th>Rating</th><th>Admin</th><th>Actions</th></tr>
@@ -354,7 +426,127 @@ export default function AdminPage() {
               </div>
             </>
           )}
+
+          {/* ── College Verifications ── */}
+          {tab === "verifications" && (
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>College</th>
+                    <th>Status</th>
+                    <th>Submitted Date</th>
+                    <th>View ID Card</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users
+                    .filter(u => u.verificationStatus && u.verificationStatus !== "none")
+                    .map(u => {
+                      const submittedAt = u.verificationSubmittedAt?.toDate
+                        ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-IN")
+                        : "—";
+                      
+                      let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "Unverified" };
+                      if (u.collegeVerified && u.verificationStatus === "approved") {
+                        statusBadgeColor = { bg: "var(--grn-light)", color: "var(--grn)", label: "🟢 Approved" };
+                      } else if (u.verificationStatus === "pending") {
+                        statusBadgeColor = { bg: "#fef9c3", color: "#a16207", label: "🟡 Pending" };
+                      } else if (u.verificationStatus === "rejected") {
+                        statusBadgeColor = { bg: "var(--red-light)", color: "var(--red)", label: "🔴 Rejected" };
+                      }
+
+                      return (
+                        <tr key={u.id}>
+                          <td style={{ fontWeight: 700 }}>{u.name}</td>
+                          <td style={{ fontSize: 13 }}>{u.email}</td>
+                          <td>{u.college || "—"}</td>
+                          <td>
+                            <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
+                              {statusBadgeColor.label}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: 12, color: "var(--muted)" }}>{submittedAt}</td>
+                          <td>
+                            {u.collegeIdCardUrl ? (
+                              <button 
+                                className="btn btn-outline btn-xs"
+                                onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
+                              >
+                                View ID Card 👁️
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
+                            )}
+                          </td>
+                          <td>
+                            {u.verificationStatus === "pending" && (
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button 
+                                  className="btn btn-green btn-xs" 
+                                  onClick={() => handleApproveVerification(u.id)}
+                                  disabled={actionLoading}
+                                >
+                                  Approve
+                                </button>
+                                <button 
+                                  className="btn btn-danger btn-xs" 
+                                  onClick={() => handleRejectVerification(u.id)}
+                                  disabled={actionLoading}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                            {u.verificationStatus === "approved" && (
+                              <button 
+                                className="btn btn-danger btn-xs" 
+                                onClick={() => handleRejectVerification(u.id)}
+                                disabled={actionLoading}
+                              >
+                                Revoke Verification
+                              </button>
+                            )}
+                            {u.verificationStatus === "rejected" && (
+                              <button 
+                                className="btn btn-green btn-xs" 
+                                onClick={() => handleApproveVerification(u.id)}
+                                disabled={actionLoading}
+                              >
+                                Approve Anyway
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {users.filter(u => u.verificationStatus && u.verificationStatus !== "none").length === 0 && (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: "center", padding: "20px", color: "var(--muted)" }}>
+                        No college ID verification requests found in the database.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
+      )}
+
+      {activeIdCardUrl && (
+        <div className="modal-overlay" onClick={() => setActiveIdCardUrl(null)} style={{ zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)" }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+            <h3>College ID Card View</h3>
+            <div style={{ background: "var(--light)", borderRadius: "var(--r-md)", padding: "16px", margin: "16px 0", textAlign: "center" }}>
+              <img src={activeIdCardUrl} alt="College ID Card" style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: "var(--r-sm)" }} />
+            </div>
+            <button className="btn btn-outline" style={{ width: "100%", justifyContent: "center" }} onClick={() => setActiveIdCardUrl(null)}>Close</button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   collection, query, where, onSnapshot,
-  doc, updateDoc, addDoc, serverTimestamp
+  doc, updateDoc, addDoc, serverTimestamp, increment, getDoc, getDocs
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -57,7 +57,32 @@ export default function PurchaseRequestsPage({ setPage, setChatWith }) {
       await updateDoc(doc(db, "purchaseRequests", req.id), { status: "accepted" });
       // 2. Mark listing as sold
       await updateDoc(doc(db, "listings", req.listingId), { status: "sold" });
-      // 3. Notify buyer
+
+      // 3. Increment successfulSales on seller profile
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        successfulSales: increment(1)
+      });
+
+      // 4. Sync successfulSales count to all active listings of this seller
+      const q = query(
+        collection(db, "listings"),
+        where("sellerId", "==", currentUser.uid),
+        where("status", "==", "active")
+      );
+      const snap = await getDocs(q);
+
+      // Fetch the updated user profile to get the latest sales count
+      const userSnap = await getDoc(userRef);
+      const currentSales = userSnap.exists() ? (userSnap.data().successfulSales || 0) : 0;
+
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, "listings", d.id), {
+          sellerSuccessfulSales: currentSales
+        });
+      }
+
+      // 5. Notify buyer
       await addDoc(collection(db, "notifications"), {
         type:         "request_accepted",
         sellerId:     currentUser.uid,

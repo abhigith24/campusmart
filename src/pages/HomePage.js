@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { collection, query, where, orderBy, onSnapshot, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import ListingCard from "../components/ListingCard";
+import { useAuth } from "../context/AuthContext";
 
 const CATEGORIES = ["All","Textbooks","Notes","Lab Equipment","Electronics","Stationery","Girls","Misc"];
 const CONDITIONS = ["All","New","Good","Fair","Old"];
@@ -112,7 +113,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
   }, [open]);
 
   const filtered = options.filter(opt =>
-    opt.label.toLowerCase().includes(search.toLowerCase())
+    opt.val !== "DIVIDER" && opt.label.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -172,20 +173,25 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
                 No colleges found
               </div>
             ) : (
-              filtered.map(opt => (
-                <button
-                  key={opt.val}
-                  type="button"
-                  className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
-                  onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); }}
-                >
-                  <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2"
-                    viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: .5 }}>
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  </svg>
-                  {opt.label}
-                </button>
-              ))
+              filtered.map(opt => {
+                if (opt.val === "DIVIDER") {
+                  return <div key="divider" className="dd-divider-line" style={{ margin: "6px 0", height: "1px", background: "var(--bdr)" }} />;
+                }
+                return (
+                  <button
+                    key={opt.val}
+                    type="button"
+                    className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
+                    onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); }}
+                  >
+                    <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2"
+                      viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: .5 }}>
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                    {opt.label}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -194,9 +200,9 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
   );
 }
 
-function SkeletonCard() {
+function SkeletonCard({ layout = "grid" }) {
   return (
-    <div className="listing-card skeleton-card">
+    <div className={`listing-card skeleton-card ${layout === "list" ? "layout-list-card" : ""}`}>
       <div className="skeleton skeleton-img" />
       <div className="card-body">
         <div className="skeleton skeleton-line short" />
@@ -209,11 +215,61 @@ function SkeletonCard() {
 }
 
 export default function HomePage({ setPage, setSelectedListing, searchQuery, requireAuth }) {
+  const { userProfile } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
-  const [college, setCollege] = useState("All");
+  const [college, setCollege] = useState(() => {
+    const temp = sessionStorage.getItem("tempCollegeFilter");
+    if (temp) {
+      sessionStorage.removeItem("tempCollegeFilter");
+      return temp;
+    }
+    const saved = localStorage.getItem("selectedCollegeFilter");
+    if (saved) return saved;
+    return "All";
+  });
+
+  const [layout, setLayout] = useState(() => {
+    return userProfile?.marketplacePreferences?.defaultView === "List" ? "list" : "grid";
+  });
+
+  useEffect(() => {
+    if (userProfile?.marketplacePreferences?.defaultView) {
+      setLayout(userProfile.marketplacePreferences.defaultView.toLowerCase());
+    }
+  }, [userProfile]);
+
+  useEffect(() => {
+    const temp = sessionStorage.getItem("tempCollegeFilter");
+    if (temp) {
+      sessionStorage.removeItem("tempCollegeFilter");
+      setCollege(temp);
+      localStorage.setItem("selectedCollegeFilter", temp);
+      localStorage.setItem("hasVisitedCollegeFilter", "true");
+      return;
+    }
+
+    const hasVisited = localStorage.getItem("hasVisitedCollegeFilter");
+    if (!hasVisited && userProfile?.college) {
+      localStorage.setItem("hasVisitedCollegeFilter", "true");
+      localStorage.setItem("selectedCollegeFilter", userProfile.college);
+      setCollege(userProfile.college);
+    } else if (userProfile) {
+      if (userProfile?.marketplacePreferences?.defaultFeed === "My College" && userProfile?.college) {
+        setCollege(userProfile.college);
+        localStorage.setItem("selectedCollegeFilter", userProfile.college);
+      }
+    }
+  }, [userProfile]);
+
+  const handleSelectCollege = (val) => {
+    setCollege(val);
+    localStorage.setItem("selectedCollegeFilter", val);
+    localStorage.setItem("hasVisitedCollegeFilter", "true");
+  };
+
   const [freeOnly, setFreeOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [priceMin, setPriceMin] = useState("");
@@ -320,16 +376,56 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
   const collegeOptions = useMemo(() => {
-    const seen = new Set();
-    const opts = [{ val: "All", label: "All colleges" }];
+    // Count active listings per college
+    const collegeCounts = {};
     listings.forEach(l => {
-      if (l.sellerCollege && !seen.has(l.sellerCollege)) {
-        seen.add(l.sellerCollege);
-        opts.push({ val: l.sellerCollege, label: l.sellerCollege });
+      if (l.sellerCollege) {
+        collegeCounts[l.sellerCollege] = (collegeCounts[l.sellerCollege] || 0) + 1;
       }
     });
+
+    const totalListings = listings.length;
+    const userCollege = userProfile?.college || "";
+
+    // Dynamic list of other colleges (excluding user college)
+    const otherCollegesList = Object.keys(collegeCounts)
+      .filter(c => c !== userCollege)
+      .sort((a, b) => a.localeCompare(b));
+
+    const opts = [];
+    
+    // 1. All Colleges option
+    opts.push({ 
+      val: "All", 
+      label: `All Colleges (${totalListings})` 
+    });
+
+    // 2. My College option (prioritized on top if logged in)
+    if (userCollege) {
+      const userCollegeCount = collegeCounts[userCollege] || 0;
+      opts.push({ 
+        val: userCollege, 
+        label: `📍 My College - ${userCollege} (${userCollegeCount})` 
+      });
+    }
+
+    // 3. Add other colleges with a visual divider line
+    if (otherCollegesList.length > 0) {
+      opts.push({ 
+        val: "DIVIDER", 
+        label: "---"
+      });
+
+      otherCollegesList.forEach(c => {
+        opts.push({ 
+          val: c, 
+          label: `${c} (${collegeCounts[c]})` 
+        });
+      });
+    }
+
     return opts;
-  }, [listings]);
+  }, [listings, userProfile]);
 
   let filtered = listings;
   if (searchQuery) {
@@ -356,14 +452,14 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const catLabel = category === "All" ? "All categories" : category;
   const sortLabel = SORT_OPTS.find(o => o.val === sortBy)?.label || "Newest first";
   const condLabel = condition === "All" ? "Condition" : condition;
-  const collegeLabel = college === "All" ? "College" : (college.length > 18 ? college.slice(0, 16) + "…" : college);
+  const collegeLabel = college === "All" ? "Filter by College" : (college.length > 18 ? college.slice(0, 16) + "…" : college);
   const priceFilterActive = priceMin !== "" || priceMax !== "";
   const activeFilters = (category !== "All" ? 1 : 0) + (condition !== "All" ? 1 : 0) + (college !== "All" ? 1 : 0) + (freeOnly ? 1 : 0) + (sortBy !== "newest" ? 1 : 0) + (priceFilterActive ? 1 : 0);
 
   function clearAllFilters() {
     setCategory("All");
     setCondition("All");
-    setCollege("All");
+    handleSelectCollege("All");
     setFreeOnly(false);
     setSortBy("newest");
     setPriceMin("");
@@ -542,16 +638,36 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
       </div>
 
       <div className="container listings-section" id="listings-section" style={{ paddingTop: 28, paddingBottom: 48 }}>
-        <h2 className="homepage-section-title" style={{ borderBottom: "1px solid var(--bdr)", paddingBottom: "12px", marginBottom: "16px" }}>
-          All Campus Listings
-        </h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--bdr)", paddingBottom: "12px", marginBottom: "16px" }}>
+          <h2 className="homepage-section-title" style={{ margin: 0, border: "none", padding: 0 }}>
+            All Campus Listings
+          </h2>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button 
+              type="button" 
+              className={`btn btn-sm ${layout === "grid" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => setLayout("grid")}
+              style={{ padding: "6px 10px", minWidth: 0, fontSize: "14px", fontWeight: "700" }}
+              title="Grid View"
+            >
+              田
+            </button>
+            <button 
+              type="button" 
+              className={`btn btn-sm ${layout === "list" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => setLayout("list")}
+              style={{ padding: "6px 10px", minWidth: 0, fontSize: "14px", fontWeight: "700" }}
+              title="List View"
+            >
+              ☰
+            </button>
+          </div>
+        </div>
         <div className={`filter-bar ${filtered.length > 6 ? "is-sticky" : ""}`}>
           <DropdownBtn label={catLabel} options={CATEGORIES.map(c => ({ val:c, label:c === "All" ? "All categories" : c }))} selected={category} onSelect={setCategory} />
           <DropdownBtn label={sortLabel} options={SORT_OPTS} selected={sortBy} onSelect={setSortBy} />
           <DropdownBtn label={condLabel} options={CONDITIONS.map(c => ({ val:c, label:c === "All" ? "All conditions" : c }))} selected={condition} onSelect={setCondition} />
-          {collegeOptions.length > 1 && (
-            <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={setCollege} />
-          )}
+          <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={handleSelectCollege} />
 
           <div className="dd-wrap" ref={priceRef} style={{ position:"relative" }}>
             <button
@@ -607,8 +723,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
         </div>
 
         {loading ? (
-          <div className="listings-grid">
-            {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+          <div className={layout === "list" ? "listings-list" : "listings-grid"}>
+            {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} layout={layout} />)}
           </div>
         ) : filtered.length === 0 ? (
           college !== "All" && collegeOptions.length > 1 && !listings.some(l => l.sellerCollege === college) ? (
@@ -619,9 +735,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                 <rect x="14" y="14" width="4" height="8"/>
                 <circle cx="12" cy="9" r="1.5"/>
               </svg>
-              <h3>No listings in this college</h3>
-              <p>Try looking at listings from other campuses instead.</p>
-              <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={() => setCollege("All")}>Show All Colleges</button>
+              <h3>{college === userProfile?.college ? "No listings available from your college yet." : "No listings in this college"}</h3>
+              <p>{college === userProfile?.college ? "Be the first to list an item or view listings from other campuses." : "Try looking at listings from other campuses instead."}</p>
+              <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={() => handleSelectCollege("All")}>
+                {college === userProfile?.college ? "View All Colleges" : "Show All Colleges"}
+              </button>
             </div>
           ) : (
             <div className="empty-state">
@@ -640,9 +758,9 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           )
         ) : (
           <>
-            <div className="listings-grid">
+            <div className={layout === "list" ? "listings-list" : "listings-grid"}>
               {displayedListings.map(l => (
-                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+                <ListingCard key={l.id} listing={l} layout={layout} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
               ))}
             </div>
             {filtered.length > displayLimit && (

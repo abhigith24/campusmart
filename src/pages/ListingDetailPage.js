@@ -10,6 +10,9 @@ import { useWishlist } from "../context/WishlistContext";
 import RatingModal from "../components/RatingModal";
 import ListingCard from "../components/ListingCard";
 import { trackListingView, trackInitiatePurchase } from "../utils/analytics";
+import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
+import SameCampusBadge from "../components/SameCampusBadge";
+import TrustedSellerBadge from "../components/TrustedSellerBadge";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "#dcfce7", color: "#15803d" },
@@ -294,7 +297,29 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   async function handleMarkSold() {
     if (!window.confirm("Mark this listing as sold? You will no longer be able to edit it.")) return;
     try {
+      // 1. Mark listing as sold
       await updateDoc(doc(db, "listings", listing.id), { status: "sold" });
+
+      // 2. Increment successfulSales on user profile
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        successfulSales: increment(1)
+      });
+
+      // 3. Sync successfulSales count to all active listings of this seller
+      const q = query(
+        collection(db, "listings"),
+        where("sellerId", "==", currentUser.uid),
+        where("status", "==", "active")
+      );
+      const snap = await getDocs(q);
+      const newSalesCount = (userProfile?.successfulSales || 0) + 1;
+      for (const d of snap.docs) {
+        await updateDoc(doc(db, "listings", d.id), {
+          sellerSuccessfulSales: newSalesCount
+        });
+      }
+
       toast("Marked as sold! ✅", "success");
       setPage("home");
     } catch (err) {
@@ -429,7 +454,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
           )}
 
-          <div style={{ background:"#fff", borderRadius:"var(--r-md)", border:"1.5px solid var(--bdr)", padding:20, marginTop:16 }}>
+          <div style={{ background:"var(--surface)", borderRadius:"var(--r-md)", border:"1.5px solid var(--bdr)", padding:20, marginTop:16 }}>
             <h4 style={{ fontWeight:800, marginBottom:10 }}>📄 Description</h4>
             <p style={{ fontSize:14, lineHeight:1.7, color:"var(--muted)" }}>{listing.description}</p>
             <div style={{ marginTop:12, fontSize:13, color:"var(--muted-2)", display:"flex", gap:16 }}>
@@ -468,6 +493,13 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               {listing.isFree && <span className="badge" style={{ background: "#dcfce7", color: "#15803d", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Free</span>}
               {isSold && <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Sold</span>}
               <span className="badge" style={{ background: "var(--light)", color: "var(--txt-2)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{listing.category}</span>
+              {(listing.collegeVerified || listing.isVerified) && <VerifiedStudentBadge />}
+              {currentUser && userProfile?.college && listing.sellerCollege && userProfile.college.trim().toLowerCase() === listing.sellerCollege.trim().toLowerCase() && (
+                <SameCampusBadge />
+              )}
+              {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
+                <TrustedSellerBadge />
+              )}
             </div>
 
             {/* Redesigned Seller Card with Trust Stats */}
@@ -501,14 +533,18 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div className="seller-name" style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                     <span style={{ fontWeight: 800 }}>{sellerData?.name || listing.sellerName}</span>
-                    {sellerData?.isVerified && (
-                      <span className="card-verified-badge" title="Verified Student" style={{ padding: "1px 4px", fontSize: "9px" }}>
-                        Verified
-                      </span>
+                    {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
+                      <VerifiedStudentBadge />
+                    )}
+                    {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
+                      <TrustedSellerBadge />
                     )}
                   </div>
-                  <div className="seller-college" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: "12px", color: "var(--muted)" }}>
-                    {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}
+                  <div className="seller-college" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "12px", color: "var(--muted)" }}>
+                    <span>{[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}</span>
+                    {currentUser && userProfile?.college && sellerData?.college && userProfile.college.trim().toLowerCase() === sellerData.college.trim().toLowerCase() && (
+                      <SameCampusBadge />
+                    )}
                   </div>
                 </div>
               </div>

@@ -24,6 +24,10 @@ const COND_META = {
   Old:  { label:"Used", dot:"#ef4444", bg:"#fee2e2", color:"#991b1b" },
 };
 
+import VerifiedStudentBadge from "./VerifiedStudentBadge";
+import SameCampusBadge from "./SameCampusBadge";
+import TrustedSellerBadge from "./TrustedSellerBadge";
+
 function timeAgo(ts) {
   if (!ts) return "";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -34,13 +38,13 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day:"numeric", month:"short" });
 }
 
-export default function ListingCard({ listing, onClick, requireAuth }) {
-  const { currentUser } = useAuth();
+export default function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
+  const { currentUser, userProfile } = useAuth();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const {
     id, title, price, isFree, category, condition,
     images, sellerName, sellerCollege, sellerRating,
-    status, createdAt, isVerified, listingType, rentPerDay
+    status, createdAt, isVerified, collegeVerified, sellerSuccessfulSales, listingType, rentPerDay
   } = listing;
 
   const icon = CAT_ICONS[category] || "Item";
@@ -61,7 +65,7 @@ export default function ListingCard({ listing, onClick, requireAuth }) {
   }
 
   return (
-    <div className={`listing-card ${isFree ? "free-item" : ""} ${isSold ? "sold-item" : ""}`} onClick={onClick}>
+    <div className={`listing-card ${layout === "list" ? "layout-list-card" : ""} ${isFree ? "free-item" : ""} ${isSold ? "sold-item" : ""}`} onClick={onClick}>
       <div className="card-img">
         {images?.[0]
           ? <img src={images[0]} alt={title} loading="lazy" />
@@ -89,15 +93,14 @@ export default function ListingCard({ listing, onClick, requireAuth }) {
 
       <div className="card-body">
         <div className="card-top-row">
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
             <span className="card-cat">{category}</span>
-            {isVerified && (
-              <span className="card-verified-badge" title="Verified Student">
-                <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style={{ marginRight: 2 }}>
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-                Verified
-              </span>
+            {(collegeVerified || isVerified) && <VerifiedStudentBadge />}
+            {currentUser && userProfile?.college && sellerCollege && userProfile.college.trim().toLowerCase() === sellerCollege.trim().toLowerCase() && (
+              <SameCampusBadge />
+            )}
+            {sellerSuccessfulSales >= 3 && (
+              <TrustedSellerBadge />
             )}
           </div>
           {cond && !isSold && (

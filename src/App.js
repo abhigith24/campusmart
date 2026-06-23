@@ -15,6 +15,7 @@ import ProfilePage                       from "./pages/ProfilePage";
 import AdminPage                         from "./pages/AdminPage";
 import NotificationsPage                 from "./pages/NotificationsPage";
 import PurchaseRequestsPage              from "./pages/PurchaseRequestsPage";
+import SettingsPage                      from "./pages/SettingsPage";
 import PrivacyPolicyPage                 from "./pages/PrivacyPolicyPage";
 import TermsPage                         from "./pages/TermsPage";
 import ContactPage                       from "./pages/ContactPage";
@@ -22,6 +23,7 @@ import AuthModal                         from "./components/AuthModal";
 import { trackPageView }                 from "./utils/analytics";
 import { db }                            from "./firebase";
 import { doc, getDoc }                   from "firebase/firestore";
+import { ThemeProvider }                  from "./context/ThemeContext";
 import "./styles/main.css";
 
 // Pages that should NOT show Footer
@@ -30,19 +32,21 @@ const NO_FOOTER = ["chat"];
 const FULL_HEIGHT = ["chat"];
 
 // Pages that require authentication
-const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin"];
+const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings"];
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <WishlistProvider>
-          <NotificationsProvider>
-            <Main />
-          </NotificationsProvider>
-        </WishlistProvider>
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <WishlistProvider>
+            <NotificationsProvider>
+              <Main />
+            </NotificationsProvider>
+          </WishlistProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
@@ -64,6 +68,7 @@ function Main() {
     if (path === "/notifications") return "notifications";
     if (path === "/purchase-requests") return "purchase-requests";
     if (path === "/admin") return "admin";
+    if (path === "/settings") return "settings";
     if (path.startsWith("/listing/")) return "listing";
     return "home";
   };
@@ -120,6 +125,7 @@ function Main() {
     else if (nextPage === "notifications") path = "/notifications";
     else if (nextPage === "purchase-requests") path = "/purchase-requests";
     else if (nextPage === "admin") path = "/admin";
+    else if (nextPage === "settings") path = "/settings";
     else if (nextPage === "contact") path = "/contact";
     else if (nextPage === "auth") path = "/auth";
     else if (nextPage === "listing") {
@@ -161,6 +167,7 @@ function Main() {
       else if (path === "/notifications") setPage("notifications");
       else if (path === "/purchase-requests") setPage("purchase-requests");
       else if (path === "/admin") setPage("admin");
+      else if (path === "/settings") setPage("settings");
       else if (path.startsWith("/listing/")) {
         const id = path.split("/")[2];
         if (id) {
@@ -226,6 +233,7 @@ function Main() {
     notifications:     "Notifications",
     "purchase-requests": "Purchase Requests",
     admin:             "Admin Dashboard",
+    settings:          "Account Settings",
     privacy:           "Privacy Policy",
     terms:             "Terms of Service",
     contact:           "Contact Us",
@@ -316,6 +324,7 @@ function Main() {
           <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
         )}
         {page === "admin"   && <AdminPage />}
+        {page === "settings" && <SettingsPage setPage={navigateTo} />}
         {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
         {page === "terms"   && <TermsPage setPage={navigateTo} />}
         {page === "contact" && <ContactPage setPage={navigateTo} />}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  collection, query, where, doc, getDoc, updateDoc, onSnapshot, getDocs
+  collection, query, where, doc, getDoc, updateDoc, onSnapshot, getDocs, serverTimestamp
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,9 @@ import { useToast } from "../context/ToastContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useNotifications } from "../context/NotificationsContext";
 import ListingCard from "../components/ListingCard";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
+import TrustedSellerBadge from "../components/TrustedSellerBadge";
 
 const BRANCHES = ["Computer Science","Electronics","Mechanical","Civil","Chemical","MBA","Other"];
 const YEARS    = ["1st Year","2nd Year","3rd Year","4th Year","PG"];
@@ -135,6 +138,144 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const [editCollege, setEditCollege] = useState("");
   const [editBranch,  setEditBranch]  = useState("");
   const [editYear,    setEditYear]    = useState("");
+
+  const [idFile,       setIdFile]       = useState(null);
+  const [idPreview,    setIdPreview]    = useState("");
+  const [uploadingId,  setUploadingId]  = useState(false);
+  const [idCollege,    setIdCollege]    = useState("");
+
+  useEffect(() => {
+    if (profileData?.college) {
+      setIdCollege(profileData.college);
+    }
+  }, [profileData]);
+
+  const handleIdFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast("Invalid file type. Please upload JPG, PNG, or WEBP only. ❌", "error");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast("File is too large. Max size is 5MB. ❌", "error");
+      return;
+    }
+
+    setIdFile(file);
+    setIdPreview(URL.createObjectURL(file));
+  };
+
+  const handleIdSubmit = async (e) => {
+    e.preventDefault();
+    if (!idFile) {
+      toast("Please select an ID card image first. ❌", "error");
+      return;
+    }
+    const finalCollegeName = idCollege.trim() || profileData?.college || "";
+    if (!finalCollegeName) {
+      toast("Please enter your college name. ❌", "error");
+      return;
+    }
+
+    setUploadingId(true);
+    try {
+      const imageUrl = await uploadToCloudinary(idFile, "campusmart/verifications");
+      const userRef = doc(db, "users", currentUser.uid);
+      const updates = {
+        college: finalCollegeName,
+        collegeVerified: false,
+        verificationStatus: "pending",
+        verificationMethod: "id_card",
+        collegeIdCardUrl: imageUrl,
+        verificationSubmittedAt: serverTimestamp()
+      };
+      await updateDoc(userRef, updates);
+      await fetchProfile(currentUser.uid);
+      toast("Verification request submitted! 🎓", "success");
+      setIdFile(null);
+      setIdPreview("");
+    } catch (err) {
+      console.error("ID upload error:", err);
+      toast("Failed to submit verification request. ❌", "error");
+    } finally {
+      setUploadingId(false);
+    }
+  };
+
+  const renderUploadForm = () => {
+    return (
+      <form onSubmit={handleIdSubmit} style={{ marginTop: "12px", borderTop: "1px dashed var(--bdr)", paddingTop: "14px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="form-group">
+            <label className="form-label" style={{ fontWeight: 700 }}>College Name</label>
+            <input 
+              className="form-input" 
+              type="text" 
+              placeholder="e.g. VGU Jaipur" 
+              value={idCollege} 
+              onChange={e => setIdCollege(e.target.value)} 
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontWeight: 700 }}>College ID Card Image</label>
+            <div 
+              style={{
+                border: "2px dashed var(--bdr)",
+                borderRadius: "var(--r-md)",
+                padding: "20px",
+                textAlign: "center",
+                background: "var(--bg)",
+                cursor: "pointer",
+                position: "relative"
+              }}
+              onClick={() => document.getElementById("college-id-picker").click()}
+            >
+              <input 
+                id="college-id-picker"
+                type="file" 
+                accept=".jpg,.jpeg,.png,.webp" 
+                onChange={handleIdFileChange} 
+                style={{ display: "none" }} 
+              />
+              {idPreview ? (
+                <div style={{ position: "relative", width: "100%", height: "150px" }}>
+                  <img src={idPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "var(--r-sm)" }} />
+                  <button 
+                    type="button" 
+                    className="img-remove" 
+                    onClick={(e) => { e.stopPropagation(); setIdFile(null); setIdPreview(""); }}
+                    style={{ position: "absolute", top: "5px", right: "5px" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div style={{ color: "var(--muted)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "28px" }}>📷</span>
+                  <span style={{ fontSize: "13px", fontWeight: "700" }}>Click to select your College ID card</span>
+                  <span style={{ fontSize: "11px" }}>JPG, PNG, WEBP up to 5MB</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={uploadingId || !idFile || !idCollege.trim()}
+            style={{ width: "100%", justifyContent: "center" }}
+          >
+            {uploadingId ? "Uploading to Cloudinary..." : "Submit for Verification 🚀"}
+          </button>
+        </div>
+      </form>
+    );
+  };
 
   useEffect(() => {
     if (!isSelf) {
@@ -312,7 +453,12 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
               <>
                 <div className="profile-name" style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
                   {profileData?.name}
-                  {profileData?.isVerified && <span className="verified-badge-lg">✓ Verified Student</span>}
+                  {(profileData?.collegeVerified || profileData?.isVerified) && (
+                    <VerifiedStudentBadge size="lg" />
+                  )}
+                  {profileData?.successfulSales >= 3 && (
+                    <TrustedSellerBadge size="lg" />
+                  )}
                 </div>
                 <div className="profile-college">
                   {[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}
@@ -340,11 +486,13 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         {/* 6 trust stats grid */}
         <div className="trust-statistics-row" style={{ margin: 0 }}>
           <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-              {profileData?.isVerified ? "Verified" : "Unverified"}
+            <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+              {profileData?.collegeVerified || profileData?.isVerified ? "🟢 Verified" : 
+               profileData?.verificationStatus === "pending" ? "🟡 Pending" : 
+               profileData?.verificationStatus === "rejected" ? "🔴 Rejected" : "⚪ Unverified"}
             </div>
             <div className="trust-stat-label">Student Status</div>
-            <div className="trust-stat-desc">College email check</div>
+            <div className="trust-stat-desc">College ID verification</div>
           </div>
           <div className="trust-stat-card" style={{ padding: "16px" }}>
             <div className="trust-stat-num" style={{ fontSize: "20px" }}>
@@ -383,6 +531,85 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
           </div>
         </div>
       </div>
+
+      {/* College Verification Section */}
+      {isSelf && (
+        <div className="form-card college-verification-section" style={{ marginTop: "24px" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px", color: "var(--txt)" }}>
+            🎓 College ID Verification
+          </h3>
+          <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "16px" }}>
+            Verify your student status by uploading your college ID card. Verified students get a trust badge on their listings.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {(() => {
+              const status = profileData?.verificationStatus || "none";
+              const isVerified = profileData?.collegeVerified || false;
+
+              if (isVerified || status === "approved") {
+                return (
+                  <div style={{ background: "var(--grn-light)", border: "1.5px solid rgba(34,197,94,.2)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>🟢</span>
+                    <div>
+                      <div style={{ fontWeight: "800", color: "var(--grn)", fontSize: "14px" }}>Verified Student</div>
+                      <div style={{ fontSize: "12px", color: "var(--txt-2)", marginTop: "2px" }}>
+                        Your college ID has been approved. You belong to <strong>{profileData?.college || "your campus"}</strong>.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (status === "pending") {
+                return (
+                  <div style={{ background: "#fef9c3", border: "1.5px solid #fef08a", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>🟡</span>
+                    <div>
+                      <div style={{ fontWeight: "800", color: "#a16207", fontSize: "14px" }}>Verification Pending</div>
+                      <div style={{ fontSize: "12px", color: "var(--txt-2)", marginTop: "2px" }}>
+                        Your request is currently being reviewed by our admin team. This usually takes less than 24 hours.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (status === "rejected") {
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <div style={{ background: "#fee2e2", border: "1.5px solid #fecaca", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontSize: "24px" }}>🔴</span>
+                      <div>
+                        <div style={{ fontWeight: "800", color: "var(--red)", fontSize: "14px" }}>Verification Rejected</div>
+                        <div style={{ fontSize: "12px", color: "var(--txt-2)", marginTop: "2px" }}>
+                          Your ID card was not accepted. Please ensure the image is clear and displays your name and expiration date.
+                        </div>
+                      </div>
+                    </div>
+                    {renderUploadForm()}
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div style={{ background: "var(--light)", border: "1.5px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>⚪</span>
+                    <div>
+                      <div style={{ fontWeight: "800", color: "var(--txt-2)", fontSize: "14px" }}>Not Verified</div>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
+                        Verify your campus association to trade safely with other students.
+                      </div>
+                    </div>
+                  </div>
+                  {renderUploadForm()}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Tab Nav */}
       <div className="profile-tabs" style={{ flexWrap:"wrap" }}>
