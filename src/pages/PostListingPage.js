@@ -235,7 +235,7 @@ export default function PostListingPage({ setPage, editListing }) {
 
       if (isEdit) {
         await updateDoc(doc(db, "listings", editListing.id), baseData);
-        toast("Listing updated! ✅", "success");
+        toast("Listing updated!", "success");
       } else {
         await addDoc(collection(db, "listings"), {
           ...baseData,

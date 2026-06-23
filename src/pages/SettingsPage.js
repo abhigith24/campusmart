@@ -156,7 +156,7 @@ export default function SettingsPage({ setPage }) {
       await fetchProfile(currentUser.uid);
       setEditing(false);
       setPhotoFile(null);
-      toast("Account settings updated successfully! ✅", "success");
+      toast("Account settings updated successfully!", "success");
     } catch (err) {
       console.error(err);
       toast("Failed to update profile. ❌", "error");

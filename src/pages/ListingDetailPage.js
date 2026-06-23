@@ -321,7 +321,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         });
       }
 
-      toast("Marked as sold! ✅", "success");
+      toast("Marked as sold!", "success");
       setPage("home");
     } catch (err) {
       toast("Failed to mark sold: " + err.message, "error");

@@ -38,7 +38,7 @@ export default function UserManagementPage({ setPage }) {
   async function toggleAdmin(uid, current) {
     try {
       await updateDoc(doc(db, "users", uid), { isAdmin: !current });
-      toast(`Admin ${!current ? "granted" : "revoked"} ✅`, "success");
+      toast(`Admin ${!current ? "granted" : "revoked"}`, "success");
       loadData();
     } catch (err) {
       console.error(err);
@@ -63,7 +63,7 @@ export default function UserManagementPage({ setPage }) {
   async function unbanUser(uid) {
     try {
       await updateDoc(doc(db, "users", uid), { banned: false });
-      toast("User unbanned ✅", "success");
+      toast("User unbanned", "success");
       loadData();
     } catch (err) {
       console.error(err);

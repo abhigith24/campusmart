@@ -60,7 +60,7 @@ export default function AdminDashboardPage({ setPage }) {
   async function removeListing(id) {
     try {
       await updateDoc(doc(db, "listings", id), { status: "removed" });
-      toast("Listing removed ✅", "success");
+      toast("Listing removed", "success");
       loadData();
     } catch (err) {
       console.error(err);
@@ -71,7 +71,7 @@ export default function AdminDashboardPage({ setPage }) {
   async function restoreListing(id) {
     try {
       await updateDoc(doc(db, "listings", id), { status: "active" });
-      toast("Listing restored ✅", "success");
+      toast("Listing restored", "success");
       loadData();
     } catch (err) {
       console.error(err);
@@ -93,7 +93,7 @@ export default function AdminDashboardPage({ setPage }) {
   async function unflagListing(id) {
     try {
       await updateDoc(doc(db, "listings", id), { flagged: false });
-      toast("Flag removed ✅", "success");
+      toast("Flag removed", "success");
       loadData();
     } catch (err) {
       console.error(err);

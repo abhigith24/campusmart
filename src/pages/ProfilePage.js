@@ -205,7 +205,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
     });
     await fetchProfile(currentUser.uid);
     setEditing(false);
-    toast("Profile updated! ✅", "success");
+    toast("Profile updated!", "success");
   }
 
   const activeListings = listings.filter(l => l.status === "active");

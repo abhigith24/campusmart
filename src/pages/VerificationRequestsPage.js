@@ -52,7 +52,7 @@ export default function VerificationRequestsPage({ setPage }) {
         isVerified: true
       })));
 
-      toast("College verification approved! ✅", "success");
+      toast("College verification approved!", "success");
       loadData();
     } catch (err) {
       console.error(err);
