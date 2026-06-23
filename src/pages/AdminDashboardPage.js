@@ -3,6 +3,7 @@ import { collection, getDocs, doc, updateDoc, query, orderBy } from "firebase/fi
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import AdminLayout from "../components/AdminLayout";
 
 const STATUS_COLORS = {
   active:   { bg:"var(--status-accepted-bg)", color:"var(--status-accepted-txt)" },
@@ -24,7 +25,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function AdminDashboardPage() {
+export default function AdminDashboardPage({ setPage }) {
   const { userProfile } = useAuth();
   const toast = useToast();
   const [tab, setTab] = useState("listings");
@@ -116,7 +117,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="container admin-page" style={{ padding: "30px 20px 80px" }}>
+    <AdminLayout activePage="admin" setPage={setPage}>
       <div className="page-header" style={{ marginBottom: "20px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>🛡️ Admin Dashboard</h2>
         <p style={{ color: "var(--muted)" }}>Moderate Listings & View Marketplace Requests</p>
@@ -240,6 +241,6 @@ export default function AdminDashboardPage() {
           )}
         </>
       )}
-    </div>
+    </AdminLayout>
   );
 }

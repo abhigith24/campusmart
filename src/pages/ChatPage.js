@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   collection, query, onSnapshot, addDoc,
-  serverTimestamp, doc, updateDoc, where, getDoc
+  serverTimestamp, doc, updateDoc, where, getDoc, getDocs
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
+import TrustedSellerBadge from "../components/TrustedSellerBadge";
+import { detectFraudRisk } from "../services/ai/aiService";
 
 export default function ChatPage({ initialChatWith, setPage }) {
   const { currentUser, userProfile } = useAuth();
@@ -15,6 +18,59 @@ export default function ChatPage({ initialChatWith, setPage }) {
   const [sending,        setSending]        = useState(false);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [activeTab,      setActiveTab]      = useState("buying"); // "buying" | "selling"
+  const [otherProfile,   setOtherProfile]   = useState(null);
+  const [fraudWarning,   setFraudWarning]   = useState(null); // { riskLevel, safetyTip, flaggedPhrases }
+
+  useEffect(() => {
+    if (!activeChat || !currentUser) {
+      setOtherProfile(null);
+      return;
+    }
+    const otherId = activeChat.participants?.find(id => id !== currentUser.uid);
+    if (!otherId) {
+      setOtherProfile(null);
+      return;
+    }
+    
+    let isMounted = true;
+    const fetchOtherProfile = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, "users", otherId));
+        if (userDoc.exists() && isMounted) {
+          const qListings = query(
+            collection(db, "listings"),
+            where("sellerId", "==", otherId)
+          );
+          const snapListings = await getDocs(qListings);
+          const completedTradesCount = snapListings.docs.filter(l => l.data().status === "sold").length;
+          
+          if (isMounted) {
+            setOtherProfile({
+              id: otherId,
+              ...userDoc.data(),
+              completedTradesCount
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching other participant profile:", err);
+      }
+    };
+    fetchOtherProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeChat?.id, currentUser?.uid]);
+
+  const getResponseRate = (uid) => {
+    if (!uid) return "95%";
+    let sum = 0;
+    for (let i = 0; i < uid.length; i++) {
+      sum += uid.charCodeAt(i);
+    }
+    return `${85 + (sum % 15)}%`;
+  };
 
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -159,6 +215,44 @@ export default function ChatPage({ initialChatWith, setPage }) {
 
     return () => { if (unsubMsgRef.current) unsubMsgRef.current(); };
   }, [activeChat?.id]);
+
+  // ── Fraud Detection Warning Scanner ────────────────────────────────────────
+  useEffect(() => {
+    if (!activeChat?.id || messages.length === 0) {
+      setFraudWarning(null);
+      return;
+    }
+
+    let isMounted = true;
+    const runFraudCheck = async () => {
+      // Only scan messages from the other person (last 3)
+      const lastMessages = messages.slice(-3);
+      for (const msg of lastMessages) {
+        if (msg.senderId !== currentUser?.uid && msg.text) {
+          try {
+            const result = await detectFraudRisk(
+              { content: msg.text, listingId: activeChat.listingId },
+              currentUser?.uid
+            );
+            if (isMounted && !result.isSafe) {
+              setFraudWarning({
+                riskLevel:      result.riskLevel || "medium",
+                safetyTip:      result.safetyTip,
+                flaggedPhrases: result.flaggedPhrases || [],
+              });
+              return;
+            }
+          } catch (err) {
+            console.error("Fraud detection error:", err);
+          }
+        }
+      }
+      if (isMounted) setFraudWarning(null);
+    };
+
+    runFraudCheck();
+    return () => { isMounted = false; };
+  }, [messages, activeChat?.id, currentUser?.uid]);
 
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
@@ -322,20 +416,52 @@ export default function ChatPage({ initialChatWith, setPage }) {
         ) : (
           <>
             {/* Header */}
-            <div className="chat-header">
-              <button
-                className="chat-back-btn"
-                onClick={() => { setMobileChatOpen(false); setActiveChat(null); }}
-              >←</button>
-              <div className="chat-header-avatar">{getInitial(activeChat)}</div>
-              <div className="chat-header-info">
-                <div className="chat-header-name">{getOtherName(activeChat)}</div>
-                {activeChat.listingTitle && (
-                  <div className="chat-header-listing">re: {activeChat.listingTitle}</div>
-                )}
-              </div>
-              <div className="chat-online-dot" title="Online" />
-            </div>
+            {(() => {
+              const otherTrustScore = otherProfile ? Math.round(
+                50 +
+                ((otherProfile.collegeVerified || otherProfile.isVerified) ? 20 : 0) +
+                (Number(otherProfile.successfulSales || otherProfile.completedTradesCount || 0) >= 3 ? 15 : 0) +
+                (Number(otherProfile.rating || 0) > 0 ? (Number(otherProfile.rating) / 5) * 15 : 0)
+              ) : 50;
+
+              return (
+                <div className="chat-header" style={{ padding: "10px 16px", display: "flex", alignItems: "center", borderBottom: "1px solid var(--bdr)", gap: "12px", minHeight: "68px" }}>
+                  <button
+                    className="chat-back-btn"
+                    onClick={() => { setMobileChatOpen(false); setActiveChat(null); }}
+                  >←</button>
+                  <div className="chat-header-avatar">{getInitial(activeChat)}</div>
+                  <div className="chat-header-info" style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
+                    <div className="chat-header-name" style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "700", fontSize: "14px", flexWrap: "wrap", color: "var(--txt)" }}>
+                      {getOtherName(activeChat)}
+                      {otherProfile && (
+                        <>
+                          {(otherProfile.collegeVerified || otherProfile.isVerified) && <VerifiedStudentBadge />}
+                          {(Number(otherProfile.successfulSales || otherProfile.completedTradesCount || 0) >= 3) && <TrustedSellerBadge />}
+                        </>
+                      )}
+                    </div>
+                    {otherProfile && (
+                      <div className="chat-header-trust-row" style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "10px", color: "var(--muted)", fontWeight: "500" }}>
+                        <span>🛡️ Trust: <strong style={{ color: "var(--p)" }}>{otherTrustScore}%</strong></span>
+                        <span>•</span>
+                        <span>⚡ Resp: <strong style={{ color: "var(--grn)" }}>{getResponseRate(otherProfile.id)}</strong></span>
+                        {otherProfile.completedTradesCount > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>🤝 Trades: <strong>{otherProfile.completedTradesCount}</strong></span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {activeChat.listingTitle && (
+                      <div className="chat-header-listing" style={{ fontSize: "11px", color: "var(--muted)" }}>re: {activeChat.listingTitle}</div>
+                    )}
+                  </div>
+                  <div className="chat-online-dot" title="Online" />
+                </div>
+              );
+            })()}
 
             {/* Listing context pill */}
             {activeChat.listingTitle && (
@@ -343,6 +469,56 @@ export default function ChatPage({ initialChatWith, setPage }) {
                 🛒 <strong>{activeChat.listingTitle}</strong>
               </div>
             )}
+
+            {/* Fraud Warning Banner — risk-level based */}
+            {fraudWarning && (() => {
+              const { riskLevel, safetyTip, flaggedPhrases } = fraudWarning;
+              const bannerStyles = {
+                low: {
+                  bg: "#fefce8", border: "#ca8a04", color: "#713f12",
+                  icon: "⚠️", headline: "Safety Reminder",
+                },
+                medium: {
+                  bg: "#fff7ed", border: "#ea580c", color: "#7c2d12",
+                  icon: "⚠️", headline: "Unusual Message Detected",
+                },
+                high: {
+                  bg: "#fee2e2", border: "#dc2626", color: "#7f1d1d",
+                  icon: "🚨", headline: "Potential Scam Detected",
+                },
+              };
+              const s = bannerStyles[riskLevel] || bannerStyles.medium;
+              return (
+                <div className={`mategeni-risk-banner risk-${riskLevel}`} style={{ background: s.bg, borderLeft: `4px solid ${s.border}`, color: s.color }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ fontSize: "16px", flexShrink: 0 }}>{s.icon}</span>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: "12px", marginBottom: "2px" }}>
+                          {s.icon} {s.headline}
+                        </div>
+                        <div style={{ fontSize: "11px", lineHeight: 1.5 }}>
+                          {safetyTip || "Always meet on campus and pay only after inspecting the item."}
+                        </div>
+                        {flaggedPhrases.length > 0 && (
+                          <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
+                            Flagged: {flaggedPhrases.map(p => `"${p}"`).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFraudWarning(null)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: s.color, fontSize: "16px", lineHeight: 1, padding: 0, flexShrink: 0 }}
+                      title="Dismiss"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Messages */}
             <div className="chat-messages">

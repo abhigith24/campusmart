@@ -3,8 +3,9 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import AdminLayout from "../components/AdminLayout";
 
-export default function AnalyticsReportsPage() {
+export default function AnalyticsReportsPage({ setPage }) {
   const { userProfile } = useAuth();
   const toast = useToast();
   const [stats, setStats] = useState({});
@@ -73,9 +74,9 @@ export default function AnalyticsReportsPage() {
   }
 
   return (
-    <div className="container admin-page" style={{ padding: "30px 20px 80px" }}>
+    <AdminLayout activePage="admin-analytics" setPage={setPage}>
       <div className="page-header" style={{ marginBottom: "20px" }}>
-        <h2 style={{ fontSize: "24px", fontWeight: 800 }}>📈 Analytics & Reports</h2>
+        <h2 style={{ fontSize: "24px", fontWeight: 800 }}>📊 Analytics</h2>
         <p style={{ color: "var(--muted)" }}>Monitor platform usage and health diagnostics</p>
       </div>
 
@@ -115,6 +116,6 @@ export default function AnalyticsReportsPage() {
           </div>
         </>
       )}
-    </div>
+    </AdminLayout>
   );
 }

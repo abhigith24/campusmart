@@ -539,6 +539,11 @@ body, .navbar, .listing-card, .detail-card, .form-card, .modal, .dd-menu, .btn, 
   color: #4ade80 !important;
   border-color: rgba(74, 222, 128, 0.3) !important;
 }
+[data-theme="dark"] .card-trust-score {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #60a5fa !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
+}
 
 /* Category shortcut card label */
 [data-theme="dark"] .category-shortcut-label {
@@ -2146,7 +2151,7 @@ input,textarea,select { font-family:inherit }
 }
 @media(max-width:600px) {
   .post-container { padding:20px 16px 0 }
-  .post-cat-grid { grid-template-columns:repeat(3,1fr) }
+  .post-cat-grid { grid-template-columns:repeat(2,1fr) }
   .post-cond-grid { grid-template-columns:repeat(2,1fr) }
   .post-img-grid { grid-template-columns:repeat(3,1fr) }
   .post-price-row { flex-direction:column }
@@ -2261,6 +2266,18 @@ input,textarea,select { font-family:inherit }
   padding:2px 7px; border-radius:var(--r-full);
   background:#dcfce7; color:#16a34a;
   font-size:11px; font-weight:700; border:1px solid #bbf7d0;
+}
+.card-trust-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--p-light);
+  color: var(--p);
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid var(--p-mid);
 }
 .verified-badge-lg {
   display:inline-flex; align-items:center; gap:4px;
@@ -4995,4 +5012,492 @@ button {
   }
 }
 
+@media (max-width: 768px) {
+  .admin-sidebar {
+    display: none !important;
+  }
+  .admin-mobile-nav {
+    display: flex !important;
+  }
+  .admin-main-content {
+    padding: 16px !important;
+  }
+}
 
+/* ════════════════════════════════════════════════════
+   MATEGENI AI ASSISTANT
+   ════════════════════════════════════════════════════ */
+.mategeni-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.mategeni-fab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, var(--p) 0%, var(--ind) 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+  transition: all 0.3s var(--spring);
+}
+.mategeni-fab:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+.mategeni-fab-icon {
+  font-size: 16px;
+  animation: mategeni-pulse 2s infinite ease-in-out;
+}
+
+.mategeni-window {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  width: 350px;
+  height: 480px;
+  background: var(--bg-primary);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  box-shadow: var(--s3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: mategeni-slide-in 0.3s var(--spring);
+}
+[data-theme="dark"] .mategeni-window {
+  background: var(--surface) !important;
+  border-color: var(--bdr) !important;
+}
+
+.mategeni-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--p) 0%, var(--ind) 100%);
+  color: #ffffff;
+}
+.mategeni-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mategeni-header-icon {
+  font-size: 18px;
+}
+.mategeni-close-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.mategeni-close-btn:hover {
+  opacity: 1;
+}
+
+.mategeni-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mategeni-msg-row {
+  display: flex;
+  width: 100%;
+}
+.mategeni-msg-row.user {
+  justify-content: flex-end;
+}
+.mategeni-msg-row.ai {
+  justify-content: flex-start;
+}
+.mategeni-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.mategeni-bubble.user {
+  background: var(--p);
+  color: #ffffff;
+  border-bottom-right-radius: 2px;
+}
+.mategeni-bubble.ai {
+  background: var(--bg-tertiary);
+  color: var(--txt);
+  border-bottom-left-radius: 2px;
+  white-space: pre-wrap;
+}
+[data-theme="dark"] .mategeni-bubble.ai {
+  background: var(--bg-secondary) !important;
+  color: var(--txt) !important;
+}
+
+.mategeni-chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--bdr);
+  background: var(--bg-secondary);
+}
+[data-theme="dark"] .mategeni-chip-container {
+  background: var(--bg-primary) !important;
+  border-color: var(--bdr) !important;
+}
+.mategeni-chip {
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  background: var(--bg-primary);
+  color: var(--txt-2);
+  border: 1px solid var(--bdr);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mategeni-chip:hover {
+  background: var(--p-light);
+  color: var(--p);
+  border-color: var(--p-mid);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .mategeni-chip {
+  background: var(--surface) !important;
+  border-color: var(--bdr) !important;
+  color: var(--txt-2) !important;
+}
+[data-theme="dark"] .mategeni-chip:hover {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #60a5fa !important;
+  border-color: rgba(96, 165, 250, 0.4) !important;
+}
+
+.mategeni-input-area {
+  display: flex;
+  padding: 10px 16px;
+  gap: 8px;
+  border-top: 1px solid var(--bdr);
+  background: var(--bg-primary);
+}
+[data-theme="dark"] .mategeni-input-area {
+  background: var(--surface) !important;
+  border-color: var(--bdr) !important;
+}
+.mategeni-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-sm);
+  background: var(--bg-secondary);
+  color: var(--txt);
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.mategeni-input:focus {
+  border-color: var(--p);
+}
+[data-theme="dark"] .mategeni-input {
+  background: var(--bg-primary) !important;
+  border-color: var(--bdr) !important;
+  color: var(--txt) !important;
+}
+.mategeni-send-btn {
+  padding: 8px 16px;
+  border-radius: var(--r-sm);
+  background: var(--p);
+  color: #ffffff;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mategeni-send-btn:hover:not(:disabled) {
+  background: var(--p-dark);
+}
+.mategeni-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes mategeni-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); text-shadow: 0 0 8px rgba(255,255,255,0.6); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mategeni-slide-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+  .mategeni-container {
+    bottom: 16px;
+    right: 16px;
+  }
+  .mategeni-window {
+    width: calc(100vw - 32px);
+    height: 400px;
+    bottom: 56px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MATEGENI PRODUCTION UI — v2.0
+   Price Card · Risk Banners · Category Banner · Chips · Results
+════════════════════════════════════════════════════════════════ */
+
+/* ── Price Suggestion Card ──────────────────────────────────── */
+.mategeni-price-card {
+  margin-top: 12px;
+  border: 1.5px solid var(--p-mid);
+  border-radius: var(--r-md);
+  background: var(--p-glow);
+  overflow: hidden;
+  animation: mategeni-slide-in 0.25s var(--ease);
+}
+.mategeni-price-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--p-light);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--p);
+  border-bottom: 1px solid var(--p-mid);
+}
+.mategeni-price-conf { font-size: 10px; font-weight: 600; color: var(--p-dark); opacity: 0.75; }
+.mategeni-price-cols {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+}
+.mategeni-price-col {
+  padding: 12px 10px;
+  text-align: center;
+  border-right: 1px solid var(--p-mid);
+}
+.mategeni-price-col:last-child { border-right: none; }
+.mategeni-price-col.recommended { background: var(--p-light); }
+.mategeni-price-col-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.mategeni-price-col.recommended .mategeni-price-col-label { color: var(--p); }
+.mategeni-price-col-val { font-size: 15px; font-weight: 800; color: var(--txt); }
+.mategeni-price-col.recommended .mategeni-price-col-val { font-size: 18px; color: var(--p); }
+.mategeni-price-reason {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  border-top: 1px solid var(--p-mid);
+  border-bottom: 1px solid var(--p-mid);
+}
+.mategeni-price-apply-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, var(--p), var(--ind));
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.mategeni-price-apply-btn:hover { opacity: 0.9; }
+
+/* ── Category Suggestion Banner ─────────────────────────────── */
+.post-ai-cat-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--p-glow);
+  border: 1.5px solid var(--p-mid);
+  border-radius: var(--r-sm);
+  animation: mategeni-slide-in 0.2s var(--ease);
+}
+.post-ai-conf {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--p);
+  opacity: 0.8;
+}
+.post-ai-apply-btn {
+  padding: 4px 10px;
+  background: var(--p);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.post-ai-apply-btn:hover { background: var(--p-dark); }
+.post-ai-dismiss-btn {
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: background 0.15s;
+}
+.post-ai-dismiss-btn:hover { background: var(--bg-tertiary); }
+
+/* ── Fraud Risk Banners ─────────────────────────────────────── */
+.mategeni-risk-banner { padding: 10px 14px; font-size: 12px; transition: all 0.3s ease; }
+.mategeni-risk-banner.risk-low    { background:#fefce8; border-left:4px solid #ca8a04; color:#713f12; }
+.mategeni-risk-banner.risk-medium { background:#fff7ed; border-left:4px solid #ea580c; color:#7c2d12; }
+.mategeni-risk-banner.risk-high   { background:#fee2e2; border-left:4px solid #dc2626; color:#7f1d1d; }
+[data-theme="dark"] .mategeni-risk-banner.risk-low    { background:rgba(202,138,4,.12);  color:#fde68a; border-left-color:#ca8a04; }
+[data-theme="dark"] .mategeni-risk-banner.risk-medium { background:rgba(234,88,12,.12);  color:#fed7aa; border-left-color:#ea580c; }
+[data-theme="dark"] .mategeni-risk-banner.risk-high   { background:rgba(220,38,38,.12);  color:#fca5a5; border-left-color:#dc2626; }
+
+/* ── Quick Action Chips ─────────────────────────────────────── */
+.mategeni-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 2px;
+}
+.mategeni-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--p);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.mategeni-chip:hover { background: var(--p-light); border-color: var(--p-mid); }
+
+/* ── Listing Result Cards inside Chat ───────────────────────── */
+.mategeni-listing-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  width: 100%;
+}
+.mategeni-listing-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mategeni-listing-result:hover { border-color: var(--p-mid); box-shadow: var(--s1); }
+.mategeni-listing-result-img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-xs);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.mategeni-listing-result-info { flex: 1; min-width: 0; }
+.mategeni-listing-result-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mategeni-listing-result-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.mategeni-listing-result-price { font-size: 12px; font-weight: 800; color: var(--p); }
+.mategeni-listing-result-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--grn);
+  background: var(--grn-light);
+  padding: 1px 5px;
+  border-radius: var(--r-full);
+}
+.mategeni-listing-result-cat { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── Optimizer Modal Sections ───────────────────────────────── */
+.mategeni-modal-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.mategeni-modal-value {
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--txt);
+  line-height: 1.6;
+}
+.mategeni-ksp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.mategeni-ksp-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+  padding: 6px 10px;
+  background: var(--grn-light);
+  border-radius: var(--r-sm);
+}
+[data-theme="dark"] .mategeni-ksp-item { background: rgba(34,197,94,0.12); color: #4ade80; }
+.mategeni-tag-chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  background: var(--p-light);
+  color: var(--p);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+}
+[data-theme="dark"] .mategeni-tag-chip { background: rgba(37,99,235,0.15); }
+
+/* ── Fix msg-row layout for chips + listing results ─────────── */
+.mategeni-msg-row { flex-direction: column; }
+.mategeni-msg-row.user { align-items: flex-end; }
+.mategeni-msg-row.ai  { align-items: flex-start; }

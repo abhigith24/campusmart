@@ -41,3 +41,16 @@ export async function uploadToCloudinary(file, folder = "campusmart/listings") {
 export async function uploadMultipleToCloudinary(files, folder = "campusmart/listings") {
   return Promise.all(files.map(f => uploadToCloudinary(f, folder)));
 }
+
+/**
+ * Optimize Cloudinary URLs by inserting transformation parameters.
+ * @param {string} url - Original image URL
+ * @param {string} transforms - Transformation string (e.g. "f_auto,q_auto,w_400,c_fill")
+ */
+export function optimizeCloudinaryUrl(url, transforms = "f_auto,q_auto") {
+  if (!url) return "";
+  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+  return url.replace("/upload/", `/upload/${transforms}/`);
+}

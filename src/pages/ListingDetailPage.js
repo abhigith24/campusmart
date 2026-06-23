@@ -10,6 +10,7 @@ import { useWishlist } from "../context/WishlistContext";
 import RatingModal from "../components/RatingModal";
 import ListingCard from "../components/ListingCard";
 import { trackListingView, trackInitiatePurchase } from "../utils/analytics";
+import { optimizeCloudinaryUrl } from "../utils/cloudinary";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
@@ -376,7 +377,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             onTouchEnd={handleTouchEnd}
           >
             {images
-              ? <img src={images[activeImg]} alt={listing.title} />
+              ? <img src={optimizeCloudinaryUrl(images[activeImg], "f_auto,q_auto,w_800")} alt={listing.title} />
               : CAT_IMAGES[listing.category]
                 ? <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <span style={{ fontSize:64 }}>📦</span>}
@@ -448,7 +449,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             <div className="detail-thumbs">
               {images.map((url, i) => (
                 <div key={i} className={`detail-thumb ${activeImg===i?"active":""}`} onClick={() => setActiveImg(i)}>
-                  <img src={url} alt="" />
+                  <img src={optimizeCloudinaryUrl(url, "f_auto,q_auto,w_100,c_fill")} alt="" />
                 </div>
               ))}
             </div>
@@ -513,8 +514,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                       <div className="skeleton" style={{ height: 12, width: "80%" }} />
                     </div>
                   </div>
-                  <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
-                    {Array(4).fill(0).map((_, i) => (
+                  <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
+                    {Array(5).fill(0).map((_, i) => (
                       <div key={i} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div className="skeleton" style={{ height: 10, width: "40%" }} />
                         <div className="skeleton" style={{ height: 12, width: "70%" }} />
@@ -549,11 +550,22 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 </div>
               </div>
 
-              <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
+              <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
                 <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                   <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Rating</div>
                   <div className="trust-stat-val-mini" style={{ color: "var(--yel)", fontWeight: "700", fontSize: "12px" }}>
                     ★ {sellerData?.rating > 0 ? sellerData.rating.toFixed(1) : "N/A"}
+                  </div>
+                </div>
+                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Trust Score</div>
+                  <div className="trust-stat-val-mini" style={{ fontSize: "12px", color: "var(--p)", fontWeight: "700" }}>
+                    🛡️ {Math.round(
+                      50 +
+                      ((sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) ? 20 : 0) +
+                      (Number(sellerData?.successfulSales || listing.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
+                      (Number(sellerData?.rating || listing.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing.sellerRating || 0) / 5) * 15 : 0)
+                    )}%
                   </div>
                 </div>
                 <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
@@ -726,7 +738,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             <p>Send a request to the seller. They'll be notified and can accept or decline.</p>
             <div style={{ background:"var(--light)", borderRadius:"var(--r-md)", padding:16, marginBottom:16 }}>
               {listing.images?.[0] && (
-                <img src={listing.images[0]} alt="" style={{ width:"100%", height:130, objectFit:"cover", borderRadius:"var(--r-sm)", marginBottom:12 }} />
+                <img src={optimizeCloudinaryUrl(listing.images[0], "f_auto,q_auto,w_300,c_fill")} alt="" style={{ width:"100%", height:130, objectFit:"cover", borderRadius:"var(--r-sm)", marginBottom:12 }} />
               )}
               <div style={{ fontWeight:800, fontSize:16, marginBottom:4 }}>{listing.title}</div>
               <div style={{ fontSize:13, color:"var(--muted)", marginBottom:8 }}>{listing.condition} · {listing.category}</div>

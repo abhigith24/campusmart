@@ -1,12 +1,32 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { categorizeProduct, optimizeListingDescription, suggestPriceRange } from "../services/ai/aiService";
+import { trackAIEvent, AI_EVENTS } from "../services/ai/aiAnalytics";
+import MateGeniButton from "../components/MateGeni/MateGeniButton";
+import MateGeniModal from "../components/MateGeni/MateGeniModal";
 
-const CATEGORIES = ["Textbooks","Notes","Lab Equipment","Electronics","Stationery","Girls","Misc"];
-const CAT_ICONS  = { Textbooks:"📖", Notes:"📝", "Lab Equipment":"🔬", Electronics:"💻", Stationery:"✏️", Girls:"👗", Misc:"📦" };
+const PRIMARY_CATEGORIES = ["Books", "Notes", "Electronics", "Lab Equipment", "Stationery", "Fashion", "Hostel"];
+const MORE_CATEGORIES = ["Sports", "Gaming", "Musical Instruments", "Photography", "Other"];
+const ALL_CATEGORIES = [...PRIMARY_CATEGORIES, ...MORE_CATEGORIES];
+
+const CAT_ICONS = {
+  Books: "📚",
+  Notes: "📝",
+  Electronics: "💻",
+  "Lab Equipment": "🧪",
+  Stationery: "✏️",
+  Fashion: "👕",
+  Hostel: "🏠",
+  Sports: "🚲",
+  Gaming: "🎮",
+  "Musical Instruments": "🎸",
+  Photography: "📷",
+  Other: "📦",
+};
 const CONDITIONS = ["New","Good","Fair","Old"];
 const COND_META  = {
   New:  { label:"Brand New",    color:"var(--cond-new-txt)", bg:"var(--cond-new-bg)", desc:"Unused, original packaging" },
@@ -31,11 +51,15 @@ const MEETUP_SPOTS = [
 export default function PostListingPage({ setPage, editListing }) {
   const { currentUser, userProfile } = useAuth();
   const toast = useToast();
+  const userId = currentUser?.uid || null;
   const isEdit = !!editListing;
 
   const [title,         setTitle]         = useState(editListing?.title         || "");
   const [description,   setDescription]   = useState(editListing?.description   || "");
-  const [category,      setCategory]      = useState(editListing?.category      || "Textbooks");
+  const [category,      setCategory]      = useState(editListing?.category      || "Books");
+  const [showMoreCategories, setShowMoreCategories] = useState(() => {
+    return editListing?.category ? MORE_CATEGORIES.includes(editListing.category) : false;
+  });
   const [condition,     setCondition]     = useState(editListing?.condition     || "Good");
   const [listingType,   setListingType]   = useState(editListing?.listingType   || "sell"); // "sell" | "free" | "rent"
   const [price,         setPrice]         = useState(editListing?.price         || "");
@@ -53,8 +77,15 @@ export default function PostListingPage({ setPage, editListing }) {
   const [newPreviews,   setNewPreviews]   = useState([]);
   const [loading,       setLoading]       = useState(false);
   const [aiLoading,     setAiLoading]     = useState(false);
-  const [aiSuggestion,  setAiSuggestion]  = useState("");
+  const [priceSuggestion, setPriceSuggestion] = useState(null); // full price object
   const [dragOver,      setDragOver]      = useState(false);
+
+  // MateGeni Integration States
+  const [suggestedCat,       setSuggestedCat]       = useState("");
+  const [suggestedCatConf,   setSuggestedCatConf]   = useState(0);
+  const [optimizerModalOpen, setOptimizerModalOpen] = useState(false);
+  const [optimizedData,      setOptimizedData]      = useState(null);
+  const [optimizerLoading,   setOptimizerLoading]   = useState(false);
   const fileRef = useRef();
 
   const totalImages = existingImages.length + newPreviews.length;
@@ -106,35 +137,56 @@ export default function PostListingPage({ setPage, editListing }) {
   function removeExisting(i) { setExistingImages(p => p.filter((_,x) => x !== i)); }
   function removeNew(i) { setNewFiles(p => p.filter((_,x) => x !== i)); setNewPreviews(p => p.filter((_,x) => x !== i)); }
 
-  async function suggestPrice() {
-    if (!title) { toast("Enter item name first", "error"); return; }
-    setAiLoading(true); setAiSuggestion("");
-    const GROQ_KEY = process.env.REACT_APP_GROQ_API_KEY;
-    if (!GROQ_KEY) { localFallback(); return; }
+  // AI Categorization Hook — debounced 800ms
+  useEffect(() => {
+    if (!title || title.trim().length < 4) {
+      setSuggestedCat("");
+      setSuggestedCatConf(0);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await categorizeProduct({ title, description }, userId);
+        if (result && result.suggestedCategory) {
+          setSuggestedCat(result.suggestedCategory);
+          setSuggestedCatConf(result.confidence || 0);
+        }
+      } catch (err) {
+        console.error("AI categorization error:", err);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [title, description, userId]);
+
+  async function handleOptimizeDescription() {
+    if (!title || !description) {
+      toast("Enter both name and description first", "error");
+      return;
+    }
+    setOptimizerLoading(true);
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${GROQ_KEY}` },
-        body: JSON.stringify({
-          model:"llama-3.1-8b-instant",
-          messages:[{
-            role:"user",
-            content:`You are a price advisor for a college marketplace in India. Suggest a fair second-hand price in INR for: "${title}" (condition: ${condition}). Reply with just 1-2 sentences with a price range.`
-          }],
-          max_tokens:80, temperature:0.4
-        })
-      });
-      const data = await res.json();
-      setAiSuggestion(data.choices?.[0]?.message?.content || "");
-    } catch { localFallback(); }
-    setAiLoading(false);
+      const result = await optimizeListingDescription({ title, description, category, condition }, userId);
+      setOptimizedData(result);
+      setOptimizerModalOpen(true);
+    } catch (err) {
+      console.error("Optimizer error:", err);
+      toast("Failed to optimize description", "error");
+    } finally {
+      setOptimizerLoading(false);
+    }
   }
 
-  function localFallback() {
-    const base = { Textbooks:300, Notes:100, "Lab Equipment":500, Electronics:2000, Stationery:80, Misc:200 };
-    const mult = { New:1, Good:0.65, Fair:0.4, Old:0.2 };
-    const est = Math.round((base[category]||300) * (mult[condition]||0.5));
-    setAiSuggestion(`Suggested price: ₹${Math.round(est*0.8).toLocaleString("en-IN")} – ₹${Math.round(est*1.2).toLocaleString("en-IN")} based on condition and category.`);
+  async function suggestPrice() {
+    if (!title) { toast("Enter item name first", "error"); return; }
+    setAiLoading(true);
+    setPriceSuggestion(null);
+    try {
+      const result = await suggestPriceRange({ title, category, condition }, userId);
+      setPriceSuggestion(result);
+    } catch (err) {
+      console.error("AI Price suggest error:", err);
+      toast("Failed to estimate price", "error");
+    }
     setAiLoading(false);
   }
 
@@ -294,28 +346,141 @@ export default function PostListingPage({ setPage, editListing }) {
                     placeholder="e.g. Engineering Mathematics by R.K. Jain, 4th Edition"
                     value={title} onChange={e => setTitle(e.target.value)} required />
                   {title && <div className="form-input-check">✓</div>}
+                  {suggestedCat && category !== suggestedCat && (
+                    <div className="post-ai-cat-banner" style={{ marginTop: 8 }}>
+                      <span className="post-ai-icon">✨</span>
+                      <div style={{ flex: 1 }}>
+                        <div className="post-ai-label">MateGeni suggests</div>
+                        <div className="post-ai-value">
+                          <strong>{CAT_ICONS[suggestedCat]} {suggestedCat}</strong>
+                          <span className="post-ai-conf">{Math.round(suggestedCatConf * 100)}% confidence</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="post-ai-apply-btn"
+                        onClick={() => {
+                          setCategory(suggestedCat);
+                          setSuggestedCat("");
+                          trackAIEvent(AI_EVENTS.CATEGORY_SUGGESTION_ACCEPTED, userId, { category: suggestedCat });
+                          toast(`Category set to ${suggestedCat} ✓`, "success");
+                        }}
+                      >
+                        Apply
+                      </button>
+                      <button
+                        type="button"
+                        className="post-ai-dismiss-btn"
+                        onClick={() => {
+                          setSuggestedCat("");
+                          trackAIEvent(AI_EVENTS.CATEGORY_SUGGESTION_DISMISSED, userId, { category: suggestedCat });
+                        }}
+                        title="Dismiss suggestion"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="form-group" style={{ position:"relative" }}>
-                  <label className="form-label">Description <span className="req">*</span></label>
-                  <textarea className={`form-input ${description ? "filled" : ""}`}
-                    rows={4} placeholder="Describe condition, edition, any highlights or damage..."
-                    value={description} onChange={e => setDescription(e.target.value)}
-                    required style={{ resize:"vertical" }} />
-                  <div className="char-count">{description.length}/500</div>
+                <div className="form-group">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Description <span className="req">*</span></label>
+                    <MateGeniButton
+                      flag="enableListingOptimizer"
+                      type="button"
+                      onClick={handleOptimizeDescription}
+                      disabled={optimizerLoading}
+                      style={{ padding: "4px 10px", fontSize: "12px", minHeight: "unset" }}
+                    >
+                      {optimizerLoading ? "Optimizing..." : "Optimize"}
+                    </MateGeniButton>
+                  </div>
+                  <div style={{ position:"relative" }}>
+                    <textarea className={`form-input ${description ? "filled" : ""}`}
+                      rows={4} placeholder="Describe condition, edition, any highlights or damage..."
+                      value={description} onChange={e => setDescription(e.target.value)}
+                      required style={{ resize:"vertical", width: "100%" }} />
+                    <div className="char-count">{description.length}/500</div>
+                  </div>
                 </div>
                 {/* Category */}
                 <div className="form-group">
                   <label className="form-label">Category <span className="req">*</span></label>
-                  <div className="post-cat-grid">
-                    {CATEGORIES.map(c => (
-                      <button key={c} type="button"
-                        className={`post-cat-btn ${category === c ? "active" : ""}`}
-                        onClick={() => setCategory(c)}>
-                        <span className="post-cat-icon">{CAT_ICONS[c]}</span>
-                        <span className="post-cat-label">{c}</span>
-                      </button>
-                    ))}
+                  <div className="post-cat-grid" style={{ marginBottom: "10px" }}>
+                    {PRIMARY_CATEGORIES.map(c => {
+                      const isActive = category === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`post-cat-btn ${isActive ? "active" : ""}`}
+                          onClick={() => {
+                            setCategory(c);
+                            if (suggestedCat === c) setSuggestedCat("");
+                          }}
+                          style={{ position: "relative" }}
+                        >
+                          <span className="post-cat-icon">{CAT_ICONS[c]}</span>
+                          <span className="post-cat-label">{c}</span>
+                          {isActive && <span className="post-cat-check" style={{ position: "absolute", top: "4px", right: "6px", color: "var(--p)", fontSize: "11px", fontWeight: "bold" }}>✓</span>}
+                        </button>
+                      );
+                    })}
+
+                    {/* More Button */}
+                    {(() => {
+                      const isMoreSelected = MORE_CATEGORIES.includes(category);
+                      return (
+                        <button
+                          type="button"
+                          className={`post-cat-btn ${isMoreSelected || showMoreCategories ? "active" : ""}`}
+                          onClick={() => setShowMoreCategories(prev => !prev)}
+                          style={{ position: "relative" }}
+                        >
+                          <span className="post-cat-icon">➕</span>
+                          <span className="post-cat-label">
+                            {isMoreSelected ? `More: ${category}` : "More"}
+                          </span>
+                          {isMoreSelected && <span className="post-cat-check" style={{ position: "absolute", top: "4px", right: "6px", color: "var(--p)", fontSize: "11px", fontWeight: "bold" }}>✓</span>}
+                        </button>
+                      );
+                    })()}
                   </div>
+
+                  {/* Expandable More Categories */}
+                  {showMoreCategories && (
+                    <div style={{ padding: "14px 12px 12px", background: "var(--bg-secondary)", borderRadius: "var(--r-md)", border: "1.5px solid var(--bdr)", marginTop: "10px", transition: "all 0.25s ease" }}>
+                      <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--muted)", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.5px" }}>More Categories</div>
+                      <div className="post-cat-grid">
+                        {MORE_CATEGORIES.map(c => {
+                          const isActive = category === c;
+                          return (
+                            <button
+                              key={c}
+                              type="button"
+                              className={`post-cat-btn ${isActive ? "active" : ""}`}
+                              onClick={() => {
+                                setCategory(c);
+                                if (suggestedCat === c) setSuggestedCat("");
+                              }}
+                              style={{ position: "relative" }}
+                            >
+                              <span className="post-cat-icon">{CAT_ICONS[c]}</span>
+                              <span className="post-cat-label">{c}</span>
+                              {isActive && <span className="post-cat-check" style={{ position: "absolute", top: "4px", right: "6px", color: "var(--p)", fontSize: "11px", fontWeight: "bold" }}>✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Help text for Other category */}
+                  {category === "Other" && (
+                    <div style={{ marginTop: "10px", fontSize: "12px", color: "var(--muted)", fontStyle: "italic", display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-secondary)", padding: "8px 12px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                      <span>💡</span> <span>Use Other only if your item does not fit any category.</span>
+                    </div>
+                  )}
                 </div>
                 {/* Condition */}
                 <div className="form-group">
@@ -375,16 +540,45 @@ export default function PostListingPage({ setPage, editListing }) {
                           placeholder="0" value={price} onChange={e => setPrice(e.target.value)} />
                       </div>
                       <button type="button" className="post-ai-btn" onClick={suggestPrice} disabled={aiLoading}>
-                        {aiLoading ? <><span className="post-ai-spinner" /> Getting…</> : <><span>🤖</span> AI Suggest</>}
+                        {aiLoading ? <><span className="post-ai-spinner" /> Getting…</> : <>✨ AI Suggest</>}
                       </button>
                     </div>
-                    {aiSuggestion && (
-                      <div className="post-ai-result">
-                        <span className="post-ai-icon">✨</span>
-                        <div>
-                          <div className="post-ai-label">AI Suggestion</div>
-                          <div className="post-ai-value">{aiSuggestion}</div>
+
+                    {/* Rich Price Suggestion Card */}
+                    {priceSuggestion && (
+                      <div className="mategeni-price-card">
+                        <div className="mategeni-price-card-header">
+                          <span>✨ MateGeni Price Suggestion</span>
+                          <span className="mategeni-price-conf">{Math.round((priceSuggestion.confidenceScore || 0) * 100)}% confidence</span>
                         </div>
+                        <div className="mategeni-price-cols">
+                          <div className="mategeni-price-col">
+                            <div className="mategeni-price-col-label">Min</div>
+                            <div className="mategeni-price-col-val">₹{(priceSuggestion.minPrice || 0).toLocaleString("en-IN")}</div>
+                          </div>
+                          <div className="mategeni-price-col recommended">
+                            <div className="mategeni-price-col-label">Recommended ★</div>
+                            <div className="mategeni-price-col-val">₹{(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")}</div>
+                          </div>
+                          <div className="mategeni-price-col">
+                            <div className="mategeni-price-col-label">Max</div>
+                            <div className="mategeni-price-col-val">₹{(priceSuggestion.maxPrice || 0).toLocaleString("en-IN")}</div>
+                          </div>
+                        </div>
+                        {priceSuggestion.reason && (
+                          <div className="mategeni-price-reason">💡 {priceSuggestion.reason}</div>
+                        )}
+                        <button
+                          type="button"
+                          className="mategeni-price-apply-btn"
+                          onClick={() => {
+                            setPrice(String(priceSuggestion.recommendedPrice || ""));
+                            setPriceSuggestion(null);
+                            toast(`Price set to ₹${(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")} ✓`, "success");
+                          }}
+                        >
+                          Use ₹{(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")}
+                        </button>
                       </div>
                     )}
                   </div>
@@ -540,6 +734,78 @@ export default function PostListingPage({ setPage, editListing }) {
           </div>
         </form>
       </div>
+
+      <MateGeniModal
+        flag="enableListingOptimizer"
+        isOpen={optimizerModalOpen}
+        onClose={() => setOptimizerModalOpen(false)}
+        title="MateGeni Listing Optimizer"
+      >
+        {optimizedData && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+            {/* Optimized Title */}
+            <div>
+              <div className="mategeni-modal-section-label">✨ Optimized Title</div>
+              <div className="mategeni-modal-value" style={{ fontWeight: 700 }}>
+                {optimizedData.optimizedTitle}
+              </div>
+            </div>
+
+            {/* Key Selling Points */}
+            {optimizedData.keySellingPoints && optimizedData.keySellingPoints.length > 0 && (
+              <div>
+                <div className="mategeni-modal-section-label">🎯 Key Selling Points</div>
+                <ul className="mategeni-ksp-list">
+                  {optimizedData.keySellingPoints.map((pt, i) => (
+                    <li key={i} className="mategeni-ksp-item">✓ {pt}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Optimized Description */}
+            <div>
+              <div className="mategeni-modal-section-label">📝 Optimized Description</div>
+              <div className="mategeni-modal-value" style={{ whiteSpace: "pre-line", lineHeight: "1.7" }}>
+                {optimizedData.optimizedDescription}
+              </div>
+            </div>
+
+            {/* Suggested Tags */}
+            {optimizedData.suggestedTags && optimizedData.suggestedTags.length > 0 && (
+              <div>
+                <div className="mategeni-modal-section-label">🏷️ Suggested Tags</div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+                  {optimizedData.suggestedTags.map(tag => (
+                    <span key={tag} className="mategeni-tag-chip">#{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "10px", marginTop: "4px", justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-outline" style={{ fontSize: "13px", padding: "8px 16px" }} onClick={() => setOptimizerModalOpen(false)}>
+                Keep Original
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ fontSize: "13px", padding: "8px 16px" }}
+                onClick={() => {
+                  setTitle(optimizedData.optimizedTitle);
+                  setDescription(optimizedData.optimizedDescription);
+                  setOptimizerModalOpen(false);
+                  toast("Applied MateGeni suggestions! ✨", "success");
+                }}
+              >
+                ✨ Apply All
+              </button>
+            </div>
+          </div>
+        )}
+      </MateGeniModal>
     </div>
   );
-}
+}

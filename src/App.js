@@ -6,29 +6,31 @@ import { NotificationsProvider }         from "./context/NotificationsContext";
 import Navbar                            from "./components/Navbar";
 import Footer                            from "./components/Footer";
 import CookieConsent                     from "./components/CookieConsent";
-import AuthPage                          from "./pages/AuthPage";
+import MateGeniFloatingAssistant         from "./components/MateGeni/MateGeniFloatingAssistant";
 import HomePage                          from "./pages/HomePage";
-import PostListingPage                   from "./pages/PostListingPage";
-import ListingDetailPage                 from "./pages/ListingDetailPage";
-import ChatPage                          from "./pages/ChatPage";
-import ProfilePage                       from "./pages/ProfilePage";
-import MyListingsPage                    from "./pages/MyListingsPage";
-import WishlistPage                      from "./pages/WishlistPage";
-import CollegeVerificationPage           from "./pages/CollegeVerificationPage";
-import MySalesPage                       from "./pages/MySalesPage";
-import SavedItemsPage                    from "./pages/SavedItemsPage";
-import MyCollegeListingsPage             from "./pages/MyCollegeListingsPage";
-import AdminDashboardPage                from "./pages/AdminDashboardPage";
-import VerificationRequestsPage          from "./pages/VerificationRequestsPage";
-import UserManagementPage                from "./pages/UserManagementPage";
-import AnalyticsReportsPage              from "./pages/AnalyticsReportsPage";
-import NotificationsPage                 from "./pages/NotificationsPage";
-import PurchaseRequestsPage              from "./pages/PurchaseRequestsPage";
-import SettingsPage                      from "./pages/SettingsPage";
-import PrivacyPolicyPage                 from "./pages/PrivacyPolicyPage";
-import TermsPage                         from "./pages/TermsPage";
-import ContactPage                       from "./pages/ContactPage";
 import AuthModal                         from "./components/AuthModal";
+
+const AuthPage = React.lazy(() => import("./pages/AuthPage"));
+const PostListingPage = React.lazy(() => import("./pages/PostListingPage"));
+const ListingDetailPage = React.lazy(() => import("./pages/ListingDetailPage"));
+const ChatPage = React.lazy(() => import("./pages/ChatPage"));
+const ProfilePage = React.lazy(() => import("./pages/ProfilePage"));
+const MyListingsPage = React.lazy(() => import("./pages/MyListingsPage"));
+const WishlistPage = React.lazy(() => import("./pages/WishlistPage"));
+const CollegeVerificationPage = React.lazy(() => import("./pages/CollegeVerificationPage"));
+const MySalesPage = React.lazy(() => import("./pages/MySalesPage"));
+const SavedItemsPage = React.lazy(() => import("./pages/SavedItemsPage"));
+const MyCollegeListingsPage = React.lazy(() => import("./pages/MyCollegeListingsPage"));
+const AdminDashboardPage = React.lazy(() => import("./pages/AdminDashboardPage"));
+const VerificationRequestsPage = React.lazy(() => import("./pages/VerificationRequestsPage"));
+const UserManagementPage = React.lazy(() => import("./pages/UserManagementPage"));
+const AnalyticsReportsPage = React.lazy(() => import("./pages/AnalyticsReportsPage"));
+const NotificationsPage = React.lazy(() => import("./pages/NotificationsPage"));
+const PurchaseRequestsPage = React.lazy(() => import("./pages/PurchaseRequestsPage"));
+const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
+const PrivacyPolicyPage = React.lazy(() => import("./pages/PrivacyPolicyPage"));
+const TermsPage = React.lazy(() => import("./pages/TermsPage"));
+const ContactPage = React.lazy(() => import("./pages/ContactPage"));
 import { trackPageView }                 from "./utils/analytics";
 import { db }                            from "./firebase";
 import { doc, getDoc }                   from "firebase/firestore";
@@ -318,62 +320,70 @@ function Main() {
       />
 
       <div className={`main-content ${isFullHeight ? "no-pad" : ""}`}>
-        {page === "auth" && <AuthPage setPage={navigateTo} />}
-        {page === "home" && (
-          <HomePage setPage={navigateTo} setSelectedListing={setSelectedListing} searchQuery={searchQuery} requireAuth={requireAuth} />
-        )}
-        {page === "post" && <PostListingPage setPage={navigateTo} />}
-        {page === "edit" && selectedListing && (
-          <PostListingPage setPage={navigateTo} editListing={selectedListing} />
-        )}
-        {page === "listing" && (
-          selectedListing && window.location.pathname.includes(selectedListing.id) ? (
-            <ListingDetailPage
-              listing={selectedListing} setPage={navigateTo}
-              setSelectedListing={setSelectedListing} setChatWith={setChatWith}
+        <React.Suspense fallback={
+          <div className="container" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "60vh" }}>
+            <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }}></div>
+            <div style={{ color: "var(--muted)", fontWeight: 600 }}>Loading page...</div>
+          </div>
+        }>
+          {page === "auth" && <AuthPage setPage={navigateTo} />}
+          {page === "home" && (
+            <HomePage setPage={navigateTo} setSelectedListing={setSelectedListing} searchQuery={searchQuery} requireAuth={requireAuth} />
+          )}
+          {page === "post" && <PostListingPage setPage={navigateTo} />}
+          {page === "edit" && selectedListing && (
+            <PostListingPage setPage={navigateTo} editListing={selectedListing} />
+          )}
+          {page === "listing" && (
+            selectedListing && window.location.pathname.includes(selectedListing.id) ? (
+              <ListingDetailPage
+                listing={selectedListing} setPage={navigateTo}
+                setSelectedListing={setSelectedListing} setChatWith={setChatWith}
+                requireAuth={requireAuth}
+                setViewProfileUserId={setViewProfileUserId}
+              />
+            ) : (
+              <div className="container" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "60vh" }}>
+                <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }}></div>
+                <div style={{ color: "var(--muted)", fontWeight: 600 }}>Loading listing details...</div>
+              </div>
+            )
+          )}
+          {page === "chat" && <ChatPage initialChatWith={chatWith} setPage={navigateTo} />}
+          {page === "profile" && (
+            <ProfilePage
+              setPage={navigateTo} setSelectedListing={setSelectedListing}
+              initialTab="active"
+              viewUserId={viewProfileUserId}
               requireAuth={requireAuth}
-              setViewProfileUserId={setViewProfileUserId}
             />
-          ) : (
-            <div className="container" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "60vh" }}>
-              <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }}></div>
-              <div style={{ color: "var(--muted)", fontWeight: 600 }}>Loading listing details...</div>
-            </div>
-          )
-        )}
-        {page === "chat" && <ChatPage initialChatWith={chatWith} setPage={navigateTo} />}
-        {page === "profile" && (
-          <ProfilePage
-            setPage={navigateTo} setSelectedListing={setSelectedListing}
-            initialTab="active"
-            viewUserId={viewProfileUserId}
-            requireAuth={requireAuth}
-          />
-        )}
-        {page === "my-listings" && <MyListingsPage setPage={navigateTo} />}
-        {page === "wishlist" && <WishlistPage setPage={navigateTo} />}
-        {page === "college-verification" && <CollegeVerificationPage setPage={navigateTo} />}
-        {page === "my-sales" && <MySalesPage setPage={navigateTo} />}
-        {page === "saved-items" && <SavedItemsPage setPage={navigateTo} />}
-        {page === "my-college-listings" && <MyCollegeListingsPage setPage={navigateTo} />}
-        {page === "notifications" && (
-          <NotificationsPage setPage={navigateTo} setSelectedListing={setSelectedListing} />
-        )}
-        {page === "purchase-requests" && (
-          <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
-        )}
-        {page === "admin"   && <AdminDashboardPage />}
-        {page === "admin-verifications" && <VerificationRequestsPage />}
-        {page === "admin-users" && <UserManagementPage />}
-        {page === "admin-analytics" && <AnalyticsReportsPage />}
-        {page === "settings" && <SettingsPage setPage={navigateTo} />}
-        {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
-        {page === "terms"   && <TermsPage setPage={navigateTo} />}
-        {page === "contact" && <ContactPage setPage={navigateTo} />}
+          )}
+          {page === "my-listings" && <MyListingsPage setPage={navigateTo} />}
+          {page === "wishlist" && <WishlistPage setPage={navigateTo} />}
+          {page === "college-verification" && <CollegeVerificationPage setPage={navigateTo} />}
+          {page === "my-sales" && <MySalesPage setPage={navigateTo} />}
+          {page === "saved-items" && <SavedItemsPage setPage={navigateTo} />}
+          {page === "my-college-listings" && <MyCollegeListingsPage setPage={navigateTo} />}
+          {page === "notifications" && (
+            <NotificationsPage setPage={navigateTo} setSelectedListing={setSelectedListing} />
+          )}
+          {page === "purchase-requests" && (
+            <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
+          )}
+          {page === "admin"   && <AdminDashboardPage setPage={navigateTo} />}
+          {page === "admin-verifications" && <VerificationRequestsPage setPage={navigateTo} />}
+          {page === "admin-users" && <UserManagementPage setPage={navigateTo} />}
+          {page === "admin-analytics" && <AnalyticsReportsPage setPage={navigateTo} />}
+          {page === "settings" && <SettingsPage setPage={navigateTo} />}
+          {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
+          {page === "terms"   && <TermsPage setPage={navigateTo} />}
+          {page === "contact" && <ContactPage setPage={navigateTo} />}
+        </React.Suspense>
       </div>
 
        {showFooter && <Footer setPage={navigateTo} />}
       <CookieConsent />
+      <MateGeniFloatingAssistant />
 
       {showScrollTop && (
         <button

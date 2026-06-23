@@ -16,6 +16,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const { unreadCount } = useNotifications();
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [adminControlsExpanded, setAdminControlsExpanded] = useState(false);
   const menuRef = useRef(null);
 
   // Redesigned hamburger drawer modals
@@ -49,7 +50,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const mobileOverlaySearchRef = useRef(null);
 
   const TRENDING_TAGS = ["Calculator", "Lab coat", "HCV", "Notes", "Mattress", "Kettle"];
-  const CATEGORIES = ["Textbooks", "Notes", "Lab Equipment", "Electronics", "Stationery", "Girls", "Misc"];
+  const CATEGORIES = ["Books", "Notes", "Electronics", "Lab Equipment", "Stationery", "Fashion", "Hostel", "Sports", "Gaming", "Musical Instruments", "Photography", "Other"];
 
   useEffect(() => {
     try {
@@ -467,9 +468,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                 <button className={`drawer-item-btn ${page === "settings" ? "active" : ""}`} onClick={() => { setPage("settings"); setDrawerOpen(false); }}>
                   <span className="drawer-item-icon">⚙️</span> Settings
                 </button>
-                <button className={`drawer-item-btn ${page === "college-verification" ? "active" : ""}`} onClick={() => { setPage("college-verification"); setDrawerOpen(false); }}>
-                  <span className="drawer-item-icon">🎓</span> College Verification
-                </button>
               </div>
 
               {/* MARKETPLACE CARD CONTAINER */}
@@ -490,31 +488,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   </button>
                 </div>
               </div>
-
-              {/* COLLEGE VERIFICATION CARD */}
-              {currentUser && (
-                <div className="drawer-section border-top">
-                  <div className="drawer-card-verify">
-                    <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--txt)", marginBottom: "4px" }}>College Verification</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                      {userProfile?.collegeVerified || userProfile?.isVerified ? (
-                        <span style={{ color: "var(--grn)", fontSize: "13px", fontWeight: 600 }}>🟢 Verified Student</span>
-                      ) : userProfile?.verificationStatus === "pending" ? (
-                        <span style={{ color: "var(--yel)", fontSize: "13px", fontWeight: 600 }}>🟡 Pending Review</span>
-                      ) : userProfile?.verificationStatus === "rejected" ? (
-                        <span style={{ color: "var(--red)", fontSize: "13px", fontWeight: 600 }}>🔴 Rejected</span>
-                      ) : (
-                        <span style={{ color: "var(--txt-2)", fontSize: "13px", fontWeight: 600 }}>⚪ Not Verified</span>
-                      )}
-                    </div>
-                    {!(userProfile?.collegeVerified || userProfile?.isVerified) && userProfile?.verificationStatus !== "pending" && (
-                      <button className="btn btn-primary btn-sm" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setPage("college-verification"); setDrawerOpen(false); }}>
-                        Verify College
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* QUICK SETTINGS */}
               <div className="drawer-section border-top">
@@ -538,32 +511,31 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
               {/* ADMIN SECTION */}
               {userProfile?.isAdmin && (
                 <div className="drawer-section border-top admin-section-highlight">
-                  <div className="drawer-section-title admin-title">⚡ Admin Control Panel</div>
-                  <button className={`drawer-item-btn admin-btn ${page === "admin" ? "active" : ""}`} onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
-                    <span className="drawer-item-icon">⚙️</span> Admin Dashboard
+                  <button 
+                    className="drawer-item-btn admin-toggle-btn"
+                    onClick={() => setAdminControlsExpanded(o => !o)}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "10px 14px", cursor: "pointer", color: "var(--txt)", fontWeight: "600", fontSize: "14px" }}
+                    type="button"
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}><span className="drawer-item-icon">⚡</span> Admin Controls</span>
+                    <span style={{ fontSize: "12px", transition: "transform 0.2s", transform: adminControlsExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
                   </button>
-                  <button className={`drawer-item-btn admin-btn ${page === "admin-verifications" ? "active" : ""}`} onClick={() => { setPage("admin-verifications"); setDrawerOpen(false); }}>
-                    <span className="drawer-item-icon">🎓</span> Verification Requests
-                  </button>
-                  <button className={`drawer-item-btn admin-btn ${page === "admin-users" ? "active" : ""}`} onClick={() => { setPage("admin-users"); setDrawerOpen(false); }}>
-                    <span className="drawer-item-icon">👥</span> User Management
-                  </button>
-                  <button className={`drawer-item-btn admin-btn ${page === "admin-analytics" ? "active" : ""}`} onClick={() => { setPage("admin-analytics"); setDrawerOpen(false); }}>
-                    <span className="drawer-item-icon">📈</span> Analytics & Reports
-                  </button>
-                </div>
-              )}
-
-              {/* DANGER ZONE (stub buttons for modals) */}
-              {currentUser && (
-                <div className="drawer-section border-top">
-                  <div className="drawer-section-title text-danger">⚠️ Danger Zone</div>
-                  <button className="drawer-item-btn text-danger-btn" onClick={() => setShowDeactivateConfirm(true)}>
-                    <span className="drawer-item-icon">🔒</span> Deactivate Account
-                  </button>
-                  <button className="drawer-item-btn text-danger-btn" onClick={() => setShowDeleteConfirm(true)}>
-                    <span className="drawer-item-icon">🗑️</span> Delete Account
-                  </button>
+                  {adminControlsExpanded && (
+                    <div className="admin-sub-menu" style={{ display: "flex", flexDirection: "column", gap: "2px", paddingLeft: "16px", marginTop: "4px" }}>
+                      <button className={`drawer-item-btn admin-btn ${page === "admin" ? "active" : ""}`} onClick={() => { setPage("admin"); setDrawerOpen(false); }}>
+                        <span className="drawer-item-icon">⚙️</span> Dashboard
+                      </button>
+                      <button className={`drawer-item-btn admin-btn ${page === "admin-verifications" ? "active" : ""}`} onClick={() => { setPage("admin-verifications"); setDrawerOpen(false); }}>
+                        <span className="drawer-item-icon">🎓</span> Verification Requests
+                      </button>
+                      <button className={`drawer-item-btn admin-btn ${page === "admin-users" ? "active" : ""}`} onClick={() => { setPage("admin-users"); setDrawerOpen(false); }}>
+                        <span className="drawer-item-icon">👥</span> User Management
+                      </button>
+                      <button className={`drawer-item-btn admin-btn ${page === "admin-analytics" ? "active" : ""}`} onClick={() => { setPage("admin-analytics"); setDrawerOpen(false); }}>
+                        <span className="drawer-item-icon">📊</span> Analytics
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -3,19 +3,34 @@ import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 
 const CAT_ICONS = {
-  Textbooks:"Textbook", Notes:"Note", "Lab Equipment":"Lab",
-  Electronics:"Tech", Stationery:"Pen", Girls:"Girls", Misc:"Item"
+  Books: "📚",
+  Notes: "📝",
+  Electronics: "💻",
+  "Lab Equipment": "🧪",
+  Stationery: "✏️",
+  Fashion: "👕",
+  Hostel: "🏠",
+  Sports: "🚲",
+  Gaming: "🎮",
+  "Musical Instruments": "🎸",
+  Photography: "📷",
+  Other: "📦",
 };
 
 // Category-specific placeholder images (served from /public)
 const CAT_IMAGES = {
-  Textbooks:      "/placeholder_textbooks.png",
-  Notes:          "/placeholder_notes.png",
-  "Lab Equipment":"/placeholder_lab.png",
-  Electronics:    "/placeholder_electronics.png",
-  Stationery:     "/placeholder_stationery.png",
-  Girls:          "/placeholder_girls.png",
-  Misc:           "/placeholder_misc.png",
+  Books: "/placeholder_textbooks.png",
+  Notes: "/placeholder_notes.png",
+  "Lab Equipment": "/placeholder_lab.png",
+  Electronics: "/placeholder_electronics.png",
+  Stationery: "/placeholder_stationery.png",
+  Fashion: "/placeholder_misc.png",
+  Hostel: "/placeholder_misc.png",
+  Sports: "/placeholder_misc.png",
+  Gaming: "/placeholder_misc.png",
+  "Musical Instruments": "/placeholder_misc.png",
+  Photography: "/placeholder_misc.png",
+  Other: "/placeholder_misc.png",
 };
 const COND_META = {
   New:  { label:"New",  dot:"var(--grn)", bg:"var(--cond-new-bg)", color:"var(--cond-new-txt)" },
@@ -27,6 +42,7 @@ const COND_META = {
 import VerifiedStudentBadge from "./VerifiedStudentBadge";
 import SameCampusBadge from "./SameCampusBadge";
 import TrustedSellerBadge from "./TrustedSellerBadge";
+import { optimizeCloudinaryUrl } from "../utils/cloudinary";
 
 function timeAgo(ts) {
   if (!ts) return "";
@@ -53,6 +69,12 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
   const cond = COND_META[condition];
   const posted = timeAgo(createdAt);
   const isRent = listingType === "rent";
+  const trustScore = Math.round(
+    50 +
+    ((collegeVerified || isVerified) ? 20 : 0) +
+    (Number(sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
+    (Number(sellerRating || 0) > 0 ? (Number(sellerRating) / 5) * 15 : 0)
+  );
 
   function handleHeart(e) {
     e.stopPropagation();
@@ -68,7 +90,7 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
     <div className={`listing-card ${layout === "list" ? "layout-list-card" : ""} ${isFree ? "free-item" : ""} ${isSold ? "sold-item" : ""}`} onClick={onClick}>
       <div className="card-img">
         {images?.[0]
-          ? <img src={images[0]} alt={title} loading="lazy" />
+          ? <img src={optimizeCloudinaryUrl(images[0], "f_auto,q_auto,w_400,c_fill")} alt={title} loading="lazy" />
           : CAT_IMAGES[category]
             ? <img src={CAT_IMAGES[category]} alt={category} loading="lazy" className="card-img-placeholder-img" />
             : <div className="card-img-placeholder">{icon}</div>}
@@ -132,11 +154,16 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid" }) {
             <div className="card-seller-avatar" title={sellerName}>{(sellerName || "?")[0].toUpperCase()}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
               <span className="card-seller-name-inline">{sellerName}</span>
-              {sellerRating > 0 && (
-                <span className="card-rating">
-                  ★ {sellerRating.toFixed(1)}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                {sellerRating > 0 && (
+                  <span className="card-rating">
+                    ★ {sellerRating.toFixed(1)}
+                  </span>
+                )}
+                <span className="card-trust-score" title={`Trust Score: ${trustScore}% based on verification, ratings, and sales`}>
+                  🛡️ {trustScore}%
                 </span>
-              )}
+              </div>
             </div>
           </div>
         </div>

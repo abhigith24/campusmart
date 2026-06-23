@@ -3,8 +3,9 @@ import { collection, getDocs, doc, updateDoc, query, where, serverTimestamp } fr
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import AdminLayout from "../components/AdminLayout";
 
-export default function VerificationRequestsPage() {
+export default function VerificationRequestsPage({ setPage }) {
   const { userProfile } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState([]);
@@ -104,7 +105,7 @@ export default function VerificationRequestsPage() {
   const pendingUsers = users.filter(u => u.verificationStatus && u.verificationStatus !== "none");
 
   return (
-    <div className="container admin-page" style={{ padding: "30px 20px 80px" }}>
+    <AdminLayout activePage="admin-verifications" setPage={setPage}>
       <div className="page-header" style={{ marginBottom: "20px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>🎓 Verification Requests</h2>
         <p style={{ color: "var(--muted)" }}>Review and manage student ID verification requests</p>
@@ -235,6 +236,6 @@ export default function VerificationRequestsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

@@ -3,8 +3,9 @@ import { collection, getDocs, doc, updateDoc, query, where } from "firebase/fire
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import AdminLayout from "../components/AdminLayout";
 
-export default function UserManagementPage() {
+export default function UserManagementPage({ setPage }) {
   const { userProfile } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState([]);
@@ -86,7 +87,7 @@ export default function UserManagementPage() {
   );
 
   return (
-    <div className="container admin-page" style={{ padding: "30px 20px 80px" }}>
+    <AdminLayout activePage="admin-users" setPage={setPage}>
       <div className="page-header" style={{ marginBottom: "20px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>👤 User Management</h2>
         <p style={{ color: "var(--muted)" }}>Manage platform users and check accounts</p>
@@ -151,6 +152,6 @@ export default function UserManagementPage() {
           </table>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

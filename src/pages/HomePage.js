@@ -3,8 +3,10 @@ import { collection, query, where, orderBy, onSnapshot, limit } from "firebase/f
 import { db } from "../firebase";
 import ListingCard from "../components/ListingCard";
 import { useAuth } from "../context/AuthContext";
+import { getSmartRecommendations } from "../services/ai/aiService";
+import { trackAIEvent, AI_EVENTS } from "../services/ai/aiAnalytics";
 
-const CATEGORIES = ["All","Textbooks","Notes","Lab Equipment","Electronics","Stationery","Girls","Misc"];
+const CATEGORIES = ["All", "Books", "Notes", "Electronics", "Lab Equipment", "Stationery", "Fashion", "Hostel", "Sports", "Gaming", "Musical Instruments", "Photography", "Other"];
 const CONDITIONS = ["All","New","Good","Fair","Old"];
 const SORT_OPTS = [
   { val:"newest", label:"Newest first" },
@@ -13,13 +15,13 @@ const SORT_OPTS = [
   { val:"most-viewed", label:"Most viewed" },
 ];
 const CATEGORY_SHORTCUTS = [
-  { val: "Textbooks", label: "Textbooks", emoji: "📚" },
+  { val: "Books", label: "Books", emoji: "📚" },
   { val: "Notes", label: "Notes", emoji: "📝" },
-  { val: "Lab Equipment", label: "Lab Gear", emoji: "🧪" },
   { val: "Electronics", label: "Electronics", emoji: "💻" },
+  { val: "Lab Equipment", label: "Lab Gear", emoji: "🧪" },
   { val: "Stationery", label: "Stationery", emoji: "✏️" },
-  { val: "Girls", label: "Hostel Needs", emoji: "🏠" },
-  { val: "Misc", label: "Miscellaneous", emoji: "📦" },
+  { val: "Fashion", label: "Fashion", emoji: "👕" },
+  { val: "Hostel", label: "Hostel", emoji: "🏠" },
 ];
 
 function DropdownBtn({ label, options, selected, onSelect }) {
@@ -220,6 +222,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
+  const [smartRecommendations, setSmartRecommendations] = useState([]);
   const [college, setCollege] = useState(() => {
     const temp = sessionStorage.getItem("tempCollegeFilter");
     if (temp) {
@@ -338,6 +341,28 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     return unsub;
   }, []);
 
+  // Build a simple category interest map from recent listing views stored in localStorage
+  const viewedCategoryMap = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("viewedCategories");
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  }, []);
+
+  useEffect(() => {
+    if (listings && listings.length > 0) {
+      const recs = getSmartRecommendations({
+        listings,
+        userProfile,
+        viewedCategoryMap,
+        wishlistIds: [],
+      });
+      setSmartRecommendations(recs);
+    } else {
+      setSmartRecommendations([]);
+    }
+  }, [listings, userProfile, viewedCategoryMap]);
+
   useEffect(() => {
     function h(e) {
       if (priceRef.current && !priceRef.current.contains(e.target)) setShowPriceFilter(false);
@@ -444,11 +469,23 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     if (priceMin !== "") result = result.filter(l => !l.isFree && getPrice(l) >= Number(priceMin));
     if (priceMax !== "") result = result.filter(l => !l.isFree && getPrice(l) <= Number(priceMax));
 
-    if (sortBy === "price-low") result = [...result].sort((a,b) => getPrice(a) - getPrice(b));
-    if (sortBy === "price-high") result = [...result].sort((a,b) => getPrice(b) - getPrice(a));
-    if (sortBy === "most-viewed") result = [...result].sort((a,b) => (b.views||0)-(a.views||0));
-    return result;
-  }, [listings, searchQuery, category, condition, college, freeOnly, priceMin, priceMax, sortBy]);
+    let sortedResult = [...result];
+    if (sortBy === "price-low") sortedResult.sort((a,b) => getPrice(a) - getPrice(b));
+    else if (sortBy === "price-high") sortedResult.sort((a,b) => getPrice(b) - getPrice(a));
+    else if (sortBy === "most-viewed") sortedResult.sort((a,b) => (b.views||0)-(a.views||0));
+
+    if (userProfile?.marketplacePreferences?.showVerifiedSellersFirst) {
+      sortedResult.sort((a, b) => {
+        const aVer = !!(a.collegeVerified || a.isVerified);
+        const bVer = !!(b.collegeVerified || b.isVerified);
+        if (aVer !== bVer) {
+          return aVer ? -1 : 1;
+        }
+        return 0;
+      });
+    }
+    return sortedResult;
+  }, [listings, searchQuery, category, condition, college, freeOnly, priceMin, priceMax, sortBy, userProfile]);
 
   const displayedListings = filtered.slice(0, displayLimit);
 
@@ -581,6 +618,30 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             ))}
           </div>
         </div>
+
+        {smartRecommendations.length > 0 && (
+          <div style={{ marginBottom: "48px" }}>
+            <h2 className="homepage-section-title">
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>✨ Personalized for You</span>
+              <span className="homepage-section-title-link" onClick={() => document.getElementById("listings-section")?.scrollIntoView({ behavior:"smooth" })}>
+                View all
+              </span>
+            </h2>
+            <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
+              {smartRecommendations.map(l => (
+                <ListingCard
+                  key={l.id}
+                  listing={l}
+                  onClick={() => {
+                    trackAIEvent(AI_EVENTS.SMART_FEED_ENGAGED, userProfile?.uid || null, { listingId: l.id, category: l.category });
+                    setPage("listing", l);
+                  }}
+                  requireAuth={requireAuth}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {featuredListings.length > 0 && (
           <div style={{ marginBottom: "48px" }}>
