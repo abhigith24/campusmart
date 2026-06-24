@@ -15,6 +15,7 @@ import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import ShareButton from "../components/ShareButton";
+import { Heart, MapPin, ShieldCheck, Eye, Calendar, MessageCircle, Star, ShoppingCart, ArrowLeft, Edit, Trash2 } from "lucide-react";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
@@ -55,7 +56,16 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const [similarListings, setSimilarListings] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
-  // Scroll to top when detail page opens (ensures page starts at the listed item photo at the top)
+  // Responsive UI state
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Scroll to top when detail page opens
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     setActiveImg(0);
@@ -131,28 +141,55 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     setRecentlyViewed(recent.filter(item => item.id !== listing.id).slice(0, 4));
   }, [listing.id]);
 
-  // Load similar listings
+  // Enhanced similar listings sorting & scoring logic
   useEffect(() => {
     async function loadSimilar() {
       try {
         const q = query(
           collection(db, "listings"),
           where("status", "==", "active"),
-          where("category", "==", listing.category),
-          limit(6)
+          limit(30)
         );
         const snap = await getDocs(q);
-        const items = snap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const currentCollege = userProfile?.college || listing.sellerCollege;
+        const currentPrice = listing.price || 0;
+
+        const scoredItems = items
           .filter(item => item.id !== listing.id)
-          .slice(0, 4);
-        setSimilarListings(items);
+          .map(item => {
+            let score = 0;
+            // 1. Same category
+            if (item.category === listing.category) score += 100;
+            // 2. Same campus
+            if (currentCollege && item.sellerCollege && item.sellerCollege.trim().toLowerCase() === currentCollege.trim().toLowerCase()) {
+              score += 50;
+            }
+            // 3. Similar Price Range (closer price = higher score, max 30 pts)
+            const itemPrice = item.price || 0;
+            const priceDiff = Math.abs(itemPrice - currentPrice);
+            if (currentPrice > 0) {
+              const diffPct = priceDiff / currentPrice;
+              if (diffPct <= 0.5) score += Math.max(0, Math.round((1 - diffPct) * 30));
+            } else if (item.isFree && listing.isFree) {
+              score += 30;
+            }
+            // 4. Popularity (Views/Trending - up to 20 pts)
+            const views = item.views || 0;
+            score += Math.min(20, Math.round(views / 5));
+
+            return { ...item, score };
+          });
+
+        scoredItems.sort((a, b) => b.score - a.score);
+        setSimilarListings(scoredItems.slice(0, 8));
       } catch (err) {
         console.error("Error loading similar listings:", err);
       }
     }
     loadSimilar();
-  }, [listing.id, listing.category]);
+  }, [listing.id, listing.category, listing.sellerCollege, listing.price, userProfile?.college]);
 
   useEffect(() => {
     async function load() {
@@ -345,15 +382,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     return `${85 + (sum % 15)}%`;
   };
 
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/listing/${listing.id}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      toast("Listing link copied! 📋", "success");
-    }).catch(() => {
-      toast("Failed to copy link", "error");
-    });
-  };
-
   const images = listing?.images?.length > 0 ? listing.images : null;
 
   const trustScore = Math.round(
@@ -362,6 +390,403 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     (Number(sellerData?.successfulSales || listing?.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
     (Number(sellerData?.rating || listing?.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing?.sellerRating || 0) / 5) * 15 : 0)
   );
+
+  // ── RENDER SUBSECTIONS ───────────────────────────────────────────────────
+
+  const renderImageGallery = () => {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div
+          className="detail-imgs"
+          style={{ position: "relative", touchAction: "pan-y" }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {images ? (
+            <img src={optimizeCloudinaryUrl(images[activeImg], "f_auto,q_auto,w_800")} alt={listing.title} />
+          ) : CAT_IMAGES[listing.category] ? (
+            <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <span style={{ fontSize: 64 }}>📦</span>
+          )}
+
+          {/* Overlaid Actions Group (Save & Share overlaid on image top-right in vertical stack) */}
+          {!isSold && (
+            <div className="gallery-overlay-actions">
+              <button
+                className={`action-overlay-btn btn-wishlist-overlay ${wishlisted ? "wishlisted" : ""}`}
+                onClick={(e) => { e.stopPropagation(); requireAuth(null, () => toggleWishlist(listing.id)); }}
+                title={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                type="button"
+              >
+                <Heart size={16} fill={wishlisted ? "currentColor" : "none"} />
+              </button>
+              
+              <div className="action-overlay-btn btn-share-overlay">
+                <ShareButton listing={listing} currentUserId={currentUser?.uid} iconOnly={true} />
+              </div>
+            </div>
+          )}
+
+          {isSold && (
+            <div style={{
+              position: "absolute", inset: 0, background: "rgba(0,0,0,.45)",
+              display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
+              borderRadius: "var(--r-md)", zIndex: 5
+            }}>
+              <span style={{ color: "#fff", fontSize: 22, fontWeight: 900, background: "#22c55e", padding: "8px 24px", borderRadius: 30 }}>
+                ✅ SOLD
+              </span>
+            </div>
+          )}
+
+          {images && images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="gallery-nav-btn prev"
+                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev - 1 + images.length) % images.length); }}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="gallery-nav-btn next"
+                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev + 1) % images.length); }}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            </>
+          )}
+
+          {images && images.length > 1 && (
+            <div className="gallery-dots" style={{
+              position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+              display: "flex", gap: 6, zIndex: 10, background: "rgba(0,0,0,0.35)", padding: "5px 10px", borderRadius: 12
+            }}>
+              {images.map((_, i) => (
+                <span key={i} className={`gallery-dot ${activeImg === i ? "active" : ""}`} style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: activeImg === i ? "#fff" : "rgba(255,255,255,0.4)",
+                  transition: "background 0.2s"
+                }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {images && images.length > 1 && (
+          <div className="detail-thumbs">
+            {images.map((url, i) => (
+              <div key={i} className={`detail-thumb ${activeImg === i ? "active" : ""}`} onClick={() => setActiveImg(i)}>
+                <img src={optimizeCloudinaryUrl(url, "f_auto,q_auto,w_100,c_fill")} alt="" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderProductInfoCard = () => {
+    return (
+      <div className="detail-card-premium">
+        {/* Category + Condition Badge Row */}
+        <div className="premium-tag-row">
+          <span className="premium-cat">{listing.category}</span>
+          <div style={{ display: "flex", gap: "6px" }}>
+            {COND_META[listing.condition] && (
+              <span className="premium-cond-badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color }}>
+                {COND_META[listing.condition].label}
+              </span>
+            )}
+            {listing.isFree && (
+              <span className="premium-cond-badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)" }}>
+                Free
+              </span>
+            )}
+            {isSold && (
+              <span className="premium-cond-badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)" }}>
+                Sold
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="premium-title">{listing.title}</h1>
+
+        {/* Price block */}
+        <div className="premium-price-row">
+          <div className={`premium-price ${listing.isFree ? "free" : ""}`}>
+            {isSold ? "Item Sold ✅" : listing.isFree ? "Free 💚" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
+          </div>
+          <div className="premium-views-posted">
+            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <Eye size={13} /> {listing.views || 0}
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <Calendar size={13} /> {listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}
+            </span>
+          </div>
+        </div>
+
+        {/* Action buttons (CTAs in Priority Hierarchy - Cleaned up to keep Buy Now & Message Seller only) */}
+        <div className="premium-cta-container">
+          {isOwner ? (
+            /* OWNER ACTIONS */
+            <>
+              {!isSold ? (
+                <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }} style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                  <Edit size={16} /> Edit Listing
+                </button>
+              ) : (
+                <div style={{
+                  background: "var(--status-pending-bg)", border: "1px solid var(--bdr)",
+                  borderRadius: "8px", padding: "10px 14px",
+                  fontSize: 13, color: "var(--status-pending-txt)", fontWeight: 600, lineHeight: 1.5,
+                  textAlign: "center"
+                }}>
+                  🔒 This listing has been sold and cannot be edited.
+                </div>
+              )}
+              {!isSold && (
+                <button className="btn btn-green" onClick={handleMarkSold} style={{ height: "46px", fontWeight: "700" }}>
+                  ✅ Mark as Sold
+                </button>
+              )}
+              <button className="btn btn-danger" onClick={handleDelete} style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                <Trash2 size={16} /> Delete Listing
+              </button>
+            </>
+          ) : isSold ? (
+            /* SOLD STATE — buyer actions */
+            <>
+              <div style={{
+                background: "var(--status-accepted-bg)", border: "1.5px solid var(--grn)",
+                borderRadius: "8px", padding: "12px",
+                textAlign: "center", fontWeight: 700, color: "var(--status-accepted-txt)",
+                fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+              }}>
+                <span>🎉</span> This item has been sold
+              </div>
+
+              {isEligibleBuyer && (
+                alreadyRated ? (
+                  <div style={{
+                    background: "var(--status-accepted-bg)", border: "1px solid var(--grn)",
+                    borderRadius: "8px", padding: "12px",
+                    fontSize: 13, color: "var(--status-accepted-txt)", fontWeight: 600, textAlign: "center"
+                  }}>
+                    ✅ You've already reviewed this seller
+                  </div>
+                ) : (
+                  <button className="btn-primary-premium" onClick={() => requireAuth(null, () => setShowRating(true))}>
+                    <Star size={16} fill="currentColor" /> Rate Seller
+                  </button>
+                )
+              )}
+
+              <button className="btn-secondary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading}>
+                <MessageCircle size={16} /> {contactLoading ? "Opening..." : "View Chat"}
+              </button>
+            </>
+          ) : (
+            /* ACTIVE — buyer actions */
+            <>
+              <button className="btn-primary-premium" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "48px" }}>
+                <ShoppingCart size={16} /> Buy Now
+              </button>
+              <button className="btn-secondary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "46px" }}>
+                <MessageCircle size={16} /> {contactLoading ? "Opening Chat..." : "Message Seller"}
+              </button>
+              <button
+                className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
+                onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}
+                style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%" }}
+                type="button"
+              >
+                <Heart size={15} fill={wishlisted ? "currentColor" : "none"} />
+                <span>{wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSellerTrustCard = () => {
+    if (!sellerData) {
+      return (
+        <div className="seller-trust-card-premium skeleton-shimmer">
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: 10 }}>
+            <div className="skeleton" style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div className="skeleton" style={{ height: 14, width: "50%", marginBottom: 4 }} />
+              <div className="skeleton" style={{ height: 10, width: "70%" }} />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 10 }}>
+            {[1, 2, 3].map(n => <div key={n} className="skeleton" style={{ height: 35, borderRadius: 6 }} />)}
+          </div>
+          <div className="skeleton" style={{ height: 30, borderRadius: 6 }} />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="seller-trust-card-premium"
+        onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }}
+        title="View seller profile"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter") { setViewProfileUserId(listing.sellerId); setPage("profile"); } }}
+      >
+        <div className="seller-profile-section">
+          <div className="seller-avatar-premium">
+            {sellerData?.photoURL ? (
+              <img src={sellerData.photoURL} alt={sellerData?.name || "Seller"} />
+            ) : (
+              (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()
+            )}
+          </div>
+          <div className="seller-identity-details">
+            <div className="seller-name-row">
+              <span>{sellerData?.name || listing.sellerName}</span>
+              {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
+                <VerifiedStudentBadge />
+              )}
+              {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
+                <TrustedSellerBadge />
+              )}
+            </div>
+            <div className="seller-meta-text">
+              {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ") || "Campus Seller"}
+            </div>
+            {(sellerData?.college || listing.sellerCollege) && (
+              <div style={{ marginTop: 1 }}>
+                <SameCampusBadge sellerCollege={sellerData?.college || listing.sellerCollege} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="seller-trust-metrics-grid">
+          <div className="metric-item">
+            <div className="metric-value">
+              {sellerData?.rating > 0 ? `⭐ ${sellerData.rating.toFixed(1)}` : "⭐ N/A"}
+            </div>
+            <div className="metric-label">Rating</div>
+          </div>
+          <div className="metric-item">
+            <div className="metric-value">🛡️ {trustScore}%</div>
+            <div className="metric-label">Trust Score</div>
+          </div>
+          <div className="metric-item">
+            <div className="metric-value">📦 {totalListings}</div>
+            <div className="metric-label">{totalListings === 1 ? "Listing" : "Listings"}</div>
+          </div>
+        </div>
+
+        <div className="seller-activity-info">
+          <span>💬 Response: {getResponseRate(listing.sellerId)}</span>
+          <span>📅 Joined: {getMemberSince(sellerData?.createdAt)}</span>
+        </div>
+
+        <button
+          className="seller-view-profile-btn"
+          onClick={(e) => { e.stopPropagation(); setViewProfileUserId(listing.sellerId); setPage("profile"); }}
+          type="button"
+        >
+          View Seller Profile →
+        </button>
+      </div>
+    );
+  };
+
+  const renderDescriptionBlock = () => {
+    return (
+      <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", border: "1.5px solid var(--bdr)", padding: "20px 24px", boxShadow: "var(--s1)" }}>
+        <h4 style={{ fontWeight: 800, marginBottom: 10, fontSize: "15px", color: "var(--txt)", display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>📄</span> Product Description
+        </h4>
+        <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--muted)", whiteSpace: "pre-wrap" }}>
+          {listing.description}
+        </p>
+      </div>
+    );
+  };
+
+  const renderMeetupLocationBlock = () => {
+    if (!listing.meetupSpot) return null;
+    return (
+      <div className="meetup-card-actionable">
+        <div className="meetup-header-actionable">
+          <MapPin size={15} /> Meetup Location
+        </div>
+        <div className="meetup-spot-badge-premium">
+          <span>📍</span> {listing.meetupSpot}
+        </div>
+        <div className="meetup-tip-compact">
+          💡 Always meet in public, well-lit campus areas. Inspect the item thoroughly before exchanging payment.
+        </div>
+      </div>
+    );
+  };
+
+  const renderSafetyGuidelinesBlock = () => {
+    return (
+      <div className="safety-card-compact">
+        <div className="safety-header-compact">
+          <ShieldCheck size={16} /> Safety Guidelines
+        </div>
+        <ul className="safety-list-compact">
+          <li>Meet in public, well-lit campus spaces</li>
+          <li>Inspect the item before making payment</li>
+          <li>Avoid advance online transactions — swap physically</li>
+          <li>Verify product condition matches listing description</li>
+        </ul>
+      </div>
+    );
+  };
+
+  const renderRecommendations = () => {
+    return (
+      <>
+        {similarListings.length > 0 && (
+          <div style={{ marginTop: "48px", borderTop: "1px solid var(--bdr)", paddingTop: "32px" }}>
+            <h3 className="homepage-section-title" style={{ fontSize: "17px", fontWeight: "800", marginBottom: "16px" }}>
+              ✨ You May Also Like
+            </h3>
+            <div className={isMobile ? "recommendations-carousel" : "listings-grid"} style={{ padding: "10px 0 20px" }}>
+              {similarListings.map(l => (
+                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recentlyViewed.length > 0 && (
+          <div style={{ marginTop: "32px", borderTop: "1px solid var(--bdr)", paddingTop: "32px" }}>
+            <h3 className="homepage-section-title" style={{ fontSize: "17px", fontWeight: "800", marginBottom: "16px" }}>
+              ⏱️ Recently Viewed
+            </h3>
+            <div className={isMobile ? "recommendations-carousel" : "listings-grid"} style={{ padding: "10px 0 20px" }}>
+              {recentlyViewed.map(l => (
+                <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
 
   if (!listing || !listing.id) {
     return (
@@ -372,462 +797,57 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     );
   }
 
+  // ── MAIN RENDER FLOW ─────────────────────────────────────────────────────
+
   return (
     <div className="container detail-page">
-      <button className="btn btn-ghost" onClick={() => {
-        if (window.history.state && window.history.state.page) {
-          window.history.back();
-        } else {
-          setPage("home");
-        }
-      }} style={{ marginBottom:20 }} aria-label="Back to listings">
-        ← Back to listings
+      <button
+        className="btn btn-ghost"
+        onClick={() => {
+          if (window.history.state && window.history.state.page) {
+            window.history.back();
+          } else {
+            setPage("home");
+          }
+        }}
+        style={{ marginBottom: 20, display: "inline-flex", alignItems: "center", gap: "6px" }}
+        aria-label="Back to listings"
+      >
+        <ArrowLeft size={16} /> Back to listings
       </button>
 
-      <div className="detail-grid">
-        {/* ── Left: Images + description + desktop extra content ── */}
-        <div className="detail-left-content">
-          <div
-            className="detail-imgs"
-            style={{ position:"relative", touchAction: "pan-y" }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {images
-              ? <img src={optimizeCloudinaryUrl(images[activeImg], "f_auto,q_auto,w_800")} alt={listing.title} />
-              : CAT_IMAGES[listing.category]
-                ? <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                : <span style={{ fontSize:64 }}>📦</span>}
-            {!isSold && (
-              <button
-                className={`heart-btn ${wishlisted ? "wishlisted" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  requireAuth(null, () => toggleWishlist(listing.id));
-                }}
-                title={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-                type="button"
-                style={{ width: "36px", height: "36px", top: "12px", right: "12px" }}
-              >
-                <svg width="18" height="18" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                </svg>
-              </button>
-            )}
-            {isSold && (
-              <div style={{
-                position:"absolute", inset:0, background:"rgba(0,0,0,.45)",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                borderRadius:"var(--r-md)"
-              }}>
-                <span style={{ color:"#fff", fontSize:22, fontWeight:900, background:"#22c55e", padding:"8px 24px", borderRadius:30 }}>
-                  ✅ SOLD
-                </span>
-              </div>
-            )}
-            {images && images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className="gallery-nav-btn prev"
-                  onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev - 1 + images.length) % images.length); }}
-                  aria-label="Previous image"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  className="gallery-nav-btn next"
-                  onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev + 1) % images.length); }}
-                  aria-label="Next image"
-                >
-                  ›
-                </button>
-              </>
-            )}
-            {images && images.length > 1 && (
-              <div className="gallery-dots" style={{
-                position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
-                display: "flex", gap: 6, zIndex: 10, background: "rgba(0,0,0,0.35)", padding: "5px 10px", borderRadius: 12
-              }}>
-                {images.map((_, i) => (
-                  <span key={i} className={`gallery-dot ${activeImg===i?"active":""}`} style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: activeImg === i ? "#fff" : "rgba(255,255,255,0.4)",
-                    transition: "background 0.2s"
-                  }} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {images && images.length > 1 && (
-            <div className="detail-thumbs">
-              {images.map((url, i) => (
-                <div key={i} className={`detail-thumb ${activeImg===i?"active":""}`} onClick={() => setActiveImg(i)}>
-                  <img src={optimizeCloudinaryUrl(url, "f_auto,q_auto,w_100,c_fill")} alt="" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Description */}
-          <div style={{ background:"var(--surface)", borderRadius:"var(--r-lg)", border:"1.5px solid var(--bdr)", padding:"20px 24px", marginTop:0, boxShadow:"var(--s1)" }}>
-            <h4 style={{ fontWeight:800, marginBottom:10, fontSize:"15px" }}>📄 Description</h4>
-            <p style={{ fontSize:14, lineHeight:1.75, color:"var(--muted)" }}>{listing.description}</p>
-            <div style={{ marginTop:14, fontSize:13, color:"var(--muted-2)", display:"flex", gap:16 }}>
-              <span>👀 {listing.views||0} views</span>
-              <span>📅 {listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}</span>
-            </div>
-          </div>
-
-          {/* ─── DESKTOP ONLY: Seller Info Block below description ─── */}
-          <div className="desktop-only" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div
-              className="seller-info-block"
-              onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }}
-              title="View seller profile"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter") { setViewProfileUserId(listing.sellerId); setPage("profile"); } }}
-            >
-              <div className="seller-info-block-header">👤 Seller Information</div>
-
-              {!sellerData ? (
-                <div className="skeleton-shimmer">
-                  <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: 20 }}>
-                    <div className="skeleton" style={{ width: 60, height: 60, borderRadius: "50%", flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="skeleton" style={{ height: 16, width: "50%", marginBottom: 8 }} />
-                      <div className="skeleton" style={{ height: 12, width: "70%" }} />
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
-                    {[1,2,3].map(n => <div key={n} className="skeleton" style={{ height: 60, borderRadius: 10 }} />)}
-                  </div>
-                  <div className="skeleton" style={{ height: 44, borderRadius: 10 }} />
-                </div>
-              ) : (
-                <>
-                  <div className="seller-info-block-profile">
-                    <div className="seller-info-block-avatar">
-                      {sellerData?.photoURL
-                        ? <img src={sellerData.photoURL} alt="Seller" />
-                        : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="seller-info-block-name">
-                        <span>{sellerData?.name || listing.sellerName}</span>
-                        {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
-                          <VerifiedStudentBadge />
-                        )}
-                        {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
-                          <TrustedSellerBadge />
-                        )}
-                      </div>
-                      <div className="seller-info-block-college">
-                        {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ") || "Campus Seller"}
-                      </div>
-                      {(sellerData?.college || listing.sellerCollege) && (
-                        <div style={{ marginTop: 4 }}>
-                          <SameCampusBadge sellerCollege={sellerData?.college || listing.sellerCollege} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="seller-stats-grid">
-                    <div className="seller-stat-box">
-                      <div className="seller-stat-box-value">
-                        {sellerData?.rating > 0 ? `⭐ ${sellerData.rating.toFixed(1)}` : "⭐ N/A"}
-                      </div>
-                      <div className="seller-stat-box-label">Rating</div>
-                    </div>
-                    <div className="seller-stat-box">
-                      <div className="seller-stat-box-value">🛡️ {trustScore}%</div>
-                      <div className="seller-stat-box-label">Trust Score</div>
-                    </div>
-                    <div className="seller-stat-box">
-                      <div className="seller-stat-box-value">📦 {totalListings}</div>
-                      <div className="seller-stat-box-label">{totalListings === 1 ? "Listing" : "Listings"}</div>
-                    </div>
-                  </div>
-
-                  <button
-                    className="btn btn-outline seller-info-block-cta"
-                    onClick={(e) => { e.stopPropagation(); setViewProfileUserId(listing.sellerId); setPage("profile"); }}
-                    type="button"
-                  >
-                    View Seller Profile →
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* ─── DESKTOP ONLY: Meetup Location ─── */}
-            {listing.meetupSpot && (
-              <div className="meetup-location-block">
-                <div className="meetup-block-header">📍 Meetup Location</div>
-                <div className="meetup-spot-name">
-                  <span style={{ background:"var(--p-light)", color:"var(--p)", borderRadius:"var(--r-sm)", padding:"4px 12px", fontSize:"15px", fontWeight:800 }}>
-                    {listing.meetupSpot}
-                  </span>
-                </div>
-                <div className="meetup-tip">
-                  💡 Always meet in public, well-lit campus areas. Inspect the item before exchanging payment.
-                </div>
-              </div>
-            )}
-
-            {/* ─── DESKTOP ONLY: Safety Guidelines ─── */}
-            <div className="safety-guidelines-block">
-              <div className="safety-block-header">🛡️ Safety Guidelines</div>
-              <ul className="safety-tips-list">
-                {[
-                  "Meet in public, well-lit campus spaces",
-                  "Inspect the item before making payment",
-                  "Avoid advance online transactions — swap physically",
-                  "Verify product condition matches the listing description",
-                  "Prefer campus locations with security or crowd presence"
-                ].map((tip, i) => (
-                  <li key={i}>
-                    <span className="safety-check-icon" aria-hidden="true">✓</span>
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+      {isMobile ? (
+        /* MOBILE / TABLET FLOW (prioritizes: image -> header card -> seller -> description -> meetup -> safety -> recommendations) */
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {renderImageGallery()}
+          {renderProductInfoCard()}
+          {renderSellerTrustCard()}
+          {renderDescriptionBlock()}
+          {renderMeetupLocationBlock()}
+          {renderSafetyGuidelinesBlock()}
+          {renderRecommendations()}
         </div>
-
-        {/* ── Right: Detail card ── */}
-        <div>
-          <div className="detail-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-              <div className="detail-cat" style={{ marginBottom: 0 }}>{listing.category}</div>
-              <ShareButton listing={listing} currentUserId={currentUser?.uid} />
+      ) : (
+        /* DESKTOP SPLIT COLUMN FLOW (optimizes layout: seller info card shifts directly under primary CTA on right side) */
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+          <div className="detail-grid">
+            {/* Left Column: Gallery, Description, Meetup, Safety */}
+            <div className="detail-left-content" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {renderImageGallery()}
+              {renderDescriptionBlock()}
+              {renderMeetupLocationBlock()}
+              {renderSafetyGuidelinesBlock()}
             </div>
 
-            <div className="detail-title" title={listing.title}>
-              {listing.title}
-            </div>
-
-            <div className={`detail-price ${listing.isFree ? "free" : ""}`}>
-              {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
-            </div>
-
-            <div className="detail-badges" style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
-              {COND_META[listing.condition] && (
-                <span className="badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color, border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>
-                  {COND_META[listing.condition].label}
-                </span>
-              )}
-              {listing.isFree && <span className="badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>Sold</span>}
-            </div>
-
-            {/* ── Action Buttons ── */}
-            <div className="action-btns" style={{ marginTop: "14px", gap: "8px" }}>
-              {isOwner ? (
-                /* OWNER ACTIONS */
-                <>
-                  {!isSold ? (
-                    <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }} style={{ height: "44px" }}>
-                      ✏️ Edit Listing
-                    </button>
-                  ) : (
-                    <div style={{
-                      background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
-                      borderRadius:"var(--r-sm)", padding:"10px 14px",
-                      fontSize:13, color:"var(--status-pending-txt)", fontWeight:600, lineHeight:1.5,
-                      textAlign: "center"
-                    }}>
-                      🔒 This listing has been sold and cannot be edited.
-                    </div>
-                  )}
-                  {!isSold && (
-                    <button className="btn btn-green" onClick={handleMarkSold} style={{ height: "44px" }}>✅ Mark as Sold</button>
-                  )}
-                  <button className="btn btn-danger" onClick={handleDelete} style={{ height: "44px" }}>🗑️ Delete Listing</button>
-                </>
-              ) : isSold ? (
-                /* SOLD STATE — buyer actions */
-                <>
-                  <div style={{
-                    background:"var(--status-accepted-bg)", border:"1.5px solid var(--grn)",
-                    borderRadius:"var(--r-sm)", padding:"10px 14px",
-                    textAlign:"center", fontWeight:700, color:"var(--status-accepted-txt)",
-                    fontSize: "13px"
-                  }}>
-                    This item has been sold 🎉
-                  </div>
-
-                  {isEligibleBuyer && (
-                    alreadyRated ? (
-                      <div style={{
-                        background:"var(--status-accepted-bg)", border:"1px solid var(--grn)",
-                        borderRadius:"var(--r-sm)", padding:"10px 14px",
-                        fontSize:13, color:"var(--status-accepted-txt)", fontWeight:600, textAlign:"center"
-                      }}>
-                        ✅ You've already reviewed this seller
-                      </div>
-                    ) : (
-                      <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowRating(true))} style={{ height: "44px" }}>
-                        ⭐ Rate Seller
-                      </button>
-                    )
-                  )}
-
-                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "44px" }}>
-                    💬 {contactLoading ? "Opening..." : "View Chat"}
-                  </button>
-                </>
-              ) : (
-                /* ACTIVE — buyer actions */
-                <>
-                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "46px", fontSize: "15px", fontWeight: "700" }}>
-                    🛒 Buy Now
-                  </button>
-                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "44px", fontWeight: "600" }}>
-                    💬 Message Seller
-                  </button>
-                  <button
-                    className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
-                    onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}
-                    style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
-                  >
-                    <svg width="15" height="15" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                    </svg>
-                    {wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Divider line */}
-            <hr style={{ border: "none", borderTop: "1px solid var(--bdr)", margin: "14px 0" }} />
-
-            {/* ─── MOBILE ONLY: Compact Seller Card inside sidebar ─── */}
-            <div className="mobile-only">
-              <div
-                className="detail-seller-trust-card"
-                onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }}
-                style={{
-                  cursor: "pointer",
-                  background: "var(--light)",
-                  borderRadius: "var(--r-md)",
-                  padding: "12px",
-                  border: "1px solid var(--bdr)"
-                }}
-                title="Click to view seller profile"
-              >
-                {!sellerData ? (
-                  <div className="skeleton-shimmer">
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                      <div className="skeleton" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="skeleton" style={{ height: 12, width: "60%", marginBottom: 4 }} />
-                        <div className="skeleton" style={{ height: 10, width: "40%" }} />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
-                      <div className="avatar" style={{ width: 32, height: 32, fontSize: 13, flexShrink: 0 }}>
-                        {sellerData?.photoURL
-                          ? <img src={sellerData.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                          : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div className="seller-name" style={{ display:"flex", alignItems:"center", gap:4, flexWrap:"wrap", fontSize:"14px", fontWeight:800 }}>
-                          <span>{sellerData?.name || listing.sellerName}</span>
-                          {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
-                            <VerifiedStudentBadge />
-                          )}
-                          {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
-                            <TrustedSellerBadge />
-                          )}
-                        </div>
-                        <div className="seller-college" style={{ fontSize: "11px", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Compact Stats Row */}
-                    <div className="seller-stats-row">
-                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                        ⭐ {sellerData?.rating > 0 ? sellerData.rating.toFixed(1) : "N/A"}
-                      </span>
-                      <span style={{ color: "var(--muted)" }}>•</span>
-                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                        🛡️ {trustScore}%
-                      </span>
-                      <span style={{ color: "var(--muted)" }}>•</span>
-                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                        📦 {totalListings} {totalListings === 1 ? "Listing" : "Listings"}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: "11px", color: "var(--p)", fontWeight: 700, marginTop: "8px", textAlign: "center", borderTop: "1px solid var(--bdr)", paddingTop: "6px" }}>
-                      [ View Seller Profile ]
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Meetup spot — mobile only */}
-              {listing.meetupSpot && (
-                <div className="listing-meetup-spot" style={{ marginTop: "12px", padding: "10px 12px", background: "var(--light)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", fontSize: "13px" }}>
-                  📍 Meetup: <span style={{ fontWeight:800 }}>{listing.meetupSpot}</span>
-                </div>
-              )}
-
-              {/* Safety Tips — mobile only */}
-              <div style={{
-                background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
-                borderRadius:"var(--r-md)", padding:"12px", marginTop:12,
-                boxShadow: "var(--s0)"
-              }}>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", fontWeight: "800", color: "var(--status-pending-txt)", fontSize: "13px", marginBottom: "6px" }}>
-                  <span>🛡️</span> Safety Guidelines
-                </div>
-                <ul style={{ paddingLeft: "14px", margin: 0, fontSize: "11px", color: "var(--text-secondary)", lineHeight: "1.5", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <li>Meet in public, well-lit campus spaces.</li>
-                  <li>Inspect the item before paying.</li>
-                  <li>Avoid advance online transactions; swap physically.</li>
-                </ul>
-              </div>
+            {/* Right Column (sticky): Info card + Seller Trust card directly below it */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", position: "sticky", top: "84px" }}>
+              {renderProductInfoCard()}
+              {renderSellerTrustCard()}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Similar Listings Section */}
-      {similarListings.length > 0 && (
-        <div style={{ marginTop: "52px", borderTop: "1px solid var(--bdr)", paddingTop: "36px" }}>
-          <h3 className="homepage-section-title">✨ You May Also Like</h3>
-          <div className="listings-grid" style={{ padding: "10px 0 20px" }}>
-            {similarListings.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recently Viewed Section */}
-      {recentlyViewed.length > 0 && (
-        <div style={{ marginTop: "32px", borderTop: "1px solid var(--bdr)", paddingTop: "36px" }}>
-          <h3 className="homepage-section-title">⏱️ Recently Viewed</h3>
-          <div className="listings-grid" style={{ padding: "10px 0 20px" }}>
-            {recentlyViewed.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => { setSelectedListing(l); setActiveImg(0); setPage("listing", l); }} requireAuth={requireAuth} />
-            ))}
-          </div>
+          {/* Recommendations below split grid spans full width on desktop */}
+          {renderRecommendations()}
         </div>
       )}
 

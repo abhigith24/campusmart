@@ -7,7 +7,7 @@ import { useToast } from "../context/ToastContext";
 // Lazy load ShareModal for performance optimization
 const ShareModal = lazy(() => import("./ShareModal"));
 
-export default function ShareButton({ listing, currentUserId, className = "" }) {
+export default function ShareButton({ listing, currentUserId, className = "", iconOnly = false }) {
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -64,7 +64,7 @@ export default function ShareButton({ listing, currentUserId, className = "" }) 
         type="button"
       >
         <Share2 size={15} />
-        <span>Share</span>
+        {!iconOnly && <span>Share</span>}
       </button>
 
       {/* Lazy loaded modal wrapper */}

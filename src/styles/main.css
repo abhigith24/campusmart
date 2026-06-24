@@ -6043,3 +6043,510 @@ button {
   background: rgba(245, 158, 11, 0.08) !important;
   border-color: rgba(245, 158, 11, 0.2) !important;
 }
+
+/* ════════════════════════════════════════════════════
+   REDESIGNED PREMIUM MARKETPLACE LISTING DETAIL STYLE
+   (Facebook Marketplace, OLX, Airbnb, Etsy Benchmarks)
+   ════════════════════════════════════════════════════ */
+
+.detail-card-premium {
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Category + Badge Row */
+.premium-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.premium-cat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--p);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.premium-cond-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Product title */
+.premium-title {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--txt);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Price block */
+.premium-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.premium-price {
+  font-family: 'Sora', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--txt);
+  letter-spacing: -0.5px;
+}
+
+.premium-price.free {
+  color: var(--grn);
+}
+
+.premium-views-posted {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Unified Wishlist & Share */
+.share-wishlist-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-wishlist-custom,
+.btn-share-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all var(--dur) var(--ease);
+  cursor: pointer;
+  background: var(--light);
+  border: 1px solid var(--bdr);
+  color: var(--txt-2);
+  width: 100%;
+}
+
+.btn-wishlist-custom:hover,
+.btn-share-custom:hover {
+  background: var(--bdr-2);
+  color: var(--txt);
+  border-color: var(--muted-2);
+}
+
+.btn-wishlist-custom.wishlisted {
+  background: var(--red-light);
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-wishlist-custom.wishlisted:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* CTA Hierarchy */
+.premium-cta-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-primary-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  background: var(--p);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  box-shadow: 0 4px 10px var(--p-glow);
+}
+
+.btn-primary-premium:hover {
+  background: var(--p-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px var(--p-glow);
+}
+
+.btn-primary-premium:active {
+  transform: translateY(0);
+}
+
+.btn-secondary-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  background: transparent;
+  color: var(--p);
+  border: 1.5px solid var(--p);
+  border-radius: 8px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.btn-secondary-premium:hover {
+  background: var(--p-light);
+  border-color: var(--p-dark);
+  color: var(--p-dark);
+}
+
+/* Seller trust card (Redesigned Compact Layout) */
+.seller-trust-card-premium {
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  box-shadow: 0 4px 12px -3px rgba(0, 0, 0, 0.03);
+  transition: all var(--dur) var(--ease);
+}
+
+.seller-trust-card-premium:hover {
+  border-color: var(--p-mid);
+  box-shadow: 0 6px 16px -3px rgba(0, 0, 0, 0.06);
+}
+
+.seller-profile-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.seller-avatar-premium {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p), #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  overflow: hidden;
+  border: 2px solid var(--p-mid);
+  flex-shrink: 0;
+}
+
+.seller-avatar-premium img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seller-identity-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.seller-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--txt);
+}
+
+.seller-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+.seller-meta-text {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Seller trust metrics */
+.seller-trust-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  border-top: 1px solid var(--bdr);
+  border-bottom: 1px solid var(--bdr);
+  padding: 8px 0;
+  margin-bottom: 10px;
+}
+
+.metric-item {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt);
+}
+
+.metric-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.seller-activity-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--muted-2);
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.seller-view-profile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--p);
+  background: var(--p-light);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+
+.seller-view-profile-btn:hover {
+  background: var(--p-mid);
+  color: var(--p-dark);
+}
+
+/* Compact Safety Card */
+.safety-card-compact {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: var(--r-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.safety-header-compact {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--status-pending-txt);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.safety-list-compact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--txt-2);
+  line-height: 1.4;
+}
+
+.safety-list-compact li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.safety-list-compact li::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  color: var(--yel);
+  font-weight: 900;
+}
+
+/* Actionable Meetup Location */
+.meetup-card-actionable {
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.meetup-header-actionable {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meetup-spot-badge-premium {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--p-dark);
+  background: var(--p-light);
+  border: 1px solid var(--p-mid);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.meetup-tip-compact {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Redesigned Gallery Overlay Actions (Vertical Stack) */
+.gallery-overlay-actions {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+}
+
+.action-overlay-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.action-overlay-btn:hover {
+  transform: scale(1.08);
+  background: #ffffff;
+  color: var(--text-primary);
+}
+
+.action-overlay-btn.btn-wishlist-overlay.wishlisted {
+  color: var(--red);
+  background: #ffffff;
+}
+
+.action-overlay-btn .btn-share-custom {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Mobile-Responsive Horizontal Recommendations Carousel */
+@media (max-width: 767px) {
+  .recommendations-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding: 10px 4px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .recommendations-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .recommendations-carousel .listing-card {
+    flex: 0 0 240px;
+    scroll-snap-align: start;
+    margin: 0;
+  }
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .detail-card-premium {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .seller-trust-card-premium {
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .safety-card-compact {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+[data-theme="dark"] .action-overlay-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .action-overlay-btn:hover {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .action-overlay-btn.btn-wishlist-overlay.wishlisted {
+  color: #f87171;
+}
