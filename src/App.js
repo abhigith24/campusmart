@@ -6,7 +6,7 @@ import { NotificationsProvider }         from "./context/NotificationsContext";
 import Navbar                            from "./components/Navbar";
 import Footer                            from "./components/Footer";
 import CookieConsent                     from "./components/CookieConsent";
-import MateGeniFloatingAssistant         from "./components/MateGeni/MateGeniFloatingAssistant";
+import FloatingActionGroup               from "./components/FloatingActionGroup";
 import HomePage                          from "./pages/HomePage";
 import AuthModal                         from "./components/AuthModal";
 
@@ -35,6 +35,8 @@ import { trackPageView }                 from "./utils/analytics";
 import { db }                            from "./firebase";
 import { doc, getDoc }                   from "firebase/firestore";
 import { ThemeProvider }                  from "./context/ThemeContext";
+import { parseListingIdFromPath, getListingUrl } from "./utils/urlHelper";
+import { trackShareClick }               from "./utils/shareAnalytics";
 import "./styles/main.css";
 
 // Pages that should NOT show Footer
@@ -85,8 +87,8 @@ function Main() {
     if (path === "/admin/verifications") return "admin-verifications";
     if (path === "/admin/users") return "admin-users";
     if (path === "/admin/analytics") return "admin-analytics";
-    if (path === "/settings") return "settings";
-    if (path.startsWith("/listing/")) return "listing";
+    if (path.startsWith("/settings")) return "settings";
+    if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) return "listing";
     return "home";
   };
 
@@ -104,13 +106,30 @@ function Main() {
   // Scroll to Top state
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const loadListingById = async (id) => {
+  const loadListingById = async (id, pathname = window.location.pathname, search = window.location.search) => {
     if (!id) return;
     try {
       const docRef = doc(db, "listings", id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setSelectedListing({ id: docSnap.id, ...docSnap.data() });
+        const listingObj = { id: docSnap.id, ...docSnap.data() };
+        setSelectedListing(listingObj);
+
+        // Calculate and enforce canonical SEO URL slug structure
+        const canonicalPath = getListingUrl(listingObj);
+        if (pathname !== canonicalPath) {
+          window.history.replaceState({ page: "listing", listingId: docSnap.id }, "", canonicalPath + search);
+        }
+
+        // Trigger shared link analytics click telemetry
+        const params = new URLSearchParams(search);
+        const ref = params.get("ref");
+        const utmSource = params.get("utm_source");
+        if (ref || utmSource || pathname.startsWith("/i/")) {
+          const source = utmSource || (pathname.startsWith("/i/") ? "shortlink" : "generic");
+          trackShareClick(docSnap.id, source, ref, currentUser?.uid);
+        }
+
         setPage("listing");
       } else {
         navigateTo("home");
@@ -153,7 +172,7 @@ function Main() {
     else if (nextPage === "auth") path = "/auth";
     else if (nextPage === "listing") {
       const listingObj = extraData || selectedListing;
-      path = listingObj ? `/listing/${listingObj.id}` : "/listing";
+      path = listingObj ? getListingUrl(listingObj) : "/item";
     }
     
     if (window.location.pathname !== path) {
@@ -197,10 +216,10 @@ function Main() {
       else if (path === "/admin/users") setPage("admin-users");
       else if (path === "/admin/analytics") setPage("admin-analytics");
       else if (path === "/settings") setPage("settings");
-      else if (path.startsWith("/listing/")) {
-        const id = path.split("/")[2];
-        if (id) {
-          loadListingById(id);
+      else if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) {
+        const parsedId = parseListingIdFromPath(path);
+        if (parsedId) {
+          loadListingById(parsedId, path, window.location.search);
         } else {
           setPage("home");
         }
@@ -220,14 +239,14 @@ function Main() {
   // Initial load check for listing path
   useEffect(() => {
     const path = window.location.pathname;
-    if (path.startsWith("/listing/")) {
-      const id = path.split("/")[2];
-      if (id) {
-        loadListingById(id);
+    if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) {
+      const parsedId = parseListingIdFromPath(path);
+      if (parsedId) {
+        loadListingById(parsedId, path, window.location.search);
       }
     }
     if (!window.history.state) {
-      window.history.replaceState({ page: getInitialPage() }, "", window.location.pathname);
+      window.history.replaceState({ page: getInitialPage() }, "", window.location.pathname + window.location.search);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -383,18 +402,10 @@ function Main() {
 
        {showFooter && <Footer setPage={navigateTo} />}
       <CookieConsent />
-      <MateGeniFloatingAssistant />
-
-      {showScrollTop && (
-        <button
-          className="scroll-top-btn"
-          onClick={scrollToTop}
-          aria-label="Scroll to top"
-          type="button"
-        >
-          ▲ Back to Top
-        </button>
-      )}
+      <FloatingActionGroup
+        showScrollTop={showScrollTop}
+        scrollToTop={scrollToTop}
+      />
 
       {showAuthModal && (
         <AuthModal

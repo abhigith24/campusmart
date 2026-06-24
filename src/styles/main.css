@@ -1303,7 +1303,7 @@ input,textarea,select { font-family:inherit }
    LISTING DETAIL
 ════════════════════════════════════════════════════ */
 .detail-page { padding:28px 0 52px }
-.detail-grid { display:grid; grid-template-columns:1fr 380px; gap:28px }
+.detail-grid { display:grid; grid-template-columns:1fr 380px; gap:28px; align-items:start }
 .detail-imgs {
   border-radius:var(--r-lg); overflow:hidden;
   border:1px solid var(--bdr); background:var(--light);
@@ -1322,10 +1322,21 @@ input,textarea,select { font-family:inherit }
 .detail-thumb img { width:100%; height:100%; object-fit:cover }
 .detail-card {
   background:var(--card-bg); border-radius:var(--r-lg); border:1px solid var(--bdr);
-  padding:24px; box-shadow:var(--s1); position:sticky; top:80px;
+  padding:20px; box-shadow:var(--s1); position:sticky; top:80px;
 }
 .detail-cat { font-size:11px; font-weight:700; color:var(--p); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px }
-.detail-title { font-size:22px; font-weight:800; margin-bottom:10px; line-height:1.3; letter-spacing:-.4px }
+.detail-title {
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:10px;
+  line-height:1.3;
+  letter-spacing:-.4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .detail-price {
   font-family:'Sora',sans-serif; font-size:34px; font-weight:800;
   background:linear-gradient(135deg,#f97316,#fb923c);
@@ -5501,3 +5512,534 @@ button {
 .mategeni-msg-row { flex-direction: column; }
 .mategeni-msg-row.user { align-items: flex-end; }
 .mategeni-msg-row.ai  { align-items: flex-start; }
+
+/* ════════════════════════════════════════════════════
+   GLASSMORPHISM SHARE SYSTEM STYLES
+   ════════════════════════════════════════════════════ */
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px) saturate(190%);
+  -webkit-backdrop-filter: blur(12px) saturate(190%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: shareFadeIn 0.2s ease-out;
+  padding: 16px;
+}
+
+.share-modal-content {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  animation: shareScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #0f172a;
+}
+
+[data-theme="dark"] .share-modal-overlay {
+  background: rgba(15, 23, 42, 0.65);
+}
+
+[data-theme="dark"] .share-modal-content {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes shareFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shareScaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.share-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 14px;
+  padding: 10px 4px;
+  transition: all 0.2s var(--ease);
+  outline: none;
+}
+
+.share-grid-item:focus-visible {
+  box-shadow: 0 0 0 2px var(--p);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.share-grid-item:hover {
+  background: rgba(37, 99, 235, 0.05);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .share-grid-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.share-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s var(--ease);
+}
+
+.share-grid-item:hover .share-icon-circle {
+  transform: scale(1.08);
+}
+
+/* Custom Share Button */
+.btn-share-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  outline: none;
+  user-select: none;
+}
+
+.btn-share-custom:hover {
+  color: var(--p);
+  background: var(--p-light);
+}
+
+.btn-share-custom:active {
+  transform: scale(0.97);
+}
+
+.btn-share-custom:focus-visible {
+  box-shadow: 0 0 0 2px var(--p-glow);
+}
+
+.seller-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--txt-2);
+  border-top: 1px solid var(--bdr);
+  padding-top: 8px;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .share-modal-content {
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    animation: shareSlideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    padding: 24px 24px calc(24px + cubic-bezier(safe-area-inset-bottom, 0px));
+  }
+  
+  @keyframes shareSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   FLOATING ACTION GROUP & CIRCULAR BACK TO TOP
+   ════════════════════════════════════════════════════ */
+.floating-action-group {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+  pointer-events: none; /* allow clicks to pass through spacing */
+}
+
+.floating-action-group > * {
+  pointer-events: auto; /* re-enable pointer events for buttons */
+}
+
+/* Override MateGeni Assistant default container inside group */
+.floating-action-group .mategeni-container {
+  position: relative !important;
+  bottom: auto !important;
+  right: auto !important;
+  z-index: auto !important;
+}
+
+/* Circular scroll-top FAB */
+.scroll-top-circular-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p) 0%, var(--ind) 100%);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: scrollFadeIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+
+.scroll-top-circular-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55);
+}
+
+.scroll-top-circular-btn:active {
+  transform: translateY(-1px) scale(0.97);
+}
+
+.scroll-top-circular-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+
+@keyframes scrollFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile responsive alignment */
+@media (max-width: 768px) {
+  .floating-action-group {
+    bottom: 16px;
+    right: 16px;
+    gap: 12px;
+  }
+  
+  .scroll-top-circular-btn {
+    width: 44px; /* touch-friendly but slightly compact */
+    height: 44px;
+  }
+}
+
+
+/* ════════════════════════════════════════════════════
+   LISTING DETAIL — DESKTOP LAYOUT REDESIGN (>= 1024px)
+   Moves Seller Info, Meetup, Safety below Description
+   on desktop while keeping mobile layout intact.
+════════════════════════════════════════════════════ */
+
+/* Utility visibility toggles */
+.desktop-only { display: none }
+.mobile-only  { display: block }
+
+@media (min-width: 1024px) {
+  .desktop-only { display: block }
+  .mobile-only  { display: none }
+}
+
+/* ── Sidebar stays compact on desktop ─────────────── */
+@media (min-width: 1024px) {
+  .detail-grid {
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .detail-card {
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bdr-2) transparent;
+  }
+}
+
+/* ── Desktop Left Column Flow ─────────────────────── */
+.detail-left-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Seller Info Block (desktop below description) ── */
+.seller-info-block {
+  background: var(--surface);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--s1);
+  transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  cursor: pointer;
+}
+
+.seller-info-block:hover {
+  box-shadow: var(--s2);
+  border-color: var(--p-mid);
+}
+
+.seller-info-block-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seller-info-block-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.seller-info-block-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p-mid), var(--p-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--p);
+  border: 3px solid var(--p-mid);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.seller-info-block-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seller-info-block-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--txt);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.seller-info-block-college {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Three-column stats grid */
+.seller-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.seller-stat-box {
+  background: var(--light);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  padding: 12px 10px;
+  text-align: center;
+  transition: all var(--dur) var(--ease);
+}
+
+.seller-stat-box:hover {
+  border-color: var(--p-mid);
+  background: var(--p-light);
+}
+
+.seller-stat-box-value {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--txt);
+  margin-bottom: 3px;
+}
+
+.seller-stat-box-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ── Meetup Location Block ────────────────────────── */
+.meetup-location-block {
+  background: var(--surface);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  box-shadow: var(--s1);
+  transition: box-shadow var(--dur) var(--ease);
+}
+
+.meetup-location-block:hover {
+  box-shadow: var(--s2);
+}
+
+.meetup-block-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meetup-spot-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--txt);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meetup-tip {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 10px 14px;
+  background: var(--light);
+  border-radius: var(--r-sm);
+  border-left: 3px solid var(--p);
+  margin-top: 10px;
+}
+
+/* ── Safety Guidelines Block ──────────────────────── */
+.safety-guidelines-block {
+  background: var(--status-pending-bg);
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  box-shadow: var(--s0);
+}
+
+.safety-block-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--status-pending-txt);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.safety-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.safety-tips-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--txt-2);
+  line-height: 1.5;
+}
+
+.safety-tips-list li .safety-check-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--status-accepted-bg);
+  color: var(--status-accepted-txt);
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* seller-stats-row for mobile sidebar compact display */
+.seller-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* Dark mode overrides for new desktop blocks */
+[data-theme="dark"] .seller-info-block,
+[data-theme="dark"] .meetup-location-block {
+  background: var(--surface) !important;
+  border-color: var(--bdr) !important;
+}
+
+[data-theme="dark"] .seller-stat-box {
+  background: var(--light) !important;
+  border-color: var(--bdr) !important;
+}
+
+[data-theme="dark"] .seller-stat-box:hover {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: var(--p) !important;
+}
+
+[data-theme="dark"] .meetup-tip {
+  background: var(--light) !important;
+}
+
+[data-theme="dark"] .safety-guidelines-block {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}

@@ -1,3 +1,9 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /chat/
+Disallow: /notifications/
+Disallow: /purchase-requests/
+
+Sitemap: https://campusmart.in/sitemap.xml

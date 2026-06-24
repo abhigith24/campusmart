@@ -14,6 +14,7 @@ import { optimizeCloudinaryUrl } from "../utils/cloudinary";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
+import ShareButton from "../components/ShareButton";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
@@ -97,9 +98,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     }
   };
 
-  const isOwner    = currentUser?.uid === listing.sellerId;
-  const isSold     = listing.status === "sold";
-  const wishlisted = isWishlisted(listing.id);
+  const isOwner    = currentUser?.uid === listing?.sellerId;
+  const isSold     = listing?.status === "sold";
+  const wishlisted = listing?.id ? isWishlisted(listing.id) : false;
 
   // Save to recently viewed
   useEffect(() => {
@@ -155,12 +156,13 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   useEffect(() => {
     async function load() {
-      // Load seller data
-      const snap = await getDoc(doc(db, "users", listing.sellerId));
-      if (snap.exists()) setSellerData(snap.data());
-
-      // Fetch seller stats
+      if (!listing?.sellerId) return;
       try {
+        // Load seller data
+        const snap = await getDoc(doc(db, "users", listing.sellerId));
+        if (snap.exists()) setSellerData(snap.data());
+
+        // Fetch seller stats
         const qListings = query(
           collection(db, "listings"),
           where("sellerId", "==", listing.sellerId)
@@ -170,7 +172,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         setTotalListings(sellerListings.length);
         setCompletedTrades(sellerListings.filter(l => l.status === "sold").length);
       } catch (err) {
-        console.error("Error loading seller stats:", err);
+        console.error("Error loading seller details & stats:", err);
       }
 
       // Increment view count (ignore errors)
@@ -352,7 +354,23 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     });
   };
 
-  const images = listing.images?.length > 0 ? listing.images : null;
+  const images = listing?.images?.length > 0 ? listing.images : null;
+
+  const trustScore = Math.round(
+    50 +
+    ((sellerData?.collegeVerified || sellerData?.isVerified || listing?.collegeVerified || listing?.isVerified) ? 20 : 0) +
+    (Number(sellerData?.successfulSales || listing?.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
+    (Number(sellerData?.rating || listing?.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing?.sellerRating || 0) / 5) * 15 : 0)
+  );
+
+  if (!listing || !listing.id) {
+    return (
+      <div className="container" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "60vh" }}>
+        <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }}></div>
+        <div style={{ color: "var(--muted)", fontWeight: 600 }}>Loading listing details...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container detail-page">
@@ -367,8 +385,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       </button>
 
       <div className="detail-grid">
-        {/* ── Left: Images + description ── */}
-        <div>
+        {/* ── Left: Images + description + desktop extra content ── */}
+        <div className="detail-left-content">
           <div
             className="detail-imgs"
             style={{ position:"relative", touchAction: "pan-y" }}
@@ -455,12 +473,131 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </div>
           )}
 
-          <div style={{ background:"var(--surface)", borderRadius:"var(--r-md)", border:"1.5px solid var(--bdr)", padding:20, marginTop:16 }}>
-            <h4 style={{ fontWeight:800, marginBottom:10 }}>📄 Description</h4>
-            <p style={{ fontSize:14, lineHeight:1.7, color:"var(--muted)" }}>{listing.description}</p>
-            <div style={{ marginTop:12, fontSize:13, color:"var(--muted-2)", display:"flex", gap:16 }}>
+          {/* Description */}
+          <div style={{ background:"var(--surface)", borderRadius:"var(--r-lg)", border:"1.5px solid var(--bdr)", padding:"20px 24px", marginTop:0, boxShadow:"var(--s1)" }}>
+            <h4 style={{ fontWeight:800, marginBottom:10, fontSize:"15px" }}>📄 Description</h4>
+            <p style={{ fontSize:14, lineHeight:1.75, color:"var(--muted)" }}>{listing.description}</p>
+            <div style={{ marginTop:14, fontSize:13, color:"var(--muted-2)", display:"flex", gap:16 }}>
               <span>👀 {listing.views||0} views</span>
               <span>📅 {listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}</span>
+            </div>
+          </div>
+
+          {/* ─── DESKTOP ONLY: Seller Info Block below description ─── */}
+          <div className="desktop-only" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div
+              className="seller-info-block"
+              onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }}
+              title="View seller profile"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { setViewProfileUserId(listing.sellerId); setPage("profile"); } }}
+            >
+              <div className="seller-info-block-header">👤 Seller Information</div>
+
+              {!sellerData ? (
+                <div className="skeleton-shimmer">
+                  <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: 20 }}>
+                    <div className="skeleton" style={{ width: 60, height: 60, borderRadius: "50%", flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton" style={{ height: 16, width: "50%", marginBottom: 8 }} />
+                      <div className="skeleton" style={{ height: 12, width: "70%" }} />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+                    {[1,2,3].map(n => <div key={n} className="skeleton" style={{ height: 60, borderRadius: 10 }} />)}
+                  </div>
+                  <div className="skeleton" style={{ height: 44, borderRadius: 10 }} />
+                </div>
+              ) : (
+                <>
+                  <div className="seller-info-block-profile">
+                    <div className="seller-info-block-avatar">
+                      {sellerData?.photoURL
+                        ? <img src={sellerData.photoURL} alt="Seller" />
+                        : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="seller-info-block-name">
+                        <span>{sellerData?.name || listing.sellerName}</span>
+                        {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
+                          <VerifiedStudentBadge />
+                        )}
+                        {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
+                          <TrustedSellerBadge />
+                        )}
+                      </div>
+                      <div className="seller-info-block-college">
+                        {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ") || "Campus Seller"}
+                      </div>
+                      {(sellerData?.college || listing.sellerCollege) && (
+                        <div style={{ marginTop: 4 }}>
+                          <SameCampusBadge sellerCollege={sellerData?.college || listing.sellerCollege} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="seller-stats-grid">
+                    <div className="seller-stat-box">
+                      <div className="seller-stat-box-value">
+                        {sellerData?.rating > 0 ? `⭐ ${sellerData.rating.toFixed(1)}` : "⭐ N/A"}
+                      </div>
+                      <div className="seller-stat-box-label">Rating</div>
+                    </div>
+                    <div className="seller-stat-box">
+                      <div className="seller-stat-box-value">🛡️ {trustScore}%</div>
+                      <div className="seller-stat-box-label">Trust Score</div>
+                    </div>
+                    <div className="seller-stat-box">
+                      <div className="seller-stat-box-value">📦 {totalListings}</div>
+                      <div className="seller-stat-box-label">{totalListings === 1 ? "Listing" : "Listings"}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    className="btn btn-outline seller-info-block-cta"
+                    onClick={(e) => { e.stopPropagation(); setViewProfileUserId(listing.sellerId); setPage("profile"); }}
+                    type="button"
+                  >
+                    View Seller Profile →
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* ─── DESKTOP ONLY: Meetup Location ─── */}
+            {listing.meetupSpot && (
+              <div className="meetup-location-block">
+                <div className="meetup-block-header">📍 Meetup Location</div>
+                <div className="meetup-spot-name">
+                  <span style={{ background:"var(--p-light)", color:"var(--p)", borderRadius:"var(--r-sm)", padding:"4px 12px", fontSize:"15px", fontWeight:800 }}>
+                    {listing.meetupSpot}
+                  </span>
+                </div>
+                <div className="meetup-tip">
+                  💡 Always meet in public, well-lit campus areas. Inspect the item before exchanging payment.
+                </div>
+              </div>
+            )}
+
+            {/* ─── DESKTOP ONLY: Safety Guidelines ─── */}
+            <div className="safety-guidelines-block">
+              <div className="safety-block-header">🛡️ Safety Guidelines</div>
+              <ul className="safety-tips-list">
+                {[
+                  "Meet in public, well-lit campus spaces",
+                  "Inspect the item before making payment",
+                  "Avoid advance online transactions — swap physically",
+                  "Verify product condition matches the listing description",
+                  "Prefer campus locations with security or crowd presence"
+                ].map((tip, i) => (
+                  <li key={i}>
+                    <span className="safety-check-icon" aria-hidden="true">✓</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -468,160 +605,61 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         {/* ── Right: Detail card ── */}
         <div>
           <div className="detail-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "8px" }}>
-              <div className="detail-cat">{listing.category}</div>
-              <button
-                className="btn btn-outline btn-xs"
-                onClick={handleShare}
-                type="button"
-                style={{ borderRadius: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-              >
-                <span>🔗</span> Share
-              </button>
-            </div>
-            <div className="detail-title">{listing.title}</div>
-
-            <div className={`detail-price ${listing.isFree?"free":""}`} style={{ color: listing.listingType==="rent" ? "var(--p-dark)" : undefined }}>
-              {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free Donation" : listing.listingType==="rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <div className="detail-cat" style={{ marginBottom: 0 }}>{listing.category}</div>
+              <ShareButton listing={listing} currentUserId={currentUser?.uid} />
             </div>
 
-            <div className="detail-badges" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+            <div className="detail-title" title={listing.title}>
+              {listing.title}
+            </div>
+
+            <div className={`detail-price ${listing.isFree ? "free" : ""}`}>
+              {isSold ? "Item Sold ✅" : listing.isFree ? "💚 Free" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
+            </div>
+
+            <div className="detail-badges" style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
               {COND_META[listing.condition] && (
-                <span className="badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color, border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                <span className="badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color, border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>
                   {COND_META[listing.condition].label}
                 </span>
               )}
-              {listing.isFree && <span className="badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Free</span>}
-              {isSold && <span className="badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Sold</span>}
-              <span className="badge" style={{ background: "var(--light)", color: "var(--txt-2)", border: "0", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{listing.category}</span>
-              {(listing.collegeVerified || listing.isVerified) && <VerifiedStudentBadge />}
-              {currentUser && userProfile?.college && listing.sellerCollege && userProfile.college.trim().toLowerCase() === listing.sellerCollege.trim().toLowerCase() && (
-                <SameCampusBadge />
-              )}
-              {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
-                <TrustedSellerBadge />
-              )}
-            </div>
-
-            {/* Redesigned Seller Card with Trust Stats */}
-            <div className="detail-seller-trust-card" onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }} style={{ cursor: "pointer", background: "var(--light)", borderRadius: "var(--r-md)", padding: "16px", border: "1px solid var(--bdr)", marginBottom: "16px" }}>
-              {!sellerData ? (
-                <div className="skeleton-shimmer">
-                  <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
-                    <div className="skeleton" style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="skeleton" style={{ height: 16, width: "60%", marginBottom: 6 }} />
-                      <div className="skeleton" style={{ height: 12, width: "80%" }} />
-                    </div>
-                  </div>
-                  <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
-                    {Array(5).fill(0).map((_, i) => (
-                      <div key={i} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <div className="skeleton" style={{ height: 10, width: "40%" }} />
-                        <div className="skeleton" style={{ height: 12, width: "70%" }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
-                <div className="avatar" style={{ width:40, height:40, fontSize:15, flexShrink: 0 }}>
-                  {sellerData?.photoURL
-                    ? <img src={sellerData.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                    : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
-                </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="seller-name" style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                    <span style={{ fontWeight: 800 }}>{sellerData?.name || listing.sellerName}</span>
-                    {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
-                      <VerifiedStudentBadge />
-                    )}
-                    {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
-                      <TrustedSellerBadge />
-                    )}
-                  </div>
-                  <div className="seller-college" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: "12px", color: "var(--muted)" }}>
-                    <span>{[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}</span>
-                    {currentUser && userProfile?.college && sellerData?.college && userProfile.college.trim().toLowerCase() === sellerData.college.trim().toLowerCase() && (
-                      <SameCampusBadge />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="seller-trust-grid-mini" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 12px", borderTop: "1px solid var(--border-color)", paddingTop: "10px" }}>
-                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Rating</div>
-                  <div className="trust-stat-val-mini" style={{ color: "var(--yel)", fontWeight: "700", fontSize: "12px" }}>
-                    ★ {sellerData?.rating > 0 ? sellerData.rating.toFixed(1) : "N/A"}
-                  </div>
-                </div>
-                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Trust Score</div>
-                  <div className="trust-stat-val-mini" style={{ fontSize: "12px", color: "var(--p)", fontWeight: "700" }}>
-                    🛡️ {Math.round(
-                      50 +
-                      ((sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) ? 20 : 0) +
-                      (Number(sellerData?.successfulSales || listing.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
-                      (Number(sellerData?.rating || listing.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing.sellerRating || 0) / 5) * 15 : 0)
-                    )}%
-                  </div>
-                </div>
-                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Member Since</div>
-                  <div className="trust-stat-val-mini" style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: "600" }}>{getMemberSince(sellerData?.joinedAt)}</div>
-                </div>
-                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Total Listings</div>
-                  <div className="trust-stat-val-mini" style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: "600" }}>{totalListings} items</div>
-                </div>
-                <div className="trust-stat-mini" style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                  <div className="trust-stat-label-mini" style={{ fontSize: "10px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700" }}>Completed Trades</div>
-                  <div className="trust-stat-val-mini" style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: "600" }}>{completedTrades} sold</div>
-                </div>
-                <div className="trust-stat-mini" style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", marginTop: "2px" }}>
-                  <span style={{ color: "var(--muted)", fontWeight: "500" }}>Response Rate:</span>
-                  <span style={{ fontWeight: "700", color: "var(--grn)" }}>{getResponseRate(listing.sellerId)}</span>
-                </div>
-              </div>
-              <div style={{ fontSize: "11px", color: "var(--p)", fontWeight: 700, marginTop: "10px", textAlign: "center", borderTop: "1px solid var(--border-color)", paddingTop: "6px" }}>
-                🔍 View seller profile & history
-              </div>
-                </>
-              )}
+              {listing.isFree && <span className="badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>Free</span>}
+              {isSold && <span className="badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", border: "0", padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>Sold</span>}
             </div>
 
             {/* ── Action Buttons ── */}
-            <div className="action-btns">
+            <div className="action-btns" style={{ marginTop: "14px", gap: "8px" }}>
               {isOwner ? (
                 /* OWNER ACTIONS */
                 <>
                   {!isSold ? (
-                    <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }}>
+                    <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }} style={{ height: "44px" }}>
                       ✏️ Edit Listing
                     </button>
                   ) : (
                     <div style={{
                       background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
                       borderRadius:"var(--r-sm)", padding:"10px 14px",
-                      fontSize:13, color:"var(--status-pending-txt)", fontWeight:600, lineHeight:1.5
+                      fontSize:13, color:"var(--status-pending-txt)", fontWeight:600, lineHeight:1.5,
+                      textAlign: "center"
                     }}>
-                      🔒 This listing has been sold and can no longer be edited.
+                      🔒 This listing has been sold and cannot be edited.
                     </div>
                   )}
                   {!isSold && (
-                    <button className="btn btn-green" onClick={handleMarkSold}>✅ Mark as Sold</button>
+                    <button className="btn btn-green" onClick={handleMarkSold} style={{ height: "44px" }}>✅ Mark as Sold</button>
                   )}
-                  <button className="btn btn-danger" onClick={handleDelete}>🗑️ Delete Listing</button>
+                  <button className="btn btn-danger" onClick={handleDelete} style={{ height: "44px" }}>🗑️ Delete Listing</button>
                 </>
               ) : isSold ? (
                 /* SOLD STATE — buyer actions */
                 <>
                   <div style={{
                     background:"var(--status-accepted-bg)", border:"1.5px solid var(--grn)",
-                    borderRadius:"var(--r-sm)", padding:"12px 16px",
-                    textAlign:"center", fontWeight:700, color:"var(--status-accepted-txt)"
+                    borderRadius:"var(--r-sm)", padding:"10px 14px",
+                    textAlign:"center", fontWeight:700, color:"var(--status-accepted-txt)",
+                    fontSize: "13px"
                   }}>
                     This item has been sold 🎉
                   </div>
@@ -636,59 +674,135 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                         ✅ You've already reviewed this seller
                       </div>
                     ) : (
-                      <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowRating(true))}>
+                      <button className="btn btn-primary" onClick={() => requireAuth(null, () => setShowRating(true))} style={{ height: "44px" }}>
                         ⭐ Rate Seller
                       </button>
                     )
                   )}
 
-                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading}>
+                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "44px" }}>
                     💬 {contactLoading ? "Opening..." : "View Chat"}
                   </button>
                 </>
               ) : (
                 /* ACTIVE — buyer actions */
                 <>
-                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "46px", fontSize: "15px" }}>🛒 Buy Now</button>
+                  <button className="btn btn-primary" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "46px", fontSize: "15px", fontWeight: "700" }}>
+                    🛒 Buy Now
+                  </button>
+                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "44px", fontWeight: "600" }}>
+                    💬 Message Seller
+                  </button>
                   <button
                     className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
                     onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}
-                    style={{ height: "42px" }}
+                    style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
                   >
-                    <svg width="15" height="15" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+                    <svg width="15" height="15" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                     </svg>
                     {wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
                   </button>
-                  <button className="btn btn-outline" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "42px" }}>
-                    💬 {contactLoading ? "Opening..." : "Message Seller"}
-                  </button>
                 </>
               )}
             </div>
-          </div>
 
-          {/* Meetup spot — shown if seller set one */}
-          {listing.meetupSpot && (
-            <div className="listing-meetup-spot">
-              📍 Meetup: <span style={{ fontWeight:800 }}>{listing.meetupSpot}</span>
-            </div>
-          )}
+            {/* Divider line */}
+            <hr style={{ border: "none", borderTop: "1px solid var(--bdr)", margin: "14px 0" }} />
 
-          {/* Safety Tips Card */}
-          <div style={{
-            background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
-            borderRadius:"var(--r-md)", padding:"16px", marginTop:16,
-            boxShadow: "var(--s0)"
-          }}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", fontWeight: "800", color: "var(--status-pending-txt)", fontSize: "14px", marginBottom: "8px" }}>
-              <span>🛡️</span> Safety Guidelines
+            {/* ─── MOBILE ONLY: Compact Seller Card inside sidebar ─── */}
+            <div className="mobile-only">
+              <div
+                className="detail-seller-trust-card"
+                onClick={() => { setViewProfileUserId(listing.sellerId); setPage("profile"); }}
+                style={{
+                  cursor: "pointer",
+                  background: "var(--light)",
+                  borderRadius: "var(--r-md)",
+                  padding: "12px",
+                  border: "1px solid var(--bdr)"
+                }}
+                title="Click to view seller profile"
+              >
+                {!sellerData ? (
+                  <div className="skeleton-shimmer">
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="skeleton" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="skeleton" style={{ height: 12, width: "60%", marginBottom: 4 }} />
+                        <div className="skeleton" style={{ height: 10, width: "40%" }} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+                      <div className="avatar" style={{ width: 32, height: 32, fontSize: 13, flexShrink: 0 }}>
+                        {sellerData?.photoURL
+                          ? <img src={sellerData.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                          : (sellerData?.name || listing.sellerName || "?")[0].toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div className="seller-name" style={{ display:"flex", alignItems:"center", gap:4, flexWrap:"wrap", fontSize:"14px", fontWeight:800 }}>
+                          <span>{sellerData?.name || listing.sellerName}</span>
+                          {(sellerData?.collegeVerified || sellerData?.isVerified || listing.collegeVerified || listing.isVerified) && (
+                            <VerifiedStudentBadge />
+                          )}
+                          {(sellerData?.successfulSales >= 3 || listing.sellerSuccessfulSales >= 3) && (
+                            <TrustedSellerBadge />
+                          )}
+                        </div>
+                        <div className="seller-college" style={{ fontSize: "11px", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {[sellerData?.college, sellerData?.branch].filter(Boolean).join(" • ")}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compact Stats Row */}
+                    <div className="seller-stats-row">
+                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                        ⭐ {sellerData?.rating > 0 ? sellerData.rating.toFixed(1) : "N/A"}
+                      </span>
+                      <span style={{ color: "var(--muted)" }}>•</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                        🛡️ {trustScore}%
+                      </span>
+                      <span style={{ color: "var(--muted)" }}>•</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                        📦 {totalListings} {totalListings === 1 ? "Listing" : "Listings"}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: "11px", color: "var(--p)", fontWeight: 700, marginTop: "8px", textAlign: "center", borderTop: "1px solid var(--bdr)", paddingTop: "6px" }}>
+                      [ View Seller Profile ]
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Meetup spot — mobile only */}
+              {listing.meetupSpot && (
+                <div className="listing-meetup-spot" style={{ marginTop: "12px", padding: "10px 12px", background: "var(--light)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", fontSize: "13px" }}>
+                  📍 Meetup: <span style={{ fontWeight:800 }}>{listing.meetupSpot}</span>
+                </div>
+              )}
+
+              {/* Safety Tips — mobile only */}
+              <div style={{
+                background:"var(--status-pending-bg)", border:"1px solid var(--bdr)",
+                borderRadius:"var(--r-md)", padding:"12px", marginTop:12,
+                boxShadow: "var(--s0)"
+              }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", fontWeight: "800", color: "var(--status-pending-txt)", fontSize: "13px", marginBottom: "6px" }}>
+                  <span>🛡️</span> Safety Guidelines
+                </div>
+                <ul style={{ paddingLeft: "14px", margin: 0, fontSize: "11px", color: "var(--text-secondary)", lineHeight: "1.5", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <li>Meet in public, well-lit campus spaces.</li>
+                  <li>Inspect the item before paying.</li>
+                  <li>Avoid advance online transactions; swap physically.</li>
+                </ul>
+              </div>
             </div>
-            <ul style={{ paddingLeft: "18px", margin: 0, fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.6", display: "flex", flexDirection: "column", gap: "6px" }}>
-              <li>Always meet in a public, well-lit place on campus.</li>
-              <li>Inspect the item thoroughly before making any payment.</li>
-              <li>Avoid advanced online transactions; swap physically.</li>
-            </ul>
           </div>
         </div>
       </div>
