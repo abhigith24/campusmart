@@ -1073,8 +1073,9 @@ input,textarea,select { font-family:inherit }
 .dd-btn:hover { border-color:var(--p); color:var(--p); background:var(--p-light) }
 .dd-btn.dd-open { border-color:var(--p); color:var(--p); background:var(--p-light) }
 .dd-btn.dd-active {
-  background:linear-gradient(135deg,#f97316,#fb923c);
-  color:#fff; border-color:transparent; box-shadow:0 2px 8px rgba(249,115,22,.35);
+  background: var(--p);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 .dd-btn.dd-free-active {
   background:linear-gradient(135deg,#22c55e,#4ade80);
@@ -6549,4 +6550,359 @@ button {
 
 [data-theme="dark"] .action-overlay-btn.btn-wishlist-overlay.wishlisted {
   color: #f87171;
+}
+
+/* ════════════════════════════════════════════════════
+   PAGE PAGINATION & REVEAL TRANSITIONS
+   ════════════════════════════════════════════════════ */
+
+/* Progress awareness bar */
+.pagination-progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin: 32px auto 16px;
+}
+
+.pagination-progress-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pagination-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--bdr-2);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.pagination-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--p), #4f46e5);
+  border-radius: var(--r-full);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Explore More Button */
+.btn-explore-listings {
+  min-height: 48px;
+  padding: 12px 36px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 2.5px solid var(--p);
+  color: var(--p);
+  transition: all var(--dur) var(--ease);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.05);
+}
+
+.btn-explore-listings:hover:not(:disabled) {
+  background: var(--p-light);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.1);
+  color: var(--p-dark);
+  border-color: var(--p-dark);
+}
+
+.btn-explore-listings:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  background: var(--light);
+  border-color: var(--muted-2);
+  color: var(--muted);
+}
+
+/* Card reveal slide-up animation */
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-reveal-animate {
+  animation: cardReveal 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* End of Listings Banner */
+.end-listings-banner {
+  text-align: center;
+  padding: 36px 20px;
+  background: var(--surface);
+  border: 1px dashed var(--bdr);
+  border-radius: var(--r-lg);
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.end-listings-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.end-listings-sub {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.end-listings-cta {
+  margin-top: 4px;
+}
+
+/* Custom error message */
+.pagination-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-txt);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  margin: 24px auto 0;
+  width: fit-content;
+}
+
+.pagination-error-retry {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pagination-error-retry:hover {
+  opacity: 0.9;
+}
+
+/* ════════════════════════════════════════════════════
+   FILTER BAR ENHANCEMENT — Smart Sticky + Quick Filters
+   ════════════════════════════════════════════════════ */
+
+/* Sticky wrapper: slides up on scroll-down, returns on scroll-up */
+.filter-bar-wrapper {
+  position: sticky;
+  top: 63px;
+  z-index: 90;
+  background: var(--surface);
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 250ms ease,
+              opacity 200ms ease;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--bdr);
+  margin-bottom: 8px;
+}
+
+/* Inner filter-bar no longer needs its own bottom border */
+.filter-bar-wrapper .filter-bar {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 4px;
+}
+
+/* Hidden state — slides up past the sticky header */
+.filter-bar-wrapper.filter-bar-hidden {
+  transform: translateY(calc(-100% - 68px));
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* Subtle elevation when visible and sticky */
+.filter-bar-wrapper:not(.filter-bar-hidden) {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+/* Filter count badge: "Filters (3)" */
+.filter-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: var(--p-light);
+  color: var(--p);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid rgba(37, 99, 235, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Category dropdown — wider, scrollable */
+.dd-menu-category {
+  min-width: 280px;
+  width: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bdr-2) transparent;
+  animation: dropIn 0.15s var(--ease);
+}
+.dd-menu-category::-webkit-scrollbar { width: 5px; }
+.dd-menu-category::-webkit-scrollbar-track { background: transparent; }
+.dd-menu-category::-webkit-scrollbar-thumb { background: var(--bdr-2); border-radius: 3px; }
+
+/* Emoji icon column in dropdown items */
+.dd-item-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Checkmark prefix (✓) shown on active dd-btn chips */
+.dd-check-prefix {
+  font-size: 10px;
+  font-weight: 900;
+  color: inherit;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* ── Quick Filter Row ──────────────────────────────────────────────────── */
+.quick-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-wrap: nowrap;
+}
+.quick-filter-row::-webkit-scrollbar { display: none; }
+
+.quick-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--bdr);
+  background: var(--surface);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--txt-2);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 34px;
+  user-select: none;
+}
+.quick-filter-chip:hover {
+  border-color: var(--p);
+  color: var(--p);
+  background: var(--p-light);
+  transform: translateY(-1px);
+}
+.quick-filter-chip-active {
+  background: var(--p);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.quick-filter-chip-active:hover {
+  background: var(--p-dark);
+  color: #fff;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* ── Accessibility: visible focus rings ────────────────────────────────── */
+.dd-btn:focus-visible {
+  outline: 2px solid var(--p);
+  outline-offset: 2px;
+}
+.quick-filter-chip:focus-visible {
+  outline: 2px solid var(--p);
+  outline-offset: 2px;
+}
+.dd-item:focus-visible {
+  outline: 2px solid var(--p);
+  outline-offset: -2px;
+}
+
+/* ── Dark mode overrides ───────────────────────────────────────────────── */
+[data-theme="dark"] .filter-bar-wrapper {
+  background: var(--surface);
+  border-bottom-color: var(--bdr);
+}
+[data-theme="dark"] .quick-filter-chip {
+  background: var(--surface);
+  border-color: var(--bdr);
+  color: var(--txt-2);
+}
+[data-theme="dark"] .quick-filter-chip:hover {
+  border-color: var(--p);
+  color: var(--p);
+  background: var(--p-light);
+}
+[data-theme="dark"] .quick-filter-chip-active,
+[data-theme="dark"] .quick-filter-chip-active:hover {
+  background: var(--p);
+  color: #fff;
+  border-color: transparent;
+}
+[data-theme="dark"] .filter-count-badge {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: var(--p);
+}
+[data-theme="dark"] .dd-btn.dd-active {
+  background: var(--p) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* ── Mobile overrides ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .filter-bar-wrapper {
+    top: 56px;
+  }
+  .filter-bar-wrapper.filter-bar-hidden {
+    transform: translateY(calc(-100% - 60px));
+  }
+  .quick-filter-chip {
+    font-size: 12px;
+    padding: 5px 12px;
+    min-height: 32px;
+  }
+  .filter-count-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+  .dd-menu-category {
+    width: min(300px, calc(100vw - 32px));
+    max-height: 55vh;
+  }
 }
