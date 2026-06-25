@@ -35,7 +35,7 @@ const CAT_IMAGES = {
 };
 
 export default function ListingDetailPage({ listing, setPage, setSelectedListing, setChatWith, requireAuth, setViewProfileUserId }) {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, hasFeature, hasPermission } = useAuth();
   const toast   = useToast();
   const { isWishlisted, toggleWishlist } = useWishlist();
 
@@ -103,7 +103,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         setActiveImg((prev) => (prev + 1) % images.length);
       } else {
         // Swipe right -> Prev image
-        setActiveImg((prev) => (prev - 1 + images.length) % images.length);
+        setActiveImg((prev) => (prev - 1 + listing.images.length) % listing.images.length);
       }
     }
   };
@@ -111,7 +111,6 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const isOwner    = currentUser?.uid === listing?.sellerId;
   const isSold     = listing?.status === "sold";
   const wishlisted = listing?.id ? isWishlisted(listing.id) : false;
-  const isStaff    = userProfile?.role === "admin" || userProfile?.role === "support";
 
   // Save to recently viewed
   useEffect(() => {
@@ -564,7 +563,11 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                 <Trash2 size={16} /> Delete Listing
               </button>
             </>
-          ) : isStaff ? (
+          ) : hasFeature("showPurchaseRequests") && !isOwner && listing.status === "active" ? (
+             <button className="btn-primary-premium" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "48px" }}>
+                <ShoppingCart size={16} /> Request to Buy
+              </button>
+          ) : (!hasPermission("canBuy") && currentUser) ? (
             /* STAFF ACTIONS */
             <>
               {isSold && (

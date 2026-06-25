@@ -169,15 +169,15 @@ export default function AdminDashboardPage({ setPage }) {
                       .filter(l => !listingSearch || l.title?.toLowerCase().includes(listingSearch.toLowerCase()) || l.sellerName?.toLowerCase().includes(listingSearch.toLowerCase()))
                       .map(l => (
                         <tr key={l.id} style={{ background: l.flagged ? "var(--status-pending-bg)" : "transparent" }}>
-                          <td style={{ fontWeight: 700, maxWidth: 180 }}>
+                          <td data-label="Item" style={{ fontWeight: 700, maxWidth: 180 }}>
                             {l.flagged && <span style={{ color: "#0369a1", marginRight: 4 }}>🚩</span>}
                             {l.title}
                           </td>
-                          <td>{l.sellerName}</td>
-                          <td>{l.category}</td>
-                          <td>{l.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${l.price}`}</td>
-                          <td><StatusBadge status={l.flagged && l.status === "active" ? "flagged" : l.status} /></td>
-                          <td>
+                          <td data-label="Seller">{l.sellerName}</td>
+                          <td data-label="Category">{l.category}</td>
+                          <td data-label="Price">{l.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${l.price}`}</td>
+                          <td data-label="Status"><StatusBadge status={l.flagged && l.status === "active" ? "flagged" : l.status} /></td>
+                          <td data-label="Actions">
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {l.status === "active" && !l.flagged && (
                                 <>
@@ -214,12 +214,12 @@ export default function AdminDashboardPage({ setPage }) {
                 <tbody>
                   {requests.map(r => (
                     <tr key={r.id}>
-                      <td style={{ fontWeight: 700 }}>{r.listingTitle}</td>
-                      <td>{r.buyerName}</td>
-                      <td>{r.sellerName}</td>
-                      <td>{r.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${r.price}`}</td>
-                      <td><StatusBadge status={r.status} /></td>
-                      <td style={{ fontSize: 12, color: "var(--muted)" }}>
+                      <td data-label="Item" style={{ fontWeight: 700 }}>{r.listingTitle}</td>
+                      <td data-label="Buyer">{r.buyerName}</td>
+                      <td data-label="Seller">{r.sellerName}</td>
+                      <td data-label="Price">{r.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${r.price}`}</td>
+                      <td data-label="Status"><StatusBadge status={r.status} /></td>
+                      <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)" }}>
                         {r.createdAt?.toDate
                           ? new Date(r.createdAt.toDate()).toLocaleDateString("en-IN")
                           : "—"}

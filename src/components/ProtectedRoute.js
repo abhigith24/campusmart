@@ -1,8 +1,8 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute({ children, requiredRoles }) {
-  const { userProfile, loading } = useAuth();
+export default function ProtectedRoute({ children, route }) {
+  const { userProfile, loading, canAccessRoute } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, requiredRoles }) {
     return null;
   }
 
-  if (requiredRoles && !requiredRoles.includes(userProfile.role)) {
+  if (route && !canAccessRoute(route)) {
     return (
       <div className="container" style={{ paddingTop: 60, textAlign: "center", minHeight: "100vh" }}>
         <div style={{ fontSize: 48 }}>🚫</div>

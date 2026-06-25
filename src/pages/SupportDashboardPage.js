@@ -100,14 +100,14 @@ export default function SupportDashboardPage({ setPage }) {
               <tbody>
                 {filteredTickets.map(t => (
                   <tr key={t.id} style={{ background: t.status === "closed" ? "var(--bg-secondary)" : "transparent" }}>
-                    <td style={{ fontSize: 13, whiteSpace: "nowrap" }}>
+                    <td data-label="Date" style={{ fontSize: 13, whiteSpace: "nowrap" }}>
                       {t.createdAt?.toDate ? t.createdAt.toDate().toLocaleDateString() : "Unknown"}
                     </td>
-                    <td>
+                    <td data-label="User">
                       <div style={{ fontWeight: 600 }}>{t.name || "Anonymous"}</div>
                       <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{t.email || "No email"}</div>
                     </td>
-                    <td style={{ maxWidth: "300px" }}>
+                    <td data-label="Message" style={{ maxWidth: "300px" }}>
                       <div style={{
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
@@ -119,7 +119,7 @@ export default function SupportDashboardPage({ setPage }) {
                         {t.message}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <select
                         className="form-input"
                         style={{ padding: "4px 8px", fontSize: 13, minWidth: 100 }}
@@ -131,7 +131,7 @@ export default function SupportDashboardPage({ setPage }) {
                         <option value="closed">Closed</option>
                       </select>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <button 
                         className="btn btn-sm btn-outline"
                         onClick={() => {

@@ -3,15 +3,16 @@ import { useAuth } from "../context/AuthContext";
 
 const YEAR = new Date().getFullYear();
 
+import { getDashboardRoute } from "../config/accessControl";
+
 export default function Footer({ setPage }) {
-  const { userProfile } = useAuth();
-  const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
+  const { userProfile, hasFeature } = useAuth();
   return (
     <footer className="site-footer">
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand">
-            <button className="footer-logo" onClick={() => setPage("home")} type="button">
+            <button className="footer-logo" onClick={() => setPage(getDashboardRoute(userProfile?.role))} type="button">
               <img className="footer-logo-img" src="/logo-circular.png" alt="CampusMart" />
               <span>CampusMart</span>
             </button>
@@ -24,9 +25,9 @@ export default function Footer({ setPage }) {
           <div className="footer-col">
             <div className="footer-col-title">Platform</div>
             <button className="footer-link" onClick={() => setPage("home")}>Browse Listings</button>
-            {!isStaff && <button className="footer-link" onClick={() => setPage("post")}>Post an Item</button>}
-            {!isStaff && <button className="footer-link" onClick={() => setPage("chat")}>Messages</button>}
-            {isStaff && <button className="footer-link" onClick={() => setPage(userProfile?.role === "admin" ? "admin" : "support")}>Dashboard</button>}
+            {hasFeature("showPostItemButton") && <button className="footer-link" onClick={() => setPage("post")}>Post an Item</button>}
+            {hasFeature("showChat") && <button className="footer-link" onClick={() => setPage("chat")}>Messages</button>}
+            {(hasFeature("showAdminDashboard") || hasFeature("showSupportDashboard")) && <button className="footer-link" onClick={() => setPage(getDashboardRoute(userProfile?.role))}>Dashboard</button>}
             <button className="footer-link" onClick={() => setPage("profile")}>My Profile</button>
           </div>
 

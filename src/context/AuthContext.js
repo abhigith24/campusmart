@@ -11,6 +11,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 import { trackSignUp, trackLogin } from "../utils/analytics";
+import { hasPermission, hasFeature, canAccessRoute } from "../config/accessControl";
 
 const AuthContext = createContext();
 
@@ -111,15 +112,32 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  const role = userProfile?.role || "user";
+
+  const boundHasPermission = (permission) => {
+    return hasPermission(role, permission);
+  };
+
+  const boundHasFeature = (feature) => {
+    return hasFeature(role, feature);
+  };
+
+  const boundCanAccessRoute = (route) => {
+    return canAccessRoute(role, route);
+  };
+
   const value = {
     currentUser,
     userProfile,
+    loading,
     signInWithGoogle,
     signUpWithEmail,
     loginWithEmail,
     resetPassword,
     logout,
-    fetchProfile
+    hasPermission: boundHasPermission,
+    hasFeature: boundHasFeature,
+    canAccessRoute: boundCanAccessRoute
   };
 
   return (

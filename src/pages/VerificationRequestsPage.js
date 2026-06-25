@@ -137,16 +137,16 @@ export default function VerificationRequestsPage({ setPage }) {
 
                 return (
                   <tr key={u.id}>
-                    <td style={{ fontWeight: 700 }}>{u.name}</td>
-                    <td style={{ fontSize: 13 }}>{u.email}</td>
-                    <td>{u.college || "—"}</td>
-                    <td>
+                    <td data-label="User Name" style={{ fontWeight: 700 }}>{u.name}</td>
+                    <td data-label="Email" style={{ fontSize: 13 }}>{u.email}</td>
+                    <td data-label="College">{u.college || "—"}</td>
+                    <td data-label="Status">
                       <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
                         {statusBadgeColor.label}
                       </span>
                     </td>
-                    <td style={{ fontSize: 12, color: "var(--muted)" }}>{submittedAt}</td>
-                    <td>
+                    <td data-label="Submitted Date" style={{ fontSize: 12, color: "var(--muted)" }}>{submittedAt}</td>
+                    <td data-label="View ID Card">
                       {u.collegeIdCardUrl ? (
                         <button 
                           type="button"
@@ -159,7 +159,7 @@ export default function VerificationRequestsPage({ setPage }) {
                         <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Action">
                       {u.verificationStatus === "pending" && (
                         <div style={{ display: "flex", gap: 6 }}>
                           <button 

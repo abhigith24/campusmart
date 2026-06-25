@@ -39,6 +39,7 @@ import { doc, getDoc }                   from "firebase/firestore";
 import { ThemeProvider }                  from "./context/ThemeContext";
 import { parseListingIdFromPath, getListingUrl } from "./utils/urlHelper";
 import { trackShareClick }               from "./utils/shareAnalytics";
+import { getLandingPage }                from "./config/accessControl";
 import "./styles/main.css";
 
 // Pages that should NOT show Footer
@@ -66,7 +67,7 @@ function App() {
 }
 
 function Main() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, canAccessRoute } = useAuth();
   
   // Hash/path-based navigation helper
   const getInitialPage = () => {
@@ -250,15 +251,11 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedListing]);
 
-  // Staff Commerce Page Redirection Logic
+  // Centralized Route Access Control
   useEffect(() => {
-    if (userProfile && (userProfile.role === "admin" || userProfile.role === "support")) {
-      const commercePages = [
-        "post", "chat", "my-listings", "wishlist", "purchase-requests", 
-        "my-sales", "saved-items", "my-college-listings"
-      ];
-      if (commercePages.includes(page)) {
-        navigateTo(userProfile.role === "admin" ? "admin" : "support");
+    if (userProfile && page) {
+      if (!canAccessRoute(page)) {
+        navigateTo(getLandingPage(userProfile.role));
       }
     }
   }, [userProfile, page]);
@@ -340,10 +337,9 @@ function Main() {
   }, [page, currentUser]);
 
   useEffect(() => {
-    if (currentUser && page === "auth") {
-      if (userProfile !== undefined) {
-        navigateTo(userProfile?.role === "admin" ? "admin" : userProfile?.role === "support" ? "support" : "home");
-      }
+    const path = window.location.pathname;
+    if (currentUser && (path === "/" || path === "/auth")) {
+      navigateTo(getLandingPage(userProfile?.role));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, userProfile, page]);
@@ -353,8 +349,8 @@ function Main() {
     if (authRedirectPage) {
       navigateTo(authRedirectPage);
       setAuthRedirectPage(null);
-    } else if (userProfile?.role === "admin" || userProfile?.role === "support") {
-      navigateTo(userProfile.role === "admin" ? "admin" : "support");
+    } else {
+      navigateTo(getLandingPage(userProfile?.role));
     }
     if (authSuccessCallback) {
       authSuccessCallback();
@@ -424,11 +420,11 @@ function Main() {
           {page === "purchase-requests" && (
             <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
           )}
-          {page === "admin"   && <ProtectedRoute requiredRoles={["admin"]}><AdminDashboardPage setPage={navigateTo} /></ProtectedRoute>}
-          {page === "admin-verifications" && <ProtectedRoute requiredRoles={["admin"]}><VerificationRequestsPage setPage={navigateTo} /></ProtectedRoute>}
-          {page === "admin-users" && <ProtectedRoute requiredRoles={["admin"]}><UserManagementPage setPage={navigateTo} /></ProtectedRoute>}
-          {page === "admin-analytics" && <ProtectedRoute requiredRoles={["admin"]}><AnalyticsReportsPage setPage={navigateTo} /></ProtectedRoute>}
-          {page === "support" && <ProtectedRoute requiredRoles={["admin", "support"]}><SupportDashboardPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin"   && <ProtectedRoute route="admin"><AdminDashboardPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-verifications" && <ProtectedRoute route="admin-verifications"><VerificationRequestsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-users" && <ProtectedRoute route="admin-users"><UserManagementPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-analytics" && <ProtectedRoute route="admin-analytics"><AnalyticsReportsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "support" && <ProtectedRoute route="support"><SupportDashboardPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "settings" && <SettingsPage setPage={navigateTo} />}
           {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
           {page === "terms"   && <TermsPage setPage={navigateTo} />}

@@ -160,15 +160,15 @@ export default function UserManagementPage({ setPage }) {
         <p style={{ color: "var(--muted)" }}>Manage platform users and check accounts</p>
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
         <input
           className="form-input"
-          style={{ maxWidth: 280, padding: "8px 14px" }}
+          style={{ width: "100%", padding: "10px 14px" }}
           placeholder="🔍 Search by name or email..."
           value={userSearch}
           onChange={e => setUserSearch(e.target.value)}
         />
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "4px", flexWrap: "nowrap", whiteSpace: "nowrap" }}>
           {[
             { id: "all", label: "All" },
             { id: "user", label: "Users" },
@@ -187,19 +187,18 @@ export default function UserManagementPage({ setPage }) {
               {f.label}
             </button>
           ))}
-        </div>
-        <div style={{ fontSize: 13, color: "var(--muted)", fontWeight: 700 }}>
-          {filteredUsers.length} users
+          <div style={{ fontSize: 13, color: "var(--muted)", fontWeight: 700, marginLeft: "auto", display: "flex", alignItems: "center", paddingRight: "4px" }}>
+            {filteredUsers.length} users
+          </div>
         </div>
       </div>
-
       {loading ? (
         <div className="loading-center" style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
           <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }} />
         </div>
       ) : (
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
-          <table className="report-table">
+          <table className="report-table user-management-table">
             <thead>
               <tr><th>Name</th><th>Email</th><th>College</th><th>Joined</th><th>Status</th><th>Role</th><th>Actions</th></tr>
             </thead>
@@ -215,22 +214,22 @@ export default function UserManagementPage({ setPage }) {
                 }
 
                 return (
-                <tr key={u.id} style={{ background: u.banned ? "var(--status-rejected-bg)" : "transparent" }}>
-                  <td style={{ fontWeight: 700 }}>
+                <tr key={u.id} style={{ background: u.banned ? "var(--status-rejected-bg)" : "transparent" }} data-role={currentRole} data-initial={u.name ? u.name.charAt(0).toUpperCase() : "?"}>
+                  <td data-label="Name" style={{ fontWeight: 700 }}>
                     {u.banned && <span style={{ marginRight: 4 }} title="Banned">🚫</span>}
                     {u.name}
                   </td>
-                  <td style={{ fontSize: 13 }}>{u.email}</td>
-                  <td>{u.college || "—"}</td>
-                  <td style={{ fontSize: 12 }}>{joinedDate}</td>
-                  <td>
+                  <td data-label="Email" style={{ fontSize: 13 }}>{u.email}</td>
+                  <td data-label="College">{u.college || "—"}</td>
+                  <td data-label="Joined" style={{ fontSize: 12 }}>{joinedDate}</td>
+                  <td data-label="Status">
                     {(u.isVerified || u.collegeVerified) ? (
                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--grn)" }}>✅ Verified</span>
                     ) : (
                        <span style={{ fontSize: 12, color: "var(--muted)" }}>⚪ Unverified</span>
                     )}
                   </td>
-                  <td>
+                  <td data-label="Role">
                     <select
                       className="form-input"
                       style={{ padding: "4px 8px", fontSize: 13, minWidth: 110, cursor: isSelf ? "not-allowed" : "pointer" }}
@@ -244,7 +243,7 @@ export default function UserManagementPage({ setPage }) {
                       <option value="admin">🔵 Admin</option>
                     </select>
                   </td>
-                  <td>
+                  <td data-label="Actions">
                     {isSelf ? (
                       <span title="You cannot modify your own administrative account." style={{ fontSize: 12, color: "var(--muted)", cursor: "not-allowed", borderBottom: "1px dotted var(--muted)" }}>Self Protected</span>
                     ) : processingUid === u.id ? (
