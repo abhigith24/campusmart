@@ -11,6 +11,7 @@ import ListingCard from "../components/ListingCard";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
+import OfficialStaffBadge from "../components/OfficialStaffBadge";
 
 const BRANCHES = ["Computer Science","Electronics","Mechanical","Civil","Chemical","MBA","Other"];
 const YEARS    = ["1st Year","2nd Year","3rd Year","4th Year","PG"];
@@ -133,6 +134,8 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const [loading,       setLoading]       = useState(true);
   const [editing,       setEditing]       = useState(false);
   const [profileData,   setProfileData]   = useState(isSelf ? userProfile : null);
+  
+  const isStaffProfile = profileData?.role === "admin" || profileData?.role === "support";
 
   const [editName,    setEditName]    = useState("");
   const [editCollege, setEditCollege] = useState("");
@@ -193,16 +196,22 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
 
   function startEdit() {
     setEditName(userProfile?.name || "");
-    setEditCollege(userProfile?.college || "");
-    setEditBranch(userProfile?.branch || "");
-    setEditYear(userProfile?.year || "");
+    if (!isStaffProfile) {
+      setEditCollege(userProfile?.college || "");
+      setEditBranch(userProfile?.branch || "");
+      setEditYear(userProfile?.year || "");
+    }
     setEditing(true);
   }
 
   async function saveEdit() {
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      name: editName, college: editCollege, branch: editBranch, year: editYear
-    });
+    const payload = { name: editName };
+    if (!isStaffProfile) {
+      payload.college = editCollege;
+      payload.branch = editBranch;
+      payload.year = editYear;
+    }
+    await updateDoc(doc(db, "users", currentUser.uid), payload);
     await fetchProfile(currentUser.uid);
     setEditing(false);
     toast("Profile updated!", "success");
@@ -300,36 +309,79 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
           </div>
           <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
             {editing ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div className="form-row">
+              isStaffProfile ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Full Name</label>
+                    <label className="form-label">Display Name</label>
                     <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">College / Campus</label>
-                    <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+
+                  <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                    <label className="form-label">Official Email 🔒</label>
+                    <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Managed by CampusMart</div>
+                    <input className="form-input" value={currentUser?.email || profileData?.email || ""} readOnly disabled />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                      <label className="form-label">Role 🔒</label>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Assigned by Administrator</div>
+                      <input className="form-input" style={{ textTransform: "capitalize" }} value={profileData?.role || ""} readOnly disabled />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                      <label className="form-label">Department 🔒</label>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Internal Staff Assignment</div>
+                      <input className="form-input" value={profileData?.role === "admin" ? "Administration" : "User Support"} readOnly disabled />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                      <label className="form-label">Account Type 🔒</label>
+                      <input className="form-input" value="Internal Staff" readOnly disabled />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                      <label className="form-label">Joined Date 🔒</label>
+                      <input className="form-input" value={getMemberSince(profileData?.joinedAt)} readOnly disabled />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
                   </div>
                 </div>
-                <div className="form-row">
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Branch / Major</label>
-                    <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
-                      {BRANCHES.map(b => <option key={b}>{b}</option>)}
-                    </select>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div className="form-row">
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Full Name</label>
+                      <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">College / Campus</label>
+                      <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+                    </div>
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Year of Study</label>
-                    <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
-                      {YEARS.map(y => <option key={y}>{y}</option>)}
-                    </select>
+                  <div className="form-row">
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Branch / Major</label>
+                      <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
+                        {BRANCHES.map(b => <option key={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Year of Study</label>
+                      <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
+                        {YEARS.map(y => <option key={y}>{y}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
-                  <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
-                </div>
-              </div>
+              )
             ) : (
               <>
                 <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -340,10 +392,15 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
                   {profileData?.successfulSales >= 3 && (
                     <TrustedSellerBadge size="lg" />
                   )}
+                  <OfficialStaffBadge role={profileData?.role} size="lg" />
                 </div>
                 <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
-                  <span style={{ fontSize: "14px", opacity: 0.8 }} title="College">🎓</span>
-                  <span>{[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}</span>
+                  {!isStaffProfile && (
+                    <>
+                      <span style={{ fontSize: "14px", opacity: 0.8 }} title="College">🎓</span>
+                      <span>{[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}</span>
+                    </>
+                  )}
                 </div>
                 {isSelf && (
                   <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", fontSize: "13px", color: "var(--muted)" }}>
@@ -370,65 +427,102 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
           )}
         </div>
 
-        {/* 6 trust stats grid */}
-        <div className="trust-statistics-row" style={{ margin: 0 }}>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-              {profileData?.collegeVerified || profileData?.isVerified ? "🟢 Verified" : 
-               profileData?.verificationStatus === "pending" ? "🟡 Pending" : 
-               profileData?.verificationStatus === "rejected" ? "🔴 Rejected" : "⚪ Unverified"}
+        {/* Stats grid */}
+        {isStaffProfile ? (
+          <div className="trust-statistics-row" style={{ margin: 0 }}>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "18px", padding: "3px 0", textTransform: "capitalize" }}>
+                {profileData.role}
+              </div>
+              <div className="trust-stat-label">Role</div>
             </div>
-            <div className="trust-stat-label">Student Status</div>
-            <div className="trust-stat-desc">College ID verification</div>
-          </div>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-              {profileData?.rating > 0 ? `★ ${profileData.rating.toFixed(1)}` : "N/A"}
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "18px", padding: "3px 0" }}>
+                {profileData.role === "admin" ? "Administration" : "User Support"}
+              </div>
+              <div className="trust-stat-label">Department</div>
             </div>
-            <div className="trust-stat-label">Seller Rating</div>
-            <div className="trust-stat-desc">Based on feedback</div>
-          </div>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-              {getMemberSince(profileData?.joinedAt)}
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+                Internal Staff
+              </div>
+              <div className="trust-stat-label">Account Type</div>
             </div>
-            <div className="trust-stat-label">Member Since</div>
-            <div className="trust-stat-desc">Registration date</div>
-          </div>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-              {listings.length}
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+                Verified
+              </div>
+              <div className="trust-stat-label">Official Account</div>
             </div>
-            <div className="trust-stat-label">Total Listings</div>
-            <div className="trust-stat-desc">All items posted</div>
-          </div>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-              {soldListings.length}
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+                {getMemberSince(profileData?.joinedAt)}
+              </div>
+              <div className="trust-stat-label">Joined Date</div>
             </div>
-            <div className="trust-stat-label">Completed Trades</div>
-            <div className="trust-stat-desc">Items marked as sold</div>
           </div>
-          <div className="trust-stat-card" style={{ padding: "16px" }}>
-            <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-              {getResponseRate(targetUid)}
+        ) : (
+          <div className="trust-statistics-row" style={{ margin: 0 }}>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+                {profileData?.collegeVerified || profileData?.isVerified ? "🟢 Verified" : 
+                 profileData?.verificationStatus === "pending" ? "🟡 Pending" : 
+                 profileData?.verificationStatus === "rejected" ? "🔴 Rejected" : "⚪ Unverified"}
+              </div>
+              <div className="trust-stat-label">Student Status</div>
+              <div className="trust-stat-desc">College ID verification</div>
             </div>
-            <div className="trust-stat-label">Response Rate</div>
-            <div className="trust-stat-desc">Chat reply latency</div>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                {profileData?.rating > 0 ? `★ ${profileData.rating.toFixed(1)}` : "N/A"}
+              </div>
+              <div className="trust-stat-label">Seller Rating</div>
+              <div className="trust-stat-desc">Based on feedback</div>
+            </div>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
+                {getMemberSince(profileData?.joinedAt)}
+              </div>
+              <div className="trust-stat-label">Member Since</div>
+              <div className="trust-stat-desc">Registration date</div>
+            </div>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                {listings.length}
+              </div>
+              <div className="trust-stat-label">Total Listings</div>
+              <div className="trust-stat-desc">All items posted</div>
+            </div>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                {soldListings.length}
+              </div>
+              <div className="trust-stat-label">Completed Trades</div>
+              <div className="trust-stat-desc">Items marked as sold</div>
+            </div>
+            <div className="trust-stat-card" style={{ padding: "16px" }}>
+              <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                {getResponseRate(targetUid)}
+              </div>
+              <div className="trust-stat-label">Response Rate</div>
+              <div className="trust-stat-desc">Chat reply latency</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
 
 
-      {/* Tab Nav */}
-      <div className="profile-tabs" style={{ flexWrap:"wrap" }}>
-        {TABS.map(t => (
-          <button key={t.id} className={`profile-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {!isStaffProfile && (
+        <>
+          {/* Tab Nav */}
+          <div className="profile-tabs" style={{ flexWrap:"wrap" }}>
+            {TABS.map(t => (
+              <button key={t.id} className={`profile-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </div>
 
       {/* Tab Content */}
       {(tab === "active" || tab === "sold") && (
@@ -506,6 +600,8 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
             {unreadCount > 0 && <span className="notif-badge-inline">{unreadCount}</span>}
           </button>
         </div>
+      )}
+        </>
       )}
     </div>
   );

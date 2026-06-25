@@ -8,6 +8,7 @@ import { trackSearch } from "../utils/analytics";
 import { useTheme } from "../context/ThemeContext";
 import VerifiedStudentBadge from "./VerifiedStudentBadge";
 import TrustedSellerBadge from "./TrustedSellerBadge";
+import OfficialStaffBadge from "./OfficialStaffBadge";
 
 export default function Navbar({ page, setPage, searchQuery, setSearchQuery, requireAuth }) {
   const { currentUser, userProfile, logout } = useAuth();
@@ -46,6 +47,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showMobileSearchOverlay, setShowMobileSearchOverlay] = useState(false);
   const [showOverlayDropdown, setShowOverlayDropdown] = useState(false);
+  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
   const searchRef = useRef(null);
   const mobileOverlaySearchRef = useRef(null);
 
@@ -183,6 +185,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
   const initials = (userProfile?.name || currentUser?.displayName || "?")[0].toUpperCase();
   const isVerified = userProfile?.isVerified;
+  const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
 
   const menuItems = [
     {
@@ -194,33 +197,35 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
       ),
       action: () => { setPage("profile"); setMenuOpen(false); }
     },
-    {
-      label: "My Listings",
-      icon: (
-        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>
-        </svg>
-      ),
-      action: () => { setPage("my-listings"); setMenuOpen(false); }
-    },
-    {
-      label: "Wishlist",
-      icon: (
-        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-        </svg>
-      ),
-      action: () => { setPage("wishlist"); setMenuOpen(false); }
-    },
-    {
-      label: "Purchase Requests",
-      icon: (
-        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
-        </svg>
-      ),
-      action: () => { setPage("purchase-requests"); setMenuOpen(false); }
-    },
+    ...(!isStaff ? [
+      {
+        label: "My Listings",
+        icon: (
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>
+          </svg>
+        ),
+        action: () => { setPage("my-listings"); setMenuOpen(false); }
+      },
+      {
+        label: "Wishlist",
+        icon: (
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+        ),
+        action: () => { setPage("wishlist"); setMenuOpen(false); }
+      },
+      {
+        label: "Purchase Requests",
+        icon: (
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
+        ),
+        action: () => { setPage("purchase-requests"); setMenuOpen(false); }
+      }
+    ] : []),
     ...(userProfile?.role === "admin" ? [{
       label: "Admin Panel",
       icon: (
@@ -306,13 +311,29 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             {renderDropdownContent(showSearchDropdown, setShowSearchDropdown)}
           </div>
 
+          {!isStaff && (
+            <div className="nav-categories" onMouseEnter={() => setShowCategoriesDropdown(true)} onMouseLeave={() => setShowCategoriesDropdown(false)}>
+              <span>Categories ▾</span>
+              {showCategoriesDropdown && (
+                <div className="categories-dropdown">
+                  {CATEGORIES.map((cat, i) => (
+                    <div key={i} className="category-item" onClick={() => { setSearchQuery(cat); setPage("home"); setShowCategoriesDropdown(false); }}>
+                      {cat}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="nav-spacer" />
+
           <div className="nav-links">
-            <button className="nav-post-btn" onClick={() => requireAuth("post")} type="button">
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Post Item
-            </button>
+            {!isStaff && (
+              <button className="btn btn-primary" onClick={() => setPage("post")} type="button" style={{ padding: "8px 16px", borderRadius: 8, height: 38, fontSize: 13, fontWeight: 700 }}>
+                + Post Item
+              </button>
+            )}
 
             {currentUser ? (
               <>
@@ -346,11 +367,12 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                           : <span>{initials}</span>}
                       </div>
                       <div>
-                        <div className="nav-dropdown-name" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          {userProfile?.name || currentUser?.displayName}
+                        <div className="nav-dropdown-name">
+                          {userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student")}
                           {(userProfile?.collegeVerified || userProfile?.isVerified) && <VerifiedStudentBadge size="sm" />}
+                          <OfficialStaffBadge role={userProfile?.role} size="sm" />
                         </div>
-                        <div className="nav-dropdown-college">{userProfile?.college || "Student"}</div>
+                        {!isStaff && <div className="nav-dropdown-college">{userProfile?.college || "Student"}</div>}
                         {userProfile?.rating > 0 && (
                           <div className="nav-dropdown-rating">{userProfile.rating.toFixed(1)} ({userProfile.totalRatings})</div>
                         )}
@@ -421,26 +443,32 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                 {currentUser ? (
                   <>
                     <div className="drawer-user-name-row" style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                      <span className="drawer-user-name-text">{userProfile?.name || currentUser?.displayName || "Student"}</span>
+                      <span className="drawer-user-name-text">{userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student")}</span>
                       {userProfile?.successfulSales >= 3 && <TrustedSellerBadge size="sm" />}
+                      <OfficialStaffBadge role={userProfile?.role} size="sm" />
                     </div>
                     <div className="drawer-user-email" style={{ fontSize: "12px", color: "var(--txt-2)", wordBreak: "break-all" }}>{currentUser.email}</div>
-                    <div className="drawer-user-college" style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
-                      📍 {userProfile?.college || "No College Linked"}
-                    </div>
                     
-                    {/* Verification Status Display */}
-                    <div className="drawer-verification-status-row" style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px" }}>
-                      {userProfile?.collegeVerified || userProfile?.isVerified ? (
-                        <span className="verified-status-drawer-text" style={{ color: "var(--grn)", fontSize: "12px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--grn-light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid rgba(34, 197, 94, 0.3)" }}>
-                          ✓ Verified Student
-                        </span>
-                      ) : (
-                        <span className="verified-status-drawer-text" style={{ color: "var(--txt-2)", fontSize: "12px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
-                          ⚪ Not Verified
-                        </span>
-                      )}
-                    </div>
+                    {!isStaff && (
+                      <>
+                        <div className="drawer-user-college" style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
+                          📍 {userProfile?.college || "No College Linked"}
+                        </div>
+                        
+                        {/* Verification Status Display */}
+                        <div className="drawer-verification-status-row" style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px" }}>
+                          {userProfile?.collegeVerified || userProfile?.isVerified ? (
+                            <span className="verified-status-drawer-text" style={{ color: "var(--grn)", fontSize: "12px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--grn-light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid rgba(34, 197, 94, 0.3)" }}>
+                              ✓ Verified Student
+                            </span>
+                          ) : (
+                            <span className="verified-status-drawer-text" style={{ color: "var(--txt-2)", fontSize: "12px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
+                              ⚪ Not Verified
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>

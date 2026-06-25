@@ -66,7 +66,7 @@ function App() {
 }
 
 function Main() {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   
   // Hash/path-based navigation helper
   const getInitialPage = () => {
@@ -250,6 +250,19 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedListing]);
 
+  // Staff Commerce Page Redirection Logic
+  useEffect(() => {
+    if (userProfile && (userProfile.role === "admin" || userProfile.role === "support")) {
+      const commercePages = [
+        "post", "chat", "my-listings", "wishlist", "purchase-requests", 
+        "my-sales", "saved-items", "my-college-listings"
+      ];
+      if (commercePages.includes(page)) {
+        navigateTo(userProfile.role === "admin" ? "admin" : "support");
+      }
+    }
+  }, [userProfile, page]);
+
   // Initial load check for listing path
   useEffect(() => {
     const path = window.location.pathname;
@@ -328,16 +341,20 @@ function Main() {
 
   useEffect(() => {
     if (currentUser && page === "auth") {
-      navigateTo("home");
+      if (userProfile !== undefined) {
+        navigateTo(userProfile?.role === "admin" ? "admin" : userProfile?.role === "support" ? "support" : "home");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, page]);
+  }, [currentUser, userProfile, page]);
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     if (authRedirectPage) {
       navigateTo(authRedirectPage);
       setAuthRedirectPage(null);
+    } else if (userProfile?.role === "admin" || userProfile?.role === "support") {
+      navigateTo(userProfile.role === "admin" ? "admin" : "support");
     }
     if (authSuccessCallback) {
       authSuccessCallback();

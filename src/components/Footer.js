@@ -1,8 +1,11 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 
 const YEAR = new Date().getFullYear();
 
 export default function Footer({ setPage }) {
+  const { userProfile } = useAuth();
+  const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
   return (
     <footer className="site-footer">
       <div className="container">
@@ -21,8 +24,9 @@ export default function Footer({ setPage }) {
           <div className="footer-col">
             <div className="footer-col-title">Platform</div>
             <button className="footer-link" onClick={() => setPage("home")}>Browse Listings</button>
-            <button className="footer-link" onClick={() => setPage("post")}>Post an Item</button>
-            <button className="footer-link" onClick={() => setPage("chat")}>Messages</button>
+            {!isStaff && <button className="footer-link" onClick={() => setPage("post")}>Post an Item</button>}
+            {!isStaff && <button className="footer-link" onClick={() => setPage("chat")}>Messages</button>}
+            {isStaff && <button className="footer-link" onClick={() => setPage(userProfile?.role === "admin" ? "admin" : "support")}>Dashboard</button>}
             <button className="footer-link" onClick={() => setPage("profile")}>My Profile</button>
           </div>
 

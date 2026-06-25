@@ -8,7 +8,7 @@ import { uploadToCloudinary } from "../utils/cloudinary";
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
 export default function SettingsPage({ setPage }) {
-  const { currentUser, userProfile, fetchProfile } = useAuth();
+  const { currentUser, userProfile, fetchProfile, resetPassword } = useAuth();
   const toast = useToast();
   const { themeMode, setThemeMode } = useTheme();
 
@@ -162,6 +162,17 @@ export default function SettingsPage({ setPage }) {
       toast("Failed to update profile. ❌", "error");
     } finally {
       setSavingAccount(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      if (!currentUser?.email) return;
+      await resetPassword(currentUser.email);
+      toast("Password reset email sent! Check your inbox.", "success");
+    } catch (err) {
+      console.error(err);
+      toast("Failed to send password reset email.", "error");
     }
   };
 
@@ -348,15 +359,17 @@ export default function SettingsPage({ setPage }) {
                     required 
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>College / Campus</label>
-                  <input 
-                    className="form-input" 
-                    type="text" 
-                    value={college} 
-                    onChange={e => setCollege(e.target.value)} 
-                  />
-                </div>
+                {(!userProfile?.role || userProfile?.role === "user") && (
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontWeight: 700 }}>College / Campus</label>
+                    <input 
+                      className="form-input" 
+                      type="text" 
+                      value={college} 
+                      onChange={e => setCollege(e.target.value)} 
+                    />
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label" style={{ fontWeight: 700 }}>Phone Number</label>
                   <input 
@@ -387,6 +400,13 @@ export default function SettingsPage({ setPage }) {
                     Cancel
                   </button>
                 </div>
+                <div style={{ marginTop: "16px", padding: "16px", background: "var(--light)", borderRadius: "8px", border: "1px solid var(--bdr)" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "8px", color: "var(--txt)" }}>Security</h3>
+                  <p style={{ fontSize: "12px", color: "var(--txt-2)", marginBottom: "12px" }}>We will send a secure password reset link to your registered email address.</p>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={handlePasswordReset}>
+                    Reset Password
+                  </button>
+                </div>
               </div>
             </form>
           ) : (
@@ -409,7 +429,9 @@ export default function SettingsPage({ setPage }) {
                     )}
                   </div>
                   <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>{currentUser?.email}</div>
-                  <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>{userProfile?.college || "No College Linked"}</div>
+                  {(!userProfile?.role || userProfile?.role === "user") && (
+                    <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>{userProfile?.college || "No College Linked"}</div>
+                  )}
                   {userProfile?.phoneNumber && (
                     <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>📞 {userProfile.phoneNumber}</div>
                   )}

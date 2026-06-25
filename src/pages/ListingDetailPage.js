@@ -111,6 +111,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const isOwner    = currentUser?.uid === listing?.sellerId;
   const isSold     = listing?.status === "sold";
   const wishlisted = listing?.id ? isWishlisted(listing.id) : false;
+  const isStaff    = userProfile?.role === "admin" || userProfile?.role === "support";
 
   // Save to recently viewed
   useEffect(() => {
@@ -562,6 +563,27 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               <button className="btn btn-danger" onClick={handleDelete} style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                 <Trash2 size={16} /> Delete Listing
               </button>
+            </>
+          ) : isStaff ? (
+            /* STAFF ACTIONS */
+            <>
+              {isSold && (
+                <div style={{
+                  background: "var(--status-accepted-bg)", border: "1.5px solid var(--grn)",
+                  borderRadius: "8px", padding: "12px", marginBottom: "8px",
+                  textAlign: "center", fontWeight: 700, color: "var(--status-accepted-txt)",
+                  fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                }}>
+                  <span>🎉</span> This item has been sold
+                </div>
+              )}
+              <div style={{
+                background: "var(--light)", border: "1px solid var(--bdr)",
+                borderRadius: "8px", padding: "12px",
+                fontSize: 13, color: "var(--txt-2)", fontWeight: 600, textAlign: "center"
+              }}>
+                🔒 Staff cannot buy or sell items
+              </div>
             </>
           ) : isSold ? (
             /* SOLD STATE — buyer actions */

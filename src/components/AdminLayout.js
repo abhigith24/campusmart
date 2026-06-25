@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
+import OfficialStaffBadge from "./OfficialStaffBadge";
 
 export default function AdminLayout({ children, activePage, setPage }) {
   const { userProfile } = useAuth();
@@ -36,10 +37,10 @@ export default function AdminLayout({ children, activePage, setPage }) {
         zIndex: 10
       }}>
         <div style={{ padding: "0 8px 16px 8px", borderBottom: "1px solid var(--border-color)", marginBottom: "16px" }}>
-          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "var(--text-primary)" }}>
+          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "var(--text-primary)", marginBottom: "6px" }}>
             {userProfile?.role === "admin" ? "🛡️ Admin Panel" : "🎧 Support Panel"}
           </h3>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Control Panel Options</span>
+          <OfficialStaffBadge role={userProfile?.role} size="sm" />
         </div>
         {menuItems.map(item => (
           <button

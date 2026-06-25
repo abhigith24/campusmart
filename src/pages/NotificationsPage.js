@@ -2,6 +2,7 @@ import React from "react";
 import { useNotifications } from "../context/NotificationsContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 
 const TYPE_META = {
   purchase_request: { icon: "🛒", label: "New Purchase Request" },
@@ -36,6 +37,14 @@ function SkeletonNotificationItem() {
 
 export default function NotificationsPage({ setPage, setSelectedListing }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
+  const { userProfile } = useAuth();
+  const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
+
+  // Filter out marketplace notifications for staff
+  const marketplaceTypes = ['purchase_request', 'request_accepted', 'request_rejected', 'item_sold'];
+  const displayNotifications = isStaff 
+    ? notifications.filter(n => !marketplaceTypes.includes(n.type))
+    : notifications;
 
   async function handleClick(n) {
     await markAsRead(n.id);
@@ -75,7 +84,7 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {Array(3).fill(0).map((_, i) => <SkeletonNotificationItem key={i} />)}
         </div>
-      ) : notifications.length === 0 ? (
+      ) : displayNotifications.length === 0 ? (
         <div className="empty-state">
           <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--muted-2)", marginBottom: 16 }}>
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"/>
@@ -88,7 +97,7 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {notifications.map(n => {
+          {displayNotifications.map(n => {
             const meta = TYPE_META[n.type] || { icon: "📬", label: n.type };
             return (
               <div
