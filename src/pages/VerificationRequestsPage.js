@@ -14,7 +14,6 @@ export default function VerificationRequestsPage({ setPage }) {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
     loadData();
   }, [userProfile]);
 
@@ -92,15 +91,7 @@ export default function VerificationRequestsPage({ setPage }) {
     }
   }
 
-  if (!userProfile?.isAdmin) {
-    return (
-      <div className="container" style={{ paddingTop: 60, textAlign: "center" }}>
-        <div style={{ fontSize: 48 }}>🚫</div>
-        <h2 style={{ marginTop: 16 }}>Admin Access Only</h2>
-        <p style={{ color: "var(--muted)" }}>You don't have admin privileges.</p>
-      </div>
-    );
-  }
+
 
   const pendingUsers = users.filter(u => u.verificationStatus && u.verificationStatus !== "none");
 

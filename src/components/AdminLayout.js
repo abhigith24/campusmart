@@ -1,12 +1,22 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminLayout({ children, activePage, setPage }) {
-  const menuItems = [
+  const { userProfile } = useAuth();
+
+  const adminLinks = [
     { id: "admin", label: "Dashboard", icon: "⚙️" },
     { id: "admin-verifications", label: "Verification Requests", icon: "🎓" },
     { id: "admin-users", label: "User Management", icon: "👥" },
-    { id: "admin-analytics", label: "Analytics", icon: "📊" }
+    { id: "admin-analytics", label: "Analytics", icon: "📊" },
+    { id: "support", label: "Support Dashboard", icon: "🎧" }
   ];
+
+  const supportLinks = [
+    { id: "support", label: "Support Dashboard", icon: "🎧" }
+  ];
+
+  const menuItems = userProfile?.role === "admin" ? adminLinks : supportLinks;
 
   return (
     <div className="admin-layout-container" style={{ display: "flex", minHeight: "calc(100vh - 70px)", background: "var(--bg-secondary)" }}>
@@ -26,7 +36,9 @@ export default function AdminLayout({ children, activePage, setPage }) {
         zIndex: 10
       }}>
         <div style={{ padding: "0 8px 16px 8px", borderBottom: "1px solid var(--border-color)", marginBottom: "16px" }}>
-          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "var(--text-primary)" }}>🛡️ Admin Panel</h3>
+          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "var(--text-primary)" }}>
+            {userProfile?.role === "admin" ? "🛡️ Admin Panel" : "🎧 Support Panel"}
+          </h3>
           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Control Panel Options</span>
         </div>
         {menuItems.map(item => (

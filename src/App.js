@@ -9,6 +9,7 @@ import CookieConsent                     from "./components/CookieConsent";
 import FloatingActionGroup               from "./components/FloatingActionGroup";
 import HomePage                          from "./pages/HomePage";
 import AuthModal                         from "./components/AuthModal";
+import ProtectedRoute                  from "./components/ProtectedRoute";
 
 const AuthPage = React.lazy(() => import("./pages/AuthPage"));
 const PostListingPage = React.lazy(() => import("./pages/PostListingPage"));
@@ -25,6 +26,7 @@ const AdminDashboardPage = React.lazy(() => import("./pages/AdminDashboardPage")
 const VerificationRequestsPage = React.lazy(() => import("./pages/VerificationRequestsPage"));
 const UserManagementPage = React.lazy(() => import("./pages/UserManagementPage"));
 const AnalyticsReportsPage = React.lazy(() => import("./pages/AnalyticsReportsPage"));
+const SupportDashboardPage = React.lazy(() => import("./pages/SupportDashboardPage"));
 const NotificationsPage = React.lazy(() => import("./pages/NotificationsPage"));
 const PurchaseRequestsPage = React.lazy(() => import("./pages/PurchaseRequestsPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
@@ -45,7 +47,7 @@ const NO_FOOTER = ["chat"];
 const FULL_HEIGHT = ["chat"];
 
 // Pages that require authentication
-const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics"];
+const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics", "support"];
 
 function App() {
   return (
@@ -90,6 +92,7 @@ function Main() {
     if (path === "/admin/verifications") return "admin-verifications";
     if (path === "/admin/users") return "admin-users";
     if (path === "/admin/analytics") return "admin-analytics";
+    if (path === "/support") return "support";
     if (path.startsWith("/settings")) return "settings";
     if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) return "listing";
     return "home";
@@ -170,6 +173,7 @@ function Main() {
     else if (nextPage === "admin-verifications") path = "/admin/verifications";
     else if (nextPage === "admin-users") path = "/admin/users";
     else if (nextPage === "admin-analytics") path = "/admin/analytics";
+    else if (nextPage === "support") path = "/support";
     else if (nextPage === "settings") path = "/settings";
     else if (nextPage === "contact") path = "/contact";
     else if (nextPage === "report-bug") path = "/report-bug";
@@ -224,6 +228,7 @@ function Main() {
       else if (path === "/admin/verifications") setPage("admin-verifications");
       else if (path === "/admin/users") setPage("admin-users");
       else if (path === "/admin/analytics") setPage("admin-analytics");
+      else if (path === "/support") setPage("support");
       else if (path === "/settings") setPage("settings");
       else if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) {
         const parsedId = parseListingIdFromPath(path);
@@ -296,6 +301,7 @@ function Main() {
     "admin-verifications": "Verification Requests",
     "admin-users":       "User Management",
     "admin-analytics":   "Analytics & Reports",
+    support:           "Support Dashboard",
     settings:          "Account Settings",
     privacy:           "Privacy Policy",
     terms:             "Terms of Service",
@@ -401,10 +407,11 @@ function Main() {
           {page === "purchase-requests" && (
             <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
           )}
-          {page === "admin"   && <AdminDashboardPage setPage={navigateTo} />}
-          {page === "admin-verifications" && <VerificationRequestsPage setPage={navigateTo} />}
-          {page === "admin-users" && <UserManagementPage setPage={navigateTo} />}
-          {page === "admin-analytics" && <AnalyticsReportsPage setPage={navigateTo} />}
+          {page === "admin"   && <ProtectedRoute requiredRoles={["admin"]}><AdminDashboardPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-verifications" && <ProtectedRoute requiredRoles={["admin"]}><VerificationRequestsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-users" && <ProtectedRoute requiredRoles={["admin"]}><UserManagementPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "admin-analytics" && <ProtectedRoute requiredRoles={["admin"]}><AnalyticsReportsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "support" && <ProtectedRoute requiredRoles={["admin", "support"]}><SupportDashboardPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "settings" && <SettingsPage setPage={navigateTo} />}
           {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
           {page === "terms"   && <TermsPage setPage={navigateTo} />}

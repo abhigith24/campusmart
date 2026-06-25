@@ -14,7 +14,6 @@ export default function UserManagementPage({ setPage }) {
   const [userSearch, setUserSearch] = useState("");
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
     loadData();
   }, [userProfile]);
 
@@ -35,14 +34,14 @@ export default function UserManagementPage({ setPage }) {
     }
   }
 
-  async function toggleAdmin(uid, current) {
+  async function changeRole(uid, newRole) {
     try {
-      await updateDoc(doc(db, "users", uid), { isAdmin: !current });
-      toast(`Admin ${!current ? "granted" : "revoked"}`, "success");
+      await updateDoc(doc(db, "users", uid), { role: newRole });
+      toast(`User role updated to ${newRole}`, "success");
       loadData();
     } catch (err) {
       console.error(err);
-      toast("Failed to update admin role. ❌", "error");
+      toast("Failed to update user role. ❌", "error");
     }
   }
 
@@ -71,15 +70,7 @@ export default function UserManagementPage({ setPage }) {
     }
   }
 
-  if (!userProfile?.isAdmin) {
-    return (
-      <div className="container" style={{ paddingTop: 60, textAlign: "center" }}>
-        <div style={{ fontSize: 48 }}>🚫</div>
-        <h2 style={{ marginTop: 16 }}>Admin Access Only</h2>
-        <p style={{ color: "var(--muted)" }}>You don't have admin privileges.</p>
-      </div>
-    );
-  }
+
 
   const filteredUsers = users.filter(u => !userSearch ||
     u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -114,10 +105,12 @@ export default function UserManagementPage({ setPage }) {
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
           <table className="report-table">
             <thead>
-              <tr><th>Name</th><th>Email</th><th>College</th><th>Year</th><th>Rating</th><th>Admin</th><th>Actions</th></tr>
+              <tr><th>Name</th><th>Email</th><th>College</th><th>Year</th><th>Rating</th><th>Role</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {filteredUsers.map(u => (
+              {filteredUsers.map(u => {
+                const currentRole = u.role || "user";
+                return (
                 <tr key={u.id} style={{ background: u.banned ? "var(--status-rejected-bg)" : "transparent" }}>
                   <td style={{ fontWeight: 700 }}>
                     {u.banned && <span style={{ marginRight: 4 }}>🚫</span>}
@@ -128,26 +121,29 @@ export default function UserManagementPage({ setPage }) {
                   <td>{u.year || "—"}</td>
                   <td>{u.rating > 0 ? `⭐ ${u.rating.toFixed(1)}` : "—"}</td>
                   <td>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${u.isAdmin ? "btn-danger" : "btn-outline"}`}
-                      onClick={() => toggleAdmin(u.id, u.isAdmin)}
+                    <select
+                      className="form-input"
+                      style={{ padding: "4px 8px", fontSize: 13, minWidth: 100 }}
+                      value={currentRole}
+                      onChange={(e) => changeRole(u.id, e.target.value)}
                     >
-                      {u.isAdmin ? "Revoke Admin" : "Grant Admin"}
-                    </button>
+                      <option value="user">User</option>
+                      <option value="support">Support</option>
+                      <option value="admin">Admin</option>
+                    </select>
                   </td>
                   <td>
-                    {!u.isAdmin && (
+                    {currentRole !== "admin" && (
                       u.banned
                         ? <button type="button" className="btn btn-green btn-sm" onClick={() => unbanUser(u.id)}>✅ Unban</button>
                         : <button type="button" className="btn btn-danger btn-sm" onClick={() => banUser(u.id)}>🚫 Ban</button>
                     )}
-                    {u.isAdmin && (
+                    {currentRole === "admin" && (
                       <span style={{ fontSize: 12, color: "var(--muted)" }}>Protected</span>
                     )}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

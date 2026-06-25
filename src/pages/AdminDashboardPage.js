@@ -36,7 +36,6 @@ export default function AdminDashboardPage({ setPage }) {
   const [listingFilter, setListingFilter] = useState("all");
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
     loadData();
   }, [userProfile]);
 
@@ -101,15 +100,7 @@ export default function AdminDashboardPage({ setPage }) {
     }
   }
 
-  if (!userProfile?.isAdmin) {
-    return (
-      <div className="container" style={{ paddingTop: 60, textalign: "center" }}>
-        <div style={{ fontSize: 48, textAlign: "center" }}>🚫</div>
-        <h2 style={{ marginTop: 16, textAlign: "center" }}>Admin Access Only</h2>
-        <p style={{ color: "var(--muted)", textAlign: "center" }}>You don't have admin privileges.</p>
-      </div>
-    );
-  }
+
 
   const TABS = [
     { id: "listings", label: `📦 Listings Moderation` },

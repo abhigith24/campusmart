@@ -8,7 +8,7 @@ import {
   updateProfile,
   sendPasswordResetEmail
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 import { trackSignUp, trackLogin } from "../utils/analytics";
 
@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
         rating: 0,
         totalRatings: 0,
         joinedAt: serverTimestamp(),
-        isAdmin: false
+        role: "user"
       });
     }
   }
@@ -88,12 +88,27 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    let profileUnsub;
+    const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
-      if (user) await fetchProfile(user.uid);
-      setLoading(false);
+      if (user) {
+        profileUnsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+          if (docSnap.exists()) setUserProfile(docSnap.data());
+          setLoading(false);
+        }, (err) => {
+          console.error("Error loading user profile:", err);
+          setLoading(false);
+        });
+      } else {
+        setUserProfile(null);
+        if (profileUnsub) profileUnsub();
+        setLoading(false);
+      }
     });
-    return unsub;
+    return () => {
+      unsub();
+      if (profileUnsub) profileUnsub();
+    };
   }, []);
 
   const value = {

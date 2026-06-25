@@ -221,7 +221,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
       ),
       action: () => { setPage("purchase-requests"); setMenuOpen(false); }
     },
-    ...(userProfile?.isAdmin ? [{
+    ...(userProfile?.role === "admin" ? [{
       label: "Admin Panel",
       icon: (
         <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -229,6 +229,15 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
         </svg>
       ),
       action: () => { setPage("admin"); setMenuOpen(false); }
+    }] : []),
+    ...(userProfile?.role === "support" || userProfile?.role === "admin" ? [{
+      label: "Support Dashboard",
+      icon: (
+        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      ),
+      action: () => { setPage("support"); setMenuOpen(false); }
     }] : []),
     {
       label: "Settings",
@@ -508,8 +517,21 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                 </div>
               </div>
 
+              {/* SUPPORT SECTION */}
+              {(userProfile?.role === "support" || userProfile?.role === "admin") && (
+                <div className="drawer-section border-top">
+                  <div 
+                    className={`drawer-item ${page === "support" ? "active" : ""}`}
+                    onClick={() => { setPage("support"); setDrawerOpen(false); }}
+                  >
+                    <span className="drawer-item-icon">🎧</span>
+                    Support Dashboard
+                  </div>
+                </div>
+              )}
+
               {/* ADMIN SECTION */}
-              {userProfile?.isAdmin && (
+              {userProfile?.role === "admin" && (
                 <div className="drawer-section border-top admin-section-highlight">
                   <button 
                     className="drawer-item-btn admin-toggle-btn"

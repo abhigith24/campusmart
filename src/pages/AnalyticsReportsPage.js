@@ -12,7 +12,6 @@ export default function AnalyticsReportsPage({ setPage }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
     loadData();
   }, [userProfile]);
 
@@ -113,15 +112,7 @@ export default function AnalyticsReportsPage({ setPage }) {
     }
   }
 
-  if (!userProfile?.isAdmin) {
-    return (
-      <div className="container" style={{ paddingTop: 60, textAlign: "center" }}>
-        <div style={{ fontSize: 48 }}>🚫</div>
-        <h2 style={{ marginTop: 16 }}>Admin Access Only</h2>
-        <p style={{ color: "var(--muted)" }}>You don't have admin privileges.</p>
-      </div>
-    );
-  }
+
 
   return (
     <AdminLayout activePage="admin-analytics" setPage={setPage}>
