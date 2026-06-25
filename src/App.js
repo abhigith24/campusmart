@@ -72,6 +72,9 @@ function Main() {
     if (path === "/terms-of-service" || path === "/terms") return "terms";
     if (path === "/privacy-policy" || path === "/privacy") return "privacy";
     if (path === "/contact") return "contact";
+    if (path === "/report-bug") return "report-bug";
+    if (path === "/feature-request") return "feature-request";
+    if (path === "/faqs") return "faqs";
     if (path === "/auth") return "auth";
     if (path === "/post") return "post";
     if (path === "/chat") return "chat";
@@ -169,6 +172,9 @@ function Main() {
     else if (nextPage === "admin-analytics") path = "/admin/analytics";
     else if (nextPage === "settings") path = "/settings";
     else if (nextPage === "contact") path = "/contact";
+    else if (nextPage === "report-bug") path = "/report-bug";
+    else if (nextPage === "feature-request") path = "/feature-request";
+    else if (nextPage === "faqs") path = "/faqs";
     else if (nextPage === "auth") path = "/auth";
     else if (nextPage === "listing") {
       const listingObj = extraData || selectedListing;
@@ -200,6 +206,9 @@ function Main() {
       if (path === "/terms-of-service" || path === "/terms") setPage("terms");
       else if (path === "/privacy-policy" || path === "/privacy") setPage("privacy");
       else if (path === "/contact") setPage("contact");
+      else if (path === "/report-bug") setPage("report-bug");
+      else if (path === "/feature-request") setPage("feature-request");
+      else if (path === "/faqs") setPage("faqs");
       else if (path === "/auth") setPage("auth");
       else if (path === "/post") setPage("post");
       else if (path === "/chat") setPage("chat");
@@ -291,6 +300,9 @@ function Main() {
     privacy:           "Privacy Policy",
     terms:             "Terms of Service",
     contact:           "Contact Us",
+    "report-bug":      "Report a Bug",
+    "feature-request": "Give Feedback",
+    faqs:              "FAQs",
     auth:              "Sign In / Sign Up",
   };
 
@@ -396,7 +408,10 @@ function Main() {
           {page === "settings" && <SettingsPage setPage={navigateTo} />}
           {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
           {page === "terms"   && <TermsPage setPage={navigateTo} />}
-          {page === "contact" && <ContactPage setPage={navigateTo} />}
+          {page === "contact" && <ContactPage setPage={navigateTo} mode="contact" />}
+          {page === "report-bug" && <ContactPage setPage={navigateTo} mode="bug" />}
+          {page === "feature-request" && <ContactPage setPage={navigateTo} mode="feature" />}
+          {page === "faqs" && <ContactPage setPage={navigateTo} mode="faqs" />}
         </React.Suspense>
       </div>
 

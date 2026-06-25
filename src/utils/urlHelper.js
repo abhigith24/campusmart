@@ -71,3 +71,37 @@ export function parseListingIdFromPath(path) {
   const id = parts[parts.length - 1];
   return id || null;
 }
+
+/**
+ * Generates the full share URL with ref and utm_source parameters.
+ * @param {object} listing 
+ * @param {string} refId 
+ * @param {string} source 
+ * @returns {string}
+ */
+export function getShareUrl(listing, refId, source) {
+  if (!listing) return "";
+  
+  // For external sharing channels, map localhost/127.0.0.1 to production domain
+  // to ensure links are clickable on WhatsApp/Telegram/etc.
+  const externalSources = ["whatsapp", "telegram", "email", "messages", "twitter", "facebook", "linkedin", "instagram", "native", "clipboard"];
+  const isExternal = externalSources.includes(source);
+  
+  const origin = (isExternal && (window.location.origin.includes("localhost") || window.location.origin.includes("127.0.0.1")))
+    ? "https://campusmart-omega.vercel.app"
+    : window.location.origin;
+
+  // Use the long SEO listing URL format
+  const baseUrl = `${origin}${getListingUrl(listing)}`;
+  
+  const params = [];
+  if (refId) {
+    params.push(`ref=${refId}`);
+  }
+  if (source) {
+    params.push(`utm_source=${source}`);
+  }
+  return params.length > 0 ? `${baseUrl}?${params.join("&")}` : baseUrl;
+}
+
+

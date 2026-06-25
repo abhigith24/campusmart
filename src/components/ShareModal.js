@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, Copy, Mail, Check, Share2 } from "lucide-react";
-import { generateSlug, getListingUrl } from "../utils/urlHelper";
+import { generateSlug, getListingUrl, getShareUrl } from "../utils/urlHelper";
 import { trackShareAction } from "../utils/shareAnalytics";
 import { useToast } from "../context/ToastContext";
 
@@ -29,9 +29,8 @@ export default function ShareModal({ isOpen, onClose, listing, currentUserId }) 
 
   if (!isOpen || !listing) return null;
 
-  const baseUrl = `${window.location.origin}${getListingUrl(listing)}`;
   const refId = currentUserId || listing.sellerId || "";
-  const shareUrlBase = `${baseUrl}${refId ? `?ref=${refId}` : ""}`;
+  const shareUrlBase = getShareUrl(listing, refId, "");
 
   const priceStr = listing.isFree || listing.listingType === "free"
     ? "Free"
@@ -39,10 +38,17 @@ export default function ShareModal({ isOpen, onClose, listing, currentUserId }) 
       ? `₹${listing.rentPerDay}/day`
       : `₹${listing.price}`;
 
-  const textMessage = `🎓 Check out this item on CampusMart\n\n📦 Product: ${listing.title}\n💰 Price: ${priceStr}\n🏫 Seller College: ${listing.sellerCollege || "CampusMart Campus"}\n\nView Listing:\n${shareUrlBase}`;
+  const getMessageWithUrl = (platform) => {
+    const finalUrl = getShareUrl(listing, refId, platform);
+    return `🎓 Check out this item on CampusMart\n\n📦 Product: ${listing.title}\n💰 Price: ${priceStr}\n🏫 Seller College: ${listing.sellerCollege || "CampusMart Campus"}\n\nView Listing:\n${finalUrl}`;
+  };
+
+  const getMessageWithoutUrl = () => {
+    return `🎓 Check out this item on CampusMart\n\n📦 Product: ${listing.title}\n💰 Price: ${priceStr}\n🏫 Seller College: ${listing.sellerCollege || "CampusMart Campus"}\n\nView Listing:`;
+  };
 
   const handleCopyLink = () => {
-    const finalUrl = `${shareUrlBase}${shareUrlBase.includes("?") ? "&" : "?"}utm_source=clipboard`;
+    const finalUrl = getShareUrl(listing, refId, "clipboard");
     navigator.clipboard.writeText(finalUrl).then(() => {
       setCopied(true);
       toast("🔗 Listing link copied", "success");
@@ -64,7 +70,7 @@ export default function ShareModal({ isOpen, onClose, listing, currentUserId }) 
 
   const handleInstagramClick = (e) => {
     e.preventDefault();
-    const finalUrl = `${shareUrlBase}${shareUrlBase.includes("?") ? "&" : "?"}utm_source=instagram`;
+    const finalUrl = getShareUrl(listing, refId, "instagram");
     navigator.clipboard.writeText(finalUrl).then(() => {
       toast("🔗 Instagram share link copied!", "success");
       trackShareAction(listing.id, "instagram", currentUserId);
@@ -84,49 +90,49 @@ export default function ShareModal({ isOpen, onClose, listing, currentUserId }) 
       name: "WhatsApp",
       icon: "💬",
       color: "#25D366",
-      href: `https://api.whatsapp.com/send?text=${encodeURIComponent(textMessage + "\n\nLink: " + shareUrlBase + "&utm_source=whatsapp")}`,
+      href: `https://api.whatsapp.com/send?text=${encodeURIComponent(getMessageWithUrl("whatsapp"))}`,
       platform: "whatsapp"
     },
     {
       name: "Telegram",
       icon: "✈️",
       color: "#0088cc",
-      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrlBase + (shareUrlBase.includes("?") ? "&" : "?") + "utm_source=telegram")}&text=${encodeURIComponent(textMessage)}`,
+      href: `https://t.me/share/url?url=${encodeURIComponent(getShareUrl(listing, refId, "telegram"))}&text=${encodeURIComponent(getMessageWithoutUrl())}`,
       platform: "telegram"
     },
     {
       name: "LinkedIn",
       icon: "💼",
       color: "#0a66c2",
-      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrlBase + (shareUrlBase.includes("?") ? "&" : "?") + "utm_source=linkedin")}`,
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getShareUrl(listing, refId, "linkedin"))}`,
       platform: "linkedin"
     },
     {
       name: "Facebook",
       icon: "👥",
       color: "#1877f2",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrlBase + (shareUrlBase.includes("?") ? "&" : "?") + "utm_source=facebook")}`,
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl(listing, refId, "facebook"))}`,
       platform: "facebook"
     },
     {
       name: "X (Twitter)",
       icon: "𝕏",
       color: "#000000",
-      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(textMessage)}&url=${encodeURIComponent(shareUrlBase + (shareUrlBase.includes("?") ? "&" : "?") + "utm_source=twitter")}`,
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(getMessageWithoutUrl())}&url=${encodeURIComponent(getShareUrl(listing, refId, "twitter"))}`,
       platform: "twitter"
     },
     {
       name: "Email",
       icon: "✉️",
       color: "#ea4335",
-      href: `mailto:?subject=${encodeURIComponent("CampusMart | " + listing.title)}&body=${encodeURIComponent(textMessage + "\n\nView listing: " + shareUrlBase + "&utm_source=email")}`,
+      href: `mailto:?subject=${encodeURIComponent("CampusMart | " + listing.title)}&body=${encodeURIComponent(getMessageWithUrl("email"))}`,
       platform: "email"
     },
     {
       name: "Messages",
       icon: "📱",
       color: "#4cd964",
-      href: `sms:?&body=${encodeURIComponent(textMessage + " " + shareUrlBase + "&utm_source=messages")}`,
+      href: `sms:?&body=${encodeURIComponent(getMessageWithUrl("messages"))}`,
       platform: "messages"
     },
     {
@@ -138,6 +144,7 @@ export default function ShareModal({ isOpen, onClose, listing, currentUserId }) 
       platform: "instagram"
     }
   ];
+
 
   return (
     <div 

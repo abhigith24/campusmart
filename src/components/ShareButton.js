@@ -1,6 +1,6 @@
 import React, { useState, lazy, Suspense } from "react";
 import { Share2 } from "lucide-react";
-import { getListingUrl } from "../utils/urlHelper";
+import { getShareUrl } from "../utils/urlHelper";
 import { trackShareAction } from "../utils/shareAnalytics";
 import { useToast } from "../context/ToastContext";
 
@@ -13,9 +13,8 @@ export default function ShareButton({ listing, currentUserId, className = "", ic
 
   if (!listing) return null;
 
-  const baseUrl = `${window.location.origin}${getListingUrl(listing)}`;
   const refId = currentUserId || listing.sellerId || "";
-  const shareUrl = `${baseUrl}${refId ? `?ref=${refId}` : ""}`;
+  const finalShareUrl = getShareUrl(listing, refId, "native");
   
   // Format price appropriately
   let priceStr = "";
@@ -28,7 +27,7 @@ export default function ShareButton({ listing, currentUserId, className = "", ic
   }
 
   const titleText = `CampusMart | ${listing.title}`;
-  const messageText = `🎓 Check out this item on CampusMart\n\n📦 Product: ${listing.title}\n💰 Price: ${priceStr}\n🏫 Seller College: ${listing.sellerCollege || "CampusMart Campus"}\n\nView Listing:\n${shareUrl}`;
+  const messageText = `🎓 Check out this item on CampusMart\n\n📦 Product: ${listing.title}\n💰 Price: ${priceStr}\n🏫 Seller College: ${listing.sellerCollege || "CampusMart Campus"}\n\nView Listing:`;
 
   const handleShareClick = async (e) => {
     e.stopPropagation();
@@ -39,11 +38,12 @@ export default function ShareButton({ listing, currentUserId, className = "", ic
         await navigator.share({
           title: titleText,
           text: messageText,
-          url: `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=native`
+          url: finalShareUrl
         });
         toast("✅ Shared successfully! 🎉", "success");
         trackShareAction(listing.id, "native", currentUserId);
       } catch (err) {
+
         if (err.name !== "AbortError") {
           console.error("Error sharing with native sheet, falling back to modal:", err);
           setIsModalOpen(true);

@@ -29,9 +29,9 @@ export default function Footer({ setPage }) {
           <div className="footer-col">
             <div className="footer-col-title">Support</div>
             <button className="footer-link" onClick={() => setPage("contact")}>Contact Us</button>
-            <button className="footer-link" onClick={() => setPage("contact")}>Report a Bug</button>
-            <button className="footer-link" onClick={() => setPage("contact")}>Give Feedback</button>
-            <a href="mailto:support@campusmart.in" className="footer-link">support@campusmart.in</a>
+            <button className="footer-link" onClick={() => setPage("report-bug")}>Report Bug</button>
+            <button className="footer-link" onClick={() => setPage("feature-request")}>Feature Request</button>
+            <button className="footer-link" onClick={() => setPage("faqs")}>FAQs</button>
           </div>
 
           <div className="footer-col">

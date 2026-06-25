@@ -21,16 +21,6 @@ const SORT_OPTS = [
   { val: "price-high", label: "Price: High to Low"   },
   { val: "most-viewed",label: "Most Viewed"           },
 ];
-const QUICK_FILTERS = [
-  { type: "category", val: "Books",         label: "Books",       emoji: "📚" },
-  { type: "category", val: "Electronics",   label: "Electronics", emoji: "💻" },
-  { type: "free",     val: "free",          label: "Free",        emoji: "🆓" },
-  { type: "category", val: "Lab Equipment", label: "Lab Gear",    emoji: "🧪" },
-  { type: "category", val: "Hostel",        label: "Hostel",      emoji: "🏠" },
-  { type: "category", val: "Sports",        label: "Sports",      emoji: "⚽" },
-  { type: "category", val: "Gaming",        label: "Gaming",      emoji: "🎮" },
-  { type: "category", val: "Notes",         label: "Notes",       emoji: "📝" },
-];
 const CATEGORY_SHORTCUTS = [
   { val: "Books", label: "Books", emoji: "📚" },
   { val: "Notes", label: "Notes", emoji: "📝" },
@@ -46,6 +36,19 @@ function DropdownBtn({ label, options, selected, onSelect, ariaLabel }) {
   const ref = useRef(null);
   const [alignRight, setAlignRight] = useState(false);
   const isActive = selected !== options[0].val;
+
+  // Swipe-to-close touch handlers
+  const touchStartY = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 80) {
+      setOpen(false);
+    }
+  };
 
   useEffect(() => {
     function h(e) {
@@ -109,15 +112,32 @@ function DropdownBtn({ label, options, selected, onSelect, ariaLabel }) {
 function CollegeDropdown({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const ref = useRef(null);
   const inputRef = useRef(null);
   const [alignRight, setAlignRight] = useState(false);
+
+  // Swipe-to-close touch handlers
+  const touchStartY = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 80) {
+      setOpen(false);
+      setSearch("");
+      setShowAll(false);
+    }
+  };
 
   useEffect(() => {
     function h(e) {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
         setSearch("");
+        setShowAll(false);
       }
     }
     document.addEventListener("mousedown", h);
@@ -129,6 +149,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setSearch("");
+      setShowAll(false);
     }
   }, [open]);
 
@@ -147,6 +168,10 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
     opt.val !== "DIVIDER" && opt.label.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isSearching = search.trim().length > 0;
+  const itemsToDisplay = (showAll || isSearching) ? filtered : filtered.slice(0, 6);
+  const hasMore = !showAll && !isSearching && filtered.length > 6;
+
   return (
     <div className="dd-wrap" ref={ref}>
       <button
@@ -154,21 +179,21 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
         onClick={() => setOpen(o => !o)}
         type="button"
       >
-        {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>v</span>
+        {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>▾</span>
       </button>
       {open && (
-        <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`} style={{ minWidth: 230 }}>
-          <div style={{ padding: "8px 8px 6px" }}>
+        <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`}>
+          <div style={{ padding: "6px 6px 4px" }}>
             <div style={{
-              display: "flex", alignItems: "center", gap: 7,
+              display: "flex", alignItems: "center", gap: 6,
               background: "var(--light)", border: "1.5px solid var(--bdr)",
-              borderRadius: "var(--r-full)", padding: "6px 12px",
+              borderRadius: "var(--r-full)", padding: "4px 10px",
               transition: "all .15s"
             }}
               onFocus={e => e.currentTarget.style.borderColor = "var(--p)"}
               onBlur={e => e.currentTarget.style.borderColor = "var(--bdr)"}
             >
-              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2"
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2"
                 viewBox="0 0 24 24" style={{ flexShrink: 0, color: "var(--muted-2)" }}>
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
@@ -180,8 +205,8 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
                 onChange={e => setSearch(e.target.value)}
                 style={{
                   border: "none", background: "transparent", outline: "none",
-                  fontSize: 13, width: "100%", color: "var(--txt)", fontWeight: 500,
-                  fontFamily: "inherit"
+                  fontSize: 12.5, width: "100%", color: "var(--txt)", fontWeight: 500,
+                  fontFamily: "inherit", margin: 0, padding: 0
                 }}
               />
               {search && (
@@ -198,13 +223,14 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
             </div>
           </div>
           <div className="dd-divider-line" />
-          <div style={{ maxHeight: 220, overflowY: "auto" }}>
-            {filtered.length === 0 ? (
+          
+          <div className="dd-mobile-scroll-content">
+            {itemsToDisplay.length === 0 ? (
               <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
                 No colleges found
               </div>
             ) : (
-              filtered.map(opt => {
+              itemsToDisplay.map(opt => {
                 if (opt.val === "DIVIDER") {
                   return <div key="divider" className="dd-divider-line" style={{ margin: "6px 0", height: "1px", background: "var(--bdr)" }} />;
                 }
@@ -212,17 +238,26 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
                   <button
                     key={opt.val}
                     type="button"
+                    role="option"
+                    aria-selected={selected === opt.val}
                     className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
-                    onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); }}
+                    onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); setShowAll(false); }}
                   >
-                    <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2"
-                      viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: .5 }}>
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    </svg>
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {selected === opt.val && <span className="dd-check" aria-hidden="true">✓</span>}
                   </button>
                 );
               })
+            )}
+            {hasMore && (
+              <button
+                type="button"
+                className="dd-item"
+                style={{ color: "var(--p)", justifyContent: "center", marginTop: "4px" }}
+                onClick={(e) => { e.stopPropagation(); setShowAll(true); }}
+              >
+                + More Colleges
+              </button>
             )}
           </div>
         </div>
@@ -233,17 +268,48 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
 
 function CategoryDropdown({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const ref = useRef(null);
+  const inputRef = useRef(null);
   const [alignRight, setAlignRight] = useState(false);
   const isActive = selected !== "All";
 
+  // Swipe-to-close touch handlers
+  const touchStartY = useRef(0);
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+    if (deltaY > 80) {
+      setOpen(false);
+      setSearch("");
+      setShowAll(false);
+    }
+  };
+
   useEffect(() => {
     function h(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setSearch("");
+        setShowAll(false);
+      }
     }
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      setSearch("");
+      setShowAll(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && ref.current) {
@@ -251,6 +317,14 @@ function CategoryDropdown({ label, options, selected, onSelect }) {
       setAlignRight(rect.left + 310 > window.innerWidth - 16);
     }
   }, [open]);
+
+  const filtered = options.filter(opt =>
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const isSearching = search.trim().length > 0;
+  const itemsToDisplay = (showAll || isSearching) ? filtered : filtered.slice(0, 6);
+  const hasMore = !showAll && !isSearching && filtered.length > 6;
 
   function handleKeyDown(e) {
     if (e.key === "Escape") setOpen(false);
@@ -278,20 +352,79 @@ function CategoryDropdown({ label, options, selected, onSelect }) {
           role="listbox"
           aria-label="Select a category"
         >
-          {options.map((opt) => (
-            <button
-              key={opt.val}
-              type="button"
-              role="option"
-              aria-selected={selected === opt.val}
-              className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
-              onClick={() => { onSelect(opt.val); setOpen(false); }}
+          <div style={{ padding: "6px 6px 4px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "var(--light)", border: "1.5px solid var(--bdr)",
+              borderRadius: "var(--r-full)", padding: "4px 10px",
+              transition: "all .15s"
+            }}
+              onFocus={e => e.currentTarget.style.borderColor = "var(--p)"}
+              onBlur={e => e.currentTarget.style.borderColor = "var(--bdr)"}
             >
-              <span className="dd-item-icon" aria-hidden="true">{CATEGORY_ICONS[opt.val] || "📦"}</span>
-              <span>{opt.label}</span>
-              {selected === opt.val && <span className="dd-check" aria-hidden="true">✓</span>}
-            </button>
-          ))}
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2"
+                viewBox="0 0 24 24" style={{ flexShrink: 0, color: "var(--muted-2)" }}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search category..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  border: "none", background: "transparent", outline: "none",
+                  fontSize: 12.5, width: "100%", color: "var(--txt)", fontWeight: 500,
+                  fontFamily: "inherit", margin: 0, padding: 0
+                }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  style={{
+                    border: "none", background: "none", cursor: "pointer",
+                    color: "var(--muted-2)", fontSize: 14, lineHeight: 1,
+                    padding: 0, flexShrink: 0
+                  }}
+                >×</button>
+              )}
+            </div>
+          </div>
+          <div className="dd-divider-line" />
+
+          <div className="dd-mobile-scroll-content">
+            {itemsToDisplay.length === 0 ? (
+              <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
+                No categories found
+              </div>
+            ) : (
+              itemsToDisplay.map((opt) => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  role="option"
+                  aria-selected={selected === opt.val}
+                  className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
+                  onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); setShowAll(false); }}
+                >
+                  <span className="dd-item-icon" aria-hidden="true">{CATEGORY_ICONS[opt.val] || "📦"}</span>
+                  <span>{opt.label}</span>
+                  {selected === opt.val && <span className="dd-check" aria-hidden="true">✓</span>}
+                </button>
+              ))
+            )}
+            {hasMore && (
+              <button
+                type="button"
+                className="dd-item"
+                style={{ color: "var(--p)", justifyContent: "center", marginTop: "4px" }}
+                onClick={(e) => { e.stopPropagation(); setShowAll(true); }}
+              >
+                + More Categories
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -335,7 +468,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [initialLoading, setInitialLoading] = useState(true);
   const [totalCount, setTotalCount]         = useState(0);
   const [buttonState, setButtonState]       = useState("default"); // default, loading, success
-  const [filterBarHidden, setFilterBarHidden] = useState(false);
+  const [isSticky, setIsSticky]             = useState(false);
+  const sentinelRef                         = useRef(null);
 
   const [category, setCategory]   = useState("All");
   const [condition, setCondition] = useState("All");
@@ -395,16 +529,26 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [priceMin, setPriceMin]               = useState("");
   const [priceMax, setPriceMax]               = useState("");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
-  const priceRef                              = useRef(null);
   const [priceAlignRight, setPriceAlignRight] = useState(false);
+  const priceRef                              = useRef(null);
+
+  // Swipe-to-close touch handlers for Price Bottom Sheet
+  const priceTouchStartY = useRef(0);
+  const handlePriceTouchStart = (e) => {
+    priceTouchStartY.current = e.touches[0].clientY;
+  };
+  const handlePriceTouchMove = (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - priceTouchStartY.current;
+    if (deltaY > 80) {
+      setShowPriceFilter(false);
+    }
+  };
 
   // Background Prefetch Queue Refs
   const prefetchedData      = useRef(null);
   const isPrefetching       = useRef(false);
   const isMounted           = useRef(true);
-  const lastScrollYRef      = useRef(0);
-  const filterBarRef        = useRef(null);
-  const filterBarThreshold  = useRef(600);
 
   // Keep track of mount state to cancel pending state updates on unmount
   useEffect(() => {
@@ -414,37 +558,27 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     };
   }, []);
 
-  // ── Smart Sticky Filter Bar (compute scroll threshold after load) ─────────
+  // ── IntersectionObserver for Sticky State Detection ─────────────────────
   useEffect(() => {
-    if (!initialLoading && filterBarRef.current) {
-      const rect = filterBarRef.current.getBoundingClientRect();
-      filterBarThreshold.current = Math.max(300, rect.top + window.scrollY - 70);
-    }
-  }, [initialLoading]);
+    if (initialLoading) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-  // ── Smart Sticky Filter Bar (hide on scroll-down, show on scroll-up) ──────
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentY = window.scrollY;
-          const diff = currentY - lastScrollYRef.current;
-          if (currentY > filterBarThreshold.current) {
-            if (diff > 6) setFilterBarHidden(true);
-            else if (diff < -6) setFilterBarHidden(false);
-          } else {
-            setFilterBarHidden(false);
-          }
-          lastScrollYRef.current = currentY;
-          ticking = false;
-        });
-        ticking = true;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSticky(!entry.isIntersecting);
+      },
+      {
+        threshold: [1],
+        rootMargin: "-65px 0px 0px 0px"
       }
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      observer.unobserve(sentinel);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [initialLoading]);
 
   // ── Firestore Pagination Fetcher ─────────────────────────────────────────
   const fetchBatch = async (startDoc = null) => {
@@ -1035,155 +1169,191 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
         )}
       </div>
 
-      <div className="container listings-section" id="listings-section" style={{ paddingTop: 28, paddingBottom: 48 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--bdr)", paddingBottom: "12px", marginBottom: "16px" }}>
+      <div className="container listings-section" id="listings-section" style={{ paddingTop: 24, paddingBottom: 48 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px", marginBottom: "8px" }}>
           <h2 className="homepage-section-title" style={{ margin: 0, border: "none", padding: 0 }}>
             All Campus Listings
           </h2>
-          <div style={{ display: "flex", gap: "6px" }}>
+          <div className="layout-toggle-group">
             <button 
               type="button" 
-              className={`btn btn-sm ${layout === "grid" ? "btn-primary" : "btn-outline"}`}
+              className={`layout-toggle-btn ${layout === "grid" ? "active" : ""}`}
               onClick={() => setLayout("grid")}
-              style={{ padding: "6px 10px", minWidth: 0, fontSize: "14px", fontWeight: "700" }}
               title="Grid View"
+              aria-label="Switch to Grid View"
             >
               田
             </button>
             <button 
               type="button" 
-              className={`btn btn-sm ${layout === "list" ? "btn-primary" : "btn-outline"}`}
+              className={`layout-toggle-btn ${layout === "list" ? "active" : ""}`}
               onClick={() => setLayout("list")}
-              style={{ padding: "6px 10px", minWidth: 0, fontSize: "14px", fontWeight: "700" }}
               title="List View"
+              aria-label="Switch to List View"
             >
               ☰
             </button>
           </div>
         </div>
+        {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
+        <div ref={sentinelRef} className="sticky-sentinel" />
         <div
-          className={`filter-bar-wrapper${filterBarHidden ? " filter-bar-hidden" : ""}`}
-          ref={filterBarRef}
+          className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
         >
           <div className="filter-bar">
-            {activeFilters > 0 && (
-              <span className="filter-count-badge" aria-live="polite" aria-atomic="true">
-                Filters ({activeFilters})
-              </span>
-            )}
+            <div className="filter-controls-scroll">
+              <CategoryDropdown
+                label={category === "All" ? "Category" : category}
+                options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
+                selected={category}
+                onSelect={setCategory}
+              />
 
-            <CategoryDropdown
-              label={category === "All" ? "Category" : category}
-              options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
-              selected={category}
-              onSelect={setCategory}
-            />
+              <DropdownBtn
+                label="Sort"
+                options={SORT_OPTS}
+                selected={sortBy}
+                onSelect={setSortBy}
+                ariaLabel="Sort listings"
+              />
 
-            <DropdownBtn
-              label="Sort"
-              options={SORT_OPTS}
-              selected={sortBy}
-              onSelect={setSortBy}
-              ariaLabel="Sort listings"
-            />
+              <DropdownBtn
+                label={condLabel}
+                options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
+                selected={condition}
+                onSelect={setCondition}
+                ariaLabel="Filter by condition"
+              />
 
-            <DropdownBtn
-              label={condLabel}
-              options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
-              selected={condition}
-              onSelect={setCondition}
-              ariaLabel="Filter by condition"
-            />
+              <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={handleSelectCollege} />
 
-            <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={handleSelectCollege} />
-
-            <div className="dd-wrap" ref={priceRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className={`dd-btn ${showPriceFilter ? "dd-open" : ""} ${priceFilterActive ? "dd-active" : ""}`}
-                onClick={() => setShowPriceFilter(o => !o)}
-                aria-expanded={showPriceFilter}
-                aria-label="Filter by price range"
-              >
-                {priceFilterActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-                {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}{" "}
-                <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>▾</span>
-              </button>
-              {showPriceFilter && (
-                <div className={`dd-menu price-dd-menu ${priceAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input type="number" min="0" placeholder="Min" value={priceMin} onChange={e => setPriceMin(e.target.value)}
-                      className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
-                    <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
-                    <input type="number" min="0" placeholder="Max" value={priceMax} onChange={e => setPriceMax(e.target.value)}
-                      className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+              <div className="dd-wrap" ref={priceRef} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className={`dd-btn ${showPriceFilter ? "dd-open" : ""} ${priceFilterActive ? "dd-active" : ""}`}
+                  onClick={() => setShowPriceFilter(o => !o)}
+                  aria-expanded={showPriceFilter}
+                  aria-label="Filter by price range"
+                >
+                  {priceFilterActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
+                  {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}{" "}
+                  <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>▾</span>
+                </button>
+                {showPriceFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceFilter(false)} />}
+                {showPriceFilter && (
+                  <div className={`dd-menu price-dd-menu ${priceAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px" }}>
+                    <div 
+                      className="dd-mobile-drag-handle" 
+                      onTouchStart={handlePriceTouchStart} 
+                      onTouchMove={handlePriceTouchMove}
+                    />
+                    <div className="dd-mobile-header">
+                      <h3>Price Range</h3>
+                      <button type="button" className="dd-mobile-close" onClick={() => setShowPriceFilter(false)} aria-label="Close menu">×</button>
+                    </div>
+                    <div className="dd-mobile-scroll-content">
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <input type="number" min="0" placeholder="Min" value={priceMin} onChange={e => setPriceMin(e.target.value)}
+                          className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                        <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
+                        <input type="number" min="0" placeholder="Max" value={priceMax} onChange={e => setPriceMax(e.target.value)}
+                          className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                        {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
+                          <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
+                            onClick={() => { setPriceMin(min); setPriceMax(max); }}
+                          >
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                      {priceFilterActive && (
+                        <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
+                          onClick={() => { setPriceMin(""); setPriceMax(""); }}
+                        >
+                          Clear price filter
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                    {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
-                      <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
-                        onClick={() => { setPriceMin(min); setPriceMax(max); }}
-                      >
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
+                )}
+              </div>
+
+              <div className="filter-toggle-container" title={freeOnly ? "Showing free items only" : "Showing free and paid items"}>
+                <span className="filter-toggle-label">Free Only</span>
+                <button
+                  type="button"
+                  className={`filter-toggle-switch ${freeOnly ? "on" : "off"}`}
+                  onClick={() => setFreeOnly(f => !f)}
+                  role="switch"
+                  aria-checked={freeOnly}
+                  aria-label="Filter free items only"
+                >
+                  <span className="filter-toggle-knob" />
+                </button>
+              </div>
+
+              {/* Active Filter Chips */}
+              {activeFilters > 0 && (
+                <div className="active-filters-chips-list">
+                  {category !== "All" && (
+                    <span className="active-filter-chip">
+                      {category}
+                      <button type="button" onClick={() => setCategory("All")} aria-label="Remove category filter">×</button>
+                    </span>
+                  )}
+                  {condition !== "All" && (
+                    <span className="active-filter-chip">
+                      {condition}
+                      <button type="button" onClick={() => setCondition("All")} aria-label="Remove condition filter">×</button>
+                    </span>
+                  )}
+                  {college !== "All" && (
+                    <span className="active-filter-chip">
+                      {collegeLabel}
+                      <button type="button" onClick={() => handleSelectCollege("All")} aria-label="Remove college filter">×</button>
+                    </span>
+                  )}
+                  {freeOnly && (
+                    <span className="active-filter-chip">
+                      Free Only
+                      <button type="button" onClick={() => setFreeOnly(false)} aria-label="Remove free only filter">×</button>
+                    </span>
+                  )}
                   {priceFilterActive && (
-                    <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
-                      onClick={() => { setPriceMin(""); setPriceMax(""); }}
-                    >
-                      Clear price filter
-                    </button>
+                    <span className="active-filter-chip">
+                      ₹{priceMin || 0} - ₹{priceMax || "any"}
+                      <button type="button" onClick={() => { setPriceMin(""); setPriceMax(""); }} aria-label="Remove price filter">×</button>
+                    </span>
+                  )}
+                  {sortBy !== "newest" && (
+                    <span className="active-filter-chip">
+                      {SORT_OPTS.find(o => o.val === sortBy)?.label}
+                      <button type="button" onClick={() => setSortBy("newest")} aria-label="Remove sorting filter">×</button>
+                    </span>
                   )}
                 </div>
               )}
+
+              {activeFilters > 0 && (
+                <span className="filter-count-badge" aria-live="polite" aria-atomic="true" style={{ alignSelf: "center", marginLeft: "auto" }}>
+                  Filters ({activeFilters})
+                </span>
+              )}
+
+              {activeFilters > 0 && (
+                <button type="button" className="filter-clear-btn" onClick={clearAllFilters} aria-label={`Clear all ${activeFilters} active filters`}>
+                  Clear {activeFilters} filter{activeFilters > 1 ? "s" : ""}
+                </button>
+              )}
+
+              {(activeFilters > 0 || !!searchQuery) && (
+                <span className="filter-count" aria-live="polite">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
+              )}
             </div>
 
-            <button
-              type="button"
-              className={`dd-btn ${freeOnly ? "dd-active dd-free-active" : ""}`}
-              onClick={() => setFreeOnly(f => !f)}
-              aria-pressed={freeOnly}
-              aria-label={freeOnly ? "Remove free only filter" : "Show free items only"}
-            >
-              {freeOnly && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-              Free Only
-            </button>
-
-            {activeFilters > 0 && (
-              <button type="button" className="filter-clear-btn" onClick={clearAllFilters} aria-label={`Clear all ${activeFilters} active filters`}>
-                Clear {activeFilters} filter{activeFilters > 1 ? "s" : ""}
-              </button>
-            )}
-
-            {(activeFilters > 0 || !!searchQuery) && (
-              <span className="filter-count" aria-live="polite">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
-            )}
-          </div>
-
-          {/* Quick Filter Row */}
-          <div className="quick-filter-row" role="group" aria-label="Quick category filters">
-            {QUICK_FILTERS.map(qf => {
-              const isQFActive = qf.type === "free" ? freeOnly : category === qf.val;
-              return (
-                <button
-                  key={`qf-${qf.val}`}
-                  type="button"
-                  className={`quick-filter-chip${isQFActive ? " quick-filter-chip-active" : ""}`}
-                  onClick={() => {
-                    if (qf.type === "free") {
-                      setFreeOnly(f => !f);
-                    } else {
-                      setCategory(prev => prev === qf.val ? "All" : qf.val);
-                    }
-                  }}
-                  aria-pressed={isQFActive}
-                  aria-label={`${isQFActive ? "Remove" : "Apply"} ${qf.label} filter`}
-                >
-                  <span aria-hidden="true">{qf.emoji}</span> {qf.label}
-                </button>
-              );
-            })}
           </div>
         </div>
 
