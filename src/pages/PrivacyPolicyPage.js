@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage({ setPage }) {
             <li><strong>Portability:</strong> Receive your data in a machine-readable format</li>
             <li><strong>Objection:</strong> Opt out of non-essential data processing</li>
           </ul>
-          <p>To exercise any of these rights, email us at <a href="mailto:privacy@campusmart.in" className="legal-link">privacy@campusmart.in</a></p>
+          <p>To exercise any of these rights, email us at <a href="mailto:campusmart.support@gmail.com" className="legal-link">campusmart.support@gmail.com</a></p>
         </section>
 
         <section className="legal-section">
@@ -97,7 +97,7 @@ export default function PrivacyPolicyPage({ setPage }) {
 
         <section className="legal-section">
           <h2>8. Children's Privacy</h2>
-          <p>CampusMart is intended for college students aged 18 and above. We do not knowingly collect data from individuals under 18. If you believe a minor has created an account, please contact us immediately at <a href="mailto:support@campusmart.in" className="legal-link">support@campusmart.in</a></p>
+          <p>CampusMart is intended for college students aged 18 and above. We do not knowingly collect data from individuals under 18. If you believe a minor has created an account, please contact us immediately at <a href="mailto:campusmart.support@gmail.com" className="legal-link">campusmart.support@gmail.com</a></p>
         </section>
 
         <section className="legal-section">
@@ -109,9 +109,7 @@ export default function PrivacyPolicyPage({ setPage }) {
           <h2>10. Contact Us</h2>
           <p>For privacy-related inquiries:</p>
           <div className="legal-contact-grid">
-            <div className="legal-contact-item">📧 <a href="mailto:privacy@campusmart.in" className="legal-link">privacy@campusmart.in</a></div>
-            <div className="legal-contact-item">🐛 <a href="mailto:bugs@campusmart.in" className="legal-link">bugs@campusmart.in</a></div>
-            <div className="legal-contact-item">💬 <a href="mailto:support@campusmart.in" className="legal-link">support@campusmart.in</a></div>
+            <div className="legal-contact-item">📧 <a href="mailto:campusmart.support@gmail.com" className="legal-link">campusmart.support@gmail.com</a></div>
           </div>
         </section>
       </div>

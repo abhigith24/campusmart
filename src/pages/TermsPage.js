@@ -117,7 +117,7 @@ export default function TermsPage({ setPage }) {
 
         <section className="legal-section">
           <h2>10. Contact</h2>
-          <p>For terms-related queries: <a href="mailto:legal@campusmart.in" className="legal-link">legal@campusmart.in</a></p>
+          <p>For terms-related queries: <a href="mailto:campusmart.support@gmail.com" className="legal-link">campusmart.support@gmail.com</a></p>
         </section>
       </div>
     </div>

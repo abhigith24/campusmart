@@ -164,9 +164,10 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
     }
   }, [open]);
 
-  const filtered = options.filter(opt =>
-    opt.val !== "DIVIDER" && opt.label.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = options.filter(opt => {
+    if (opt.val === "DIVIDER") return search.trim() === "";
+    return opt.label.toLowerCase().includes(search.toLowerCase());
+  });
 
   const isSearching = search.trim().length > 0;
   const itemsToDisplay = (showAll || isSearching) ? filtered : filtered.slice(0, 6);
