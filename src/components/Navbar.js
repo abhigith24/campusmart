@@ -311,20 +311,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             {renderDropdownContent(showSearchDropdown, setShowSearchDropdown)}
           </div>
 
-          {!isStaff && (
-            <div className="nav-categories" onMouseEnter={() => setShowCategoriesDropdown(true)} onMouseLeave={() => setShowCategoriesDropdown(false)}>
-              <span>Categories ▾</span>
-              {showCategoriesDropdown && (
-                <div className="categories-dropdown">
-                  {CATEGORIES.map((cat, i) => (
-                    <div key={i} className="category-item" onClick={() => { setSearchQuery(cat); setPage("home"); setShowCategoriesDropdown(false); }}>
-                      {cat}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+
 
           <div className="nav-spacer" />
 
