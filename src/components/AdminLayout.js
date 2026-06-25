@@ -93,7 +93,7 @@ export default function AdminLayout({ children, activePage, setPage }) {
           type="button"
         >
           <span>🏠</span>
-          <span>Back to Marketplace</span>
+          <span>View Marketplace</span>
         </button>
       </aside>
 
