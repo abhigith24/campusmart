@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import AdminLayout from "../components/AdminLayout";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function UserManagementPage({ setPage }) {
   const { userProfile } = useAuth();
@@ -13,6 +14,18 @@ export default function UserManagementPage({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [processingUid, setProcessingUid] = useState(null);
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    requireReason: false,
+    danger: false,
+    onConfirm: () => {}
+  });
+
+  const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
   useEffect(() => {
     loadData();
@@ -43,44 +56,73 @@ export default function UserManagementPage({ setPage }) {
     if (currentRole === "admin" && newRole !== "admin") {
       const activeAdmins = users.filter(u => u.role === "admin" && !u.banned).length;
       if (activeAdmins <= 1) {
-        toast("At least one active Administrator must remain assigned to manage the platform.", "error");
+        toast("At least one active Administrator must remain assigned.", "error");
+        // Re-render select
+        loadData();
         return;
       }
     }
 
-    if (!window.confirm(`Change Role\n\n${currentRole.toUpperCase()} ↓ ${newRole.toUpperCase()}\n\nAre you sure you want to continue?`)) {
-      // Re-render the dropdown by calling loadData or just ignoring
-      loadData(); 
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "users", uid), { role: newRole });
-      toast(`User role updated to ${newRole}`, "success");
-      loadData();
-    } catch (err) {
-      console.error(err);
-      toast("Failed to update user role. ❌", "error");
-    }
+    setModalConfig({
+      isOpen: true,
+      title: "Role Change Confirmation",
+      message: `${targetUser?.name || "User"}\n\n${currentRole.toUpperCase()} ↓ ${newRole.toUpperCase()}\n\nAre you sure you want to continue?`,
+      requireReason: false,
+      danger: true,
+      onConfirm: async () => {
+        closeModal();
+        setProcessingUid(uid);
+        try {
+          await updateDoc(doc(db, "users", uid), { role: newRole });
+          toast(`User role updated to ${newRole}`, "success");
+          loadData();
+        } catch (err) {
+          console.error(err);
+          toast("Failed to update user role. ❌", "error");
+        } finally {
+          setProcessingUid(null);
+        }
+      }
+    });
   }
 
-  async function banUser(uid, name) {
-    const reason = window.prompt(`Ban User\n\n${name}\n\nEnter reason (optional):`);
-    if (reason === null) return; // User cancelled
-    
-    try {
-      await updateDoc(doc(db, "users", uid), { banned: true, banReason: reason || "No reason provided" });
-      const userListings = listings.filter(l => l.sellerId === uid && l.status === "active");
-      await Promise.all(userListings.map(l => updateDoc(doc(db, "listings", l.id), { status: "removed" })));
-      toast("User banned and listings removed 🚫", "success");
-      loadData();
-    } catch (err) {
-      console.error(err);
-      toast("Failed to ban user. ❌", "error");
+  async function banUser(uid, name, role) {
+    // Protect last admin
+    if (role === "admin") {
+      const activeAdmins = users.filter(u => u.role === "admin" && !u.banned).length;
+      if (activeAdmins <= 1) {
+        toast("At least one active Administrator must remain assigned.", "error");
+        return;
+      }
     }
+
+    setModalConfig({
+      isOpen: true,
+      title: "Ban Confirmation",
+      message: `${name}\nRole: ${role.toUpperCase()}`,
+      requireReason: true,
+      danger: true,
+      onConfirm: async (reason) => {
+        closeModal();
+        setProcessingUid(uid);
+        try {
+          await updateDoc(doc(db, "users", uid), { banned: true, banReason: reason || "No reason provided" });
+          const userListings = listings.filter(l => l.sellerId === uid && l.status === "active");
+          await Promise.all(userListings.map(l => updateDoc(doc(db, "listings", l.id), { status: "removed" })));
+          toast("User banned and listings removed 🚫", "success");
+          loadData();
+        } catch (err) {
+          console.error(err);
+          toast("Failed to ban user. ❌", "error");
+        } finally {
+          setProcessingUid(null);
+        }
+      }
+    });
   }
 
   async function unbanUser(uid) {
+    setProcessingUid(uid);
     try {
       await updateDoc(doc(db, "users", uid), { banned: false });
       toast("User unbanned", "success");
@@ -88,13 +130,21 @@ export default function UserManagementPage({ setPage }) {
     } catch (err) {
       console.error(err);
       toast("Failed to unban user. ❌", "error");
+    } finally {
+      setProcessingUid(null);
     }
   }
 
 
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = !userSearch || u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase());
+    const q = userSearch.toLowerCase();
+    const matchesSearch = !userSearch || 
+      u.name?.toLowerCase().includes(q) || 
+      u.email?.toLowerCase().includes(q) ||
+      u.college?.toLowerCase().includes(q) ||
+      u.displayName?.toLowerCase().includes(q);
+      
     if (!matchesSearch) return false;
     if (roleFilter === "all") return true;
     if (roleFilter === "banned") return !!u.banned;
@@ -186,8 +236,8 @@ export default function UserManagementPage({ setPage }) {
                       style={{ padding: "4px 8px", fontSize: 13, minWidth: 110, cursor: isSelf ? "not-allowed" : "pointer" }}
                       value={currentRole}
                       onChange={(e) => changeRole(u.id, e.target.value)}
-                      disabled={isSelf}
-                      title={isSelf ? "You cannot change your own role." : "Change user role"}
+                      disabled={isSelf || processingUid === u.id}
+                      title={isSelf ? "You cannot modify your own administrative account." : "Change user role"}
                     >
                       <option value="user">🟢 User</option>
                       <option value="support">🟠 Support</option>
@@ -196,21 +246,31 @@ export default function UserManagementPage({ setPage }) {
                   </td>
                   <td>
                     {isSelf ? (
-                      <span title="You cannot ban yourself." style={{ fontSize: 12, color: "var(--muted)", cursor: "not-allowed", borderBottom: "1px dotted var(--muted)" }}>Self Protected</span>
-                    ) : isStaff ? (
-                      <span title="Official staff accounts cannot be banned." style={{ fontSize: 12, color: "var(--muted)", cursor: "not-allowed", borderBottom: "1px dotted var(--muted)" }}>Protected Staff</span>
+                      <span title="You cannot modify your own administrative account." style={{ fontSize: 12, color: "var(--muted)", cursor: "not-allowed", borderBottom: "1px dotted var(--muted)" }}>Self Protected</span>
+                    ) : processingUid === u.id ? (
+                      <span style={{ fontSize: 12, color: "var(--p)" }}>Processing...</span>
                     ) : (
                       u.banned
                         ? <button type="button" className="btn btn-green btn-sm" onClick={() => unbanUser(u.id)}>✅ Unban</button>
-                        : <button type="button" className="btn btn-danger btn-sm" onClick={() => banUser(u.id, u.name)}>🚫 Ban</button>
+                        : <button type="button" className="btn btn-danger btn-sm" onClick={() => banUser(u.id, u.name, currentRole)}>🚫 Ban</button>
                     )}
                   </td>
                 </tr>
               )})}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: "center", padding: "40px 20px" }}>
+                    <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--txt)" }}>No matching users found.</div>
+                    <div style={{ fontSize: "13px", color: "var(--txt-2)", marginTop: "8px" }}>Try adjusting your filters or search query.</div>
+                    <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: "16px" }} onClick={() => { setUserSearch(""); setRoleFilter("all"); }}>Reset Filters</button>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
+    <ConfirmModal {...modalConfig} onClose={closeModal} />
     </AdminLayout>
   );
 }
