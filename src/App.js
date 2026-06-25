@@ -339,10 +339,11 @@ function Main() {
   useEffect(() => {
     const path = window.location.pathname;
     if (currentUser && (path === "/" || path === "/auth")) {
+      if (page === "home" && window.history.state?.page === "home") return;
       navigateTo(getLandingPage(userProfile?.role));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, userProfile, page]);
+  }, [currentUser, userProfile]);
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);

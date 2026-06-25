@@ -47,7 +47,7 @@ export default function AdminLayout({ children, activePage, setPage }) {
           </button>
         ))}
         
-        {hasFeature("showMarketplace") && (
+        {userProfile?.role === "support" && (
           <button
             onClick={() => setPage("home")}
             className="admin-sidebar-item"
