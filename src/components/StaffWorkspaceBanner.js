@@ -5,9 +5,10 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
   
   // Theme Variables
   const primaryColor = isSupport ? "var(--grn)" : "var(--p)";
-  const bgSolid = isSupport ? "#061A12" : "#0A1128"; // Dark green vs Navy
-  const borderColor = isSupport ? "rgba(34,197,94,0.4)" : "rgba(59,130,246,0.4)";
-  const textColor = "#ffffff";
+  const bgSolid = "var(--surface)"; 
+  const borderColor = "var(--bdr)";
+  const textColor = "var(--txt)";
+  const mutedColor = "var(--muted)";
   const icon = isSupport ? "🎧" : "🛡️";
 
   return (
@@ -19,6 +20,7 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
         borderTop: `4px solid ${primaryColor}`,
         padding: "24px 20px",
         width: "100%",
+        boxShadow: "var(--s1)"
       }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
           {/* Title & Badge */}
@@ -29,8 +31,9 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
               </h2>
               <span style={{
                 fontSize: "11px",
-                background: primaryColor,
-                color: "#fff",
+                background: "var(--light)",
+                color: primaryColor,
+                border: `1px solid ${primaryColor}`,
                 padding: "4px 10px",
                 borderRadius: "12px",
                 textTransform: "uppercase",
@@ -42,7 +45,7 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
             </div>
             
             {/* Description */}
-            <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.85)", fontWeight: "500", lineHeight: 1.5, maxWidth: "700px" }}>
+            <p style={{ margin: 0, fontSize: "14px", color: mutedColor, fontWeight: "500", lineHeight: 1.5, maxWidth: "700px" }}>
               {description}
             </p>
           </div>
@@ -55,15 +58,15 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
               <span key={i} style={{ 
                 display: "flex", alignItems: "center", gap: "6px", 
                 fontSize: "12px", fontWeight: "600", color: textColor, 
-                background: "rgba(255,255,255,0.1)", padding: "4px 12px", 
-                borderRadius: "16px", border: `1px solid rgba(255,255,255,0.05)` 
+                background: "var(--light)", padding: "4px 12px", 
+                borderRadius: "16px", border: `1px solid ${borderColor}` 
               }}>
                 <span style={{ color: primaryColor }}>✓</span> {cap}
               </span>
             ))}
           </div>
 
-          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", marginTop: "-4px", fontWeight: "500", lineHeight: 1.4 }}>
+          <div style={{ fontSize: "12px", color: mutedColor, marginTop: "-4px", fontWeight: "500", lineHeight: 1.4 }}>
             Buying, Selling, Chatting and Wishlisting are disabled in this workspace.
           </div>
 
@@ -74,14 +77,9 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
               className="btn btn-outline workspace-back-btn"
               style={{
                 alignSelf: "flex-start",
-                borderColor: borderColor,
-                color: textColor,
-                fontWeight: "600",
                 padding: "8px 16px",
                 fontSize: "13px",
                 marginTop: "8px",
-                background: "rgba(255,255,255,0.05)",
-                transition: "all 0.2s ease",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
@@ -107,7 +105,7 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
         borderBottom: `1px solid ${borderColor}`,
         borderTop: `4px solid ${primaryColor}`,
         padding: "0 20px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+        boxShadow: "var(--s2)",
         display: "flex",
         alignItems: "center",
         opacity: isCompact ? 1 : 0,
@@ -123,8 +121,9 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
             </h2>
             <span style={{
               fontSize: "10px",
-              background: primaryColor,
-              color: "#fff",
+              background: "var(--light)",
+              color: primaryColor,
+              border: `1px solid ${primaryColor}`,
               padding: "3px 8px",
               borderRadius: "12px",
               textTransform: "uppercase",
@@ -140,13 +139,9 @@ export default function StaffWorkspaceBanner({ theme = "blue", title, descriptio
               onClick={onBack}
               className="btn btn-outline"
               style={{
-                borderColor: borderColor,
-                color: textColor,
-                fontWeight: "600",
                 padding: "0 12px",
                 fontSize: "12px",
                 height: "32px",
-                background: "transparent",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center"
