@@ -12,6 +12,9 @@ import { uploadToCloudinary } from "../utils/cloudinary";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import OfficialStaffBadge from "../components/OfficialStaffBadge";
+import { getWorkspace, isReviewWorkspace, isAdminReviewWorkspace, isSupportReviewWorkspace } from "../utils/workspace";
+import StaffWorkspaceBanner from "../components/StaffWorkspaceBanner";
+import { Copy, ExternalLink } from "lucide-react";
 
 const BRANCHES = ["Computer Science","Electronics","Mechanical","Civil","Chemical","MBA","Other"];
 const YEARS    = ["1st Year","2nd Year","3rd Year","4th Year","PG"];
@@ -126,6 +129,11 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const { unreadCount }  = useNotifications();
 
   const isSelf = !viewUserId || viewUserId === currentUser?.uid;
+
+  const workspace = getWorkspace(userProfile, "profile");
+  const isReview = isReviewWorkspace(userProfile, "profile");
+  const isAdminReview = isAdminReviewWorkspace(userProfile, "profile");
+  const isSupportReview = isSupportReviewWorkspace(userProfile, "profile");
   const targetUid = isSelf ? currentUser?.uid : viewUserId;
 
   const [tab,           setTab]           = useState(initialTab || "active");
@@ -237,6 +245,30 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
     return `${85 + (sum % 15)}%`;
   };
 
+  const renderListingAction = (listing) => {
+    if (!isReview) return null;
+
+    const handleCopyId = (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(listing.id);
+      toast("Listing ID copied!", "success");
+    };
+
+    if (isAdminReview || isSupportReview) {
+      return (
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button className="btn btn-outline btn-sm" onClick={handleCopyId} title="Copy ID" type="button" style={{ padding: "4px 8px" }}><Copy size={14} /></button>
+          <button className="btn btn-primary btn-sm" onClick={(e) => {
+             e.stopPropagation();
+             navigator.clipboard.writeText(`${window.location.origin}/?listing=${listing.id}`);
+             toast("Link copied to share!", "success");
+          }} title="Share" type="button" style={{ padding: "4px 8px" }}><ExternalLink size={14} /></button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const TABS = isSelf ? [
     { id:"active",    label:`Active (${activeListings.length})` },
     { id:"sold",      label:`Sold (${soldListings.length})` },
@@ -289,7 +321,16 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
 
   return (
     <div className="container profile-page">
-      {!isSelf && (
+      {isReview && !isSelf && (
+        <StaffWorkspaceBanner
+          theme={isAdminReview ? "blue" : "green"}
+          title="Profile Review Mode"
+          description="You are viewing a user's profile in read-only mode."
+          onBack={() => setPage("home")}
+          backLabel="Back to Review Workspace"
+        />
+      )}
+      {!isSelf && !isReview && (
         <button className="btn btn-ghost" onClick={() => {
           if (window.history.state && window.history.state.page) {
             window.history.back();
@@ -553,7 +594,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         ) : (
           <div className="listings-grid">
             {displayListings.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} actionOverride={renderListingAction(l)} />
             ))}
           </div>
         )
@@ -581,7 +622,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         ) : (
           <div className="listings-grid">
             {wishlistItems.map(l => (
-              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+              <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} actionOverride={renderListingAction(l)} />
             ))}
           </div>
         )

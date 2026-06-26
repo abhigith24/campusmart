@@ -3,8 +3,12 @@ import { collection, query, where, orderBy, getDocs, limit, startAfter, getCount
 import { db } from "../firebase";
 import ListingCard from "../components/ListingCard";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { getSmartRecommendations } from "../services/ai/aiService";
 import { trackAIEvent, AI_EVENTS } from "../services/ai/aiAnalytics";
+import { getWorkspace, isReviewWorkspace, isAdminReviewWorkspace, isSupportReviewWorkspace } from "../utils/workspace";
+import StaffWorkspaceBanner from "../components/StaffWorkspaceBanner";
+import { Copy, ExternalLink, ShieldCheck } from "lucide-react";
 
 const CATEGORIES = ["All", "Books", "Notes", "Electronics", "Lab Equipment", "Stationery", "Fashion", "Hostel", "Sports", "Gaming", "Musical Instruments", "Photography", "Other"];
 const CATEGORY_ICONS = {
@@ -459,6 +463,45 @@ function SkeletonCard({ layout = "grid" }) {
 
 export default function HomePage({ setPage, setSelectedListing, searchQuery, requireAuth }) {
   const { userProfile } = useAuth();
+  const toast = useToast();
+  
+  const workspace = getWorkspace(userProfile, "home");
+  const isReview = isReviewWorkspace(userProfile, "home");
+  const isAdminReview = isAdminReviewWorkspace(userProfile, "home");
+  const isSupportReview = isSupportReviewWorkspace(userProfile, "home");
+
+  const renderListingAction = (listing) => {
+    if (!isReview) return null;
+
+    const handleCopyId = (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(listing.id);
+      toast("Listing ID copied!", "success");
+    };
+
+    if (isAdminReview) {
+      return (
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button className="btn btn-outline btn-sm" onClick={handleCopyId} title="Copy ID" type="button" style={{ padding: "4px 8px" }}><Copy size={14} /></button>
+          <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); setPage("listing", listing); }} title="Review" type="button" style={{ padding: "4px 8px" }}><ShieldCheck size={14} /></button>
+        </div>
+      );
+    }
+
+    if (isSupportReview) {
+      return (
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button className="btn btn-outline btn-sm" onClick={handleCopyId} title="Copy ID" type="button" style={{ padding: "4px 8px" }}><Copy size={14} /></button>
+          <button className="btn btn-primary btn-sm" onClick={(e) => {
+             e.stopPropagation();
+             navigator.clipboard.writeText(`${window.location.origin}/?listing=${listing.id}`);
+             toast("Link copied to share!", "success");
+          }} title="Share" type="button" style={{ padding: "4px 8px" }}><ExternalLink size={14} /></button>
+        </div>
+      );
+    }
+    return null;
+  };
   
   // Required State Variables for Cursor-based Pagination
   const [products, setProducts]             = useState([]);
@@ -559,7 +602,30 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
     };
   }, []);
 
-  // ── IntersectionObserver for Sticky State Detection ─────────────────────
+  // ── IntersectionObserver for Workspace Banner Detection ─────────────
+  const workspaceSentinelRef = useRef(null);
+  const [isWorkspaceCompact, setIsWorkspaceCompact] = useState(false);
+
+  useEffect(() => {
+    if (initialLoading || !isReview) return;
+    const sentinel = workspaceSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsWorkspaceCompact(!entry.isIntersecting);
+      },
+      {
+        threshold: [0],
+        rootMargin: "-65px 0px 0px 0px" // accounts for navbar height
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.unobserve(sentinel);
+  }, [initialLoading, isReview]);
+
+  // ── IntersectionObserver for Sticky State Detection (Filter Bar) ─────────────
   useEffect(() => {
     if (initialLoading) return;
     const sentinel = sentinelRef.current;
@@ -1027,8 +1093,22 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   }
 
   return (
-    <div>
-      <div className="hero">
+    <div className={isReview ? "review-workspace" : ""}>
+      {isReview && (
+        <>
+          <StaffWorkspaceBanner
+            theme={isAdminReview ? "blue" : "green"}
+            title={isAdminReview ? "Admin Marketplace Review" : "Support Investigation Mode"}
+            description={isAdminReview ? "Marketplace Moderation Workspace. You are reviewing listings as an administrator." : "Read-only access. Buying, Selling, Wishlisting, Chatting are disabled."}
+            onBack={() => setPage(isAdminReview ? "admin" : "support")}
+            backLabel={isAdminReview ? "Back to Admin Dashboard" : "Back to Support Dashboard"}
+            isCompact={isWorkspaceCompact}
+          />
+          {/* Sentinel placed below the banner so compact header only fades in when expanded banner scrolls away */}
+          <div ref={workspaceSentinelRef} className="workspace-sentinel" style={{ height: "1px", width: "100%", pointerEvents: "none" }} />
+        </>
+      )}
+      <div className="hero" style={{ display: isReview ? "none" : "block" }}>
         <div className="container" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           <div style={{ maxWidth: "680px" }}>
             <div className="hero-eyebrow">
@@ -1052,8 +1132,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
         </div>
       </div>
 
-      <div className="container">
-        <div className="trust-statistics-row">
+      <div className="container" style={{ paddingTop: isReview ? "32px" : "0" }}>
+        <div className="trust-statistics-row" style={{ marginBottom: isReview ? "36px" : undefined }}>
           <div className="trust-stat-card">
             <div className="trust-stat-num">15k+</div>
             <div className="trust-stat-label">Exchanged Items</div>
@@ -1076,8 +1156,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           </div>
         </div>
 
-        <div className="category-shortcuts-section">
-          <h2 className="homepage-section-title">Explore by Category</h2>
+        <div className="category-shortcuts-section" style={{ marginBottom: isReview ? "32px" : undefined }}>
+          <h2 className="homepage-section-title">{isReview ? "Marketplace Categories" : "Explore by Category"}</h2>
           <div className="category-shortcuts-row">
             {CATEGORY_SHORTCUTS.map(c => (
               <button key={c.val} className="category-shortcut-card" onClick={() => handleCategoryShortcut(c.val)} type="button">
@@ -1106,6 +1186,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                     setPage("listing", l);
                   }}
                   requireAuth={requireAuth}
+                  actionOverride={renderListingAction(l)}
                 />
               ))}
             </div>
@@ -1122,7 +1203,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </h2>
             <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
               {featuredListings.map(l => (
-                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} actionOverride={renderListingAction(l)} />
               ))}
             </div>
           </div>
@@ -1138,7 +1219,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </h2>
             <div className="listings-grid" style={{ padding: "0 0 10px 0" }}>
               {recentListings.map(l => (
-                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+                <ListingCard key={l.id} listing={l} onClick={() => setPage("listing", l)} requireAuth={requireAuth} actionOverride={renderListingAction(l)} />
               ))}
             </div>
           </div>
@@ -1368,9 +1449,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </svg>
             <h3 style={{ fontSize: "20px", fontWeight: "800", marginBottom: "8px" }}>No Listings Available Yet</h3>
             <p style={{ color: "var(--muted)", marginBottom: "20px" }}>Be the first student to post an item.</p>
-            <button className="btn btn-primary" onClick={() => requireAuth("post")} type="button">
-              Post Your First Listing
-            </button>
+            {!isReview && (
+              <button className="btn btn-primary" onClick={() => requireAuth("post")} type="button">
+                Post Your First Listing
+              </button>
+            )}
           </div>
         ) : filtered.length === 0 ? (
           college !== "All" && collegeOptions.length > 1 && !products.some(l => l.sellerCollege === college) ? (
@@ -1398,7 +1481,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
               <p>Try adjusting your filters or search keywords.</p>
               <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:16, flexWrap:"wrap" }}>
                 <button className="btn btn-outline" onClick={clearAllFilters} type="button">Clear Filters</button>
-                <button className="btn btn-primary" onClick={() => setPage("post")} type="button">Post Item</button>
+                {!isReview && <button className="btn btn-primary" onClick={() => setPage("post")} type="button">Post Item</button>}
               </div>
             </div>
           )
@@ -1407,7 +1490,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             <div className={layout === "list" ? "listings-list" : "listings-grid"}>
               {filtered.map(l => (
                 <div className="card-reveal-animate" key={l.id}>
-                  <ListingCard listing={l} layout={layout} onClick={() => setPage("listing", l)} requireAuth={requireAuth} />
+                  <ListingCard listing={l} layout={layout} onClick={() => setPage("listing", l)} requireAuth={requireAuth} actionOverride={renderListingAction(l)} />
                 </div>
               ))}
               {/* Shimmer skeleton indicators when loading pagination batch */}

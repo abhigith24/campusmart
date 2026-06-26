@@ -7,7 +7,8 @@ export default function AdminLayout({ children, activePage, setPage }) {
   const { userProfile, hasFeature } = useAuth();
   
   const roleConfig = getRoleConfig(userProfile?.role);
-  const menuItems = roleConfig.navigation.filter(item => item.section === "admin" || item.section === "support");
+  const adminSupportItems = roleConfig.navigation.filter(item => item.section === "admin" || item.section === "support");
+  const reviewItems = roleConfig.navigation.filter(item => item.section === "review");
 
   return (
     <div className="admin-layout-container" style={{ display: "flex", minHeight: "calc(100vh - 70px)", background: "var(--bg-secondary)" }}>
@@ -19,10 +20,10 @@ export default function AdminLayout({ children, activePage, setPage }) {
           </h3>
           <OfficialStaffBadge role={userProfile?.role} size="sm" />
         </div>
-        {menuItems.map(item => (
+        {adminSupportItems.map(item => (
           <button
             key={item.id}
-            onClick={() => setPage(item.id)}
+            onClick={() => setPage(item.route || item.id)}
             className={`admin-sidebar-item ${activePage === item.id ? "active" : ""}`}
             style={{
               display: "flex",
@@ -46,33 +47,37 @@ export default function AdminLayout({ children, activePage, setPage }) {
             <span>{item.label}</span>
           </button>
         ))}
-        
-        {userProfile?.role === "support" && (
-          <button
-            onClick={() => setPage("home")}
-            className="admin-sidebar-item"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: "var(--r-sm)",
-              border: "none",
-              background: "transparent",
-              color: "var(--text-muted)",
-              fontWeight: "500",
-              cursor: "pointer",
-              textAlign: "left",
-              fontSize: "14px",
-              marginTop: "auto",
-              transition: "all 0.15s var(--ease)"
-            }}
-            type="button"
-          >
-            <span>🏠</span>
-            <span>View Marketplace</span>
-          </button>
+
+        {reviewItems.length > 0 && (
+          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px dashed var(--border-color)" }}>
+            {reviewItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setPage(item.route || item.id)}
+                className={`admin-sidebar-item ${activePage === item.id ? "active" : ""}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "var(--r-sm)",
+                  border: "none",
+                  background: activePage === item.id ? "var(--status-pending-bg)" : "transparent",
+                  color: activePage === item.id ? "var(--status-pending-txt)" : "var(--text-secondary)",
+                  fontWeight: activePage === item.id ? "700" : "500",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontSize: "14px",
+                  transition: "all 0.15s var(--ease)"
+                }}
+                type="button"
+              >
+                <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
         )}
       </aside>
 

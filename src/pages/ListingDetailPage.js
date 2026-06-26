@@ -16,6 +16,10 @@ import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import ShareButton from "../components/ShareButton";
 import { Heart, MapPin, ShieldCheck, Eye, Calendar, MessageCircle, Star, ShoppingCart, ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { getWorkspace, isReviewWorkspace, isAdminReviewWorkspace, isSupportReviewWorkspace } from "../utils/workspace";
+import StaffWorkspaceBanner from "../components/StaffWorkspaceBanner";
+import ReadOnlyWorkspacePanel from "../components/ReadOnlyWorkspacePanel";
+import ModerationDialog from "../components/ModerationDialog";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
@@ -38,6 +42,13 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const { currentUser, userProfile, hasFeature, hasPermission } = useAuth();
   const toast   = useToast();
   const { isWishlisted, toggleWishlist } = useWishlist();
+
+  const workspace = getWorkspace(userProfile, "listing");
+  const isReview = isReviewWorkspace(userProfile, "listing");
+  const isAdminReview = isAdminReviewWorkspace(userProfile, "listing");
+  const isSupportReview = isSupportReviewWorkspace(userProfile, "listing");
+
+  const [showModerationDialog, setShowModerationDialog] = useState(false);
 
   const [activeImg,      setActiveImg]      = useState(0);
   const [sellerData,     setSellerData]     = useState(null);
@@ -373,6 +384,41 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
   };
 
+  const getReviewActions = () => {
+    const actions = [
+      { id: "copy-listing-id", label: "Copy Listing ID", onClick: () => { navigator.clipboard.writeText(listing.id); toast("Listing ID copied!", "success"); } },
+      { id: "copy-seller-id", label: "Copy Seller ID", onClick: () => { navigator.clipboard.writeText(listing.sellerId); toast("Seller ID copied!", "success"); } },
+      { id: "open-seller", label: "View Seller Profile", onClick: () => { setViewProfileUserId(listing.sellerId); setPage("profile"); } },
+    ];
+
+    if (isAdminReview) {
+      actions.push({ id: "remove-listing", label: "Remove Listing", onClick: () => setShowModerationDialog(true) });
+    }
+
+    if (isSupportReview) {
+      actions.push({ id: "share-listing", label: "Share Listing", onClick: () => { navigator.clipboard.writeText(`${window.location.origin}/?listing=${listing.id}`); toast("Link copied!", "success"); } });
+    }
+
+    return actions;
+  };
+
+  const handleConfirmRemoval = async (reason, note) => {
+    try {
+      await updateDoc(doc(db, "listings", listing.id), {
+        status: "deleted",
+        moderationReason: reason,
+        moderationNote: note,
+        moderatedBy: currentUser.uid,
+        moderatedAt: serverTimestamp()
+      });
+      toast("Listing removed successfully.", "success");
+      setShowModerationDialog(false);
+      setPage("home");
+    } catch (err) {
+      toast("Failed to remove: " + err.message, "error");
+    }
+  };
+
   const getResponseRate = (uid) => {
     if (!uid) return "95%";
     let sum = 0;
@@ -535,9 +581,21 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           </div>
         </div>
 
-        {/* Action buttons (CTAs in Priority Hierarchy - Cleaned up to keep Buy Now & Message Seller only) */}
-        <div className="premium-cta-container">
-          {isOwner ? (
+        {/* Action buttons */}
+        {isReview ? (
+          <div style={{ marginTop: "16px" }}>
+            <ReadOnlyWorkspacePanel
+              listingId={listing.id}
+              sellerId={listing.sellerId}
+              status={listing.status}
+              postedDate={getMemberSince(listing.createdAt)}
+              updatedDate={listing.updatedAt ? getMemberSince(listing.updatedAt) : "N/A"}
+              actions={getReviewActions()}
+            />
+          </div>
+        ) : (
+          <div className="premium-cta-container">
+            {isOwner ? (
             /* OWNER ACTIONS */
             <>
               {!isSold ? (
@@ -641,6 +699,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             </>
           )}
         </div>
+        )}
       </div>
     );
   };
@@ -826,6 +885,15 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   return (
     <div className="container detail-page">
+      {isReview && (
+        <StaffWorkspaceBanner
+          theme={isAdminReview ? "blue" : "green"}
+          title={isAdminReview ? "Admin Marketplace Review" : "Support Investigation Mode"}
+          description={isAdminReview ? "Marketplace Moderation Workspace. You are reviewing listings as an administrator." : "Read-only access. Buying, Selling, Wishlisting, Chatting are disabled."}
+          onBack={() => setPage(isAdminReview ? "admin" : "support")}
+          backLabel={isAdminReview ? "Back to Admin Dashboard" : "Back to Support Dashboard"}
+        />
+      )}
       <button
         className="btn btn-ghost"
         onClick={() => {
@@ -875,6 +943,14 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           {renderRecommendations()}
         </div>
       )}
+
+      {/* Moderation Dialog */}
+      <ModerationDialog
+        isOpen={showModerationDialog}
+        onClose={() => setShowModerationDialog(false)}
+        onConfirm={handleConfirmRemoval}
+        listingTitle={listing.title}
+      />
 
       {/* Rating Modal */}
       {showRating && (

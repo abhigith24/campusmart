@@ -8,7 +8,7 @@ export const ACCESS_CONFIG = {
     ],
     permissions: [
       "canManageUsers", "canManageVerifications", "canViewAnalytics",
-      "canManageSupport", "canViewMarketplace"
+      "canManageSupport", "canViewMarketplace", "canModerateMarketplace", "canInvestigateMarketplace"
     ],
     features: [
       "showAdminDashboard", "showSupportDashboard", "showMarketplace", "showSearch"
@@ -19,8 +19,8 @@ export const ACCESS_CONFIG = {
       { id: "admin-users", label: "User Management", icon: "👥", section: "admin" },
       { id: "admin-analytics", label: "Analytics", icon: "📊", section: "admin" },
       { id: "support", label: "Support Dashboard", icon: "🎧", section: "support" },
+      { id: "marketplace-review", label: "Marketplace Review", icon: "👁️", section: "review", route: "home" },
       { id: "notifications", label: "Notifications", icon: "🔔", section: "primary" },
-      { id: "profile", label: "Profile", icon: "👤", section: "primary" },
       { id: "settings", label: "Settings", icon: "⚙️", section: "primary" }
     ]
   },
@@ -31,13 +31,14 @@ export const ACCESS_CONFIG = {
       "support", "profile", "settings", "notifications", "home", "listing", "item", "contact", "report-bug", "feature-request", "faqs", "terms", "privacy", "auth"
     ],
     permissions: [
-      "canManageSupport", "canViewMarketplace"
+      "canManageSupport", "canViewMarketplace", "canInvestigateMarketplace"
     ],
     features: [
       "showSupportDashboard", "showMarketplace", "showSearch"
     ],
     navigation: [
       { id: "support", label: "Support Dashboard", icon: "🎧", section: "support" },
+      { id: "marketplace-review", label: "Marketplace Review", icon: "👁️", section: "review", route: "home" },
       { id: "notifications", label: "Notifications", icon: "🔔", section: "primary" },
       { id: "profile", label: "Profile", icon: "👤", section: "primary" },
       { id: "settings", label: "Settings", icon: "⚙️", section: "primary" }

@@ -200,7 +200,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
       .map(item => ({
         label: item.label,
         icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>{item.icon}</span>,
-        action: () => { setPage(item.id); setMenuOpen(false); }
+        action: () => { setPage(item.route || item.id); setMenuOpen(false); }
       }));
 
     if (isStaff) {
@@ -433,7 +433,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
             {/* Scrollable Drawer Content */}
             <div className="drawer-scroll-content">
-              {["primary", "marketplace", "admin", "support"].map(sec => {
+              {Array.from(new Set((roleConfig.navigation || []).map(i => i.section))).map(sec => {
                 const items = (roleConfig.navigation || []).filter(i => i.section === sec);
                 if (items.length === 0) return null;
                 return (
@@ -441,7 +441,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                     {sec !== "primary" && <div className="drawer-section-title" style={{textTransform: "capitalize"}}>{sec}</div>}
                     <div className="drawer-card-verify" style={{ display: "flex", flexDirection: "column", gap: "2px", padding: "8px 10px", margin: "2px 0" }}>
                       {items.map(item => (
-                         <button key={item.id} className={`drawer-item-btn ${page === item.id ? "active" : ""}`} onClick={() => { setPage(item.id); setDrawerOpen(false); }}>
+                         <button key={item.id} className={`drawer-item-btn ${page === (item.route || item.id) ? "active" : ""}`} onClick={() => { setPage(item.route || item.id); setDrawerOpen(false); }}>
                            <span className="drawer-item-icon">{item.icon}</span> {item.label}
                            {item.id === "notifications" && unreadCount > 0 && <span className="drawer-badge-count">{unreadCount}</span>}
                          </button>
