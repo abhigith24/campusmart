@@ -119,30 +119,28 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOve
         )}
       </div>
 
-      <div className="card-body">
-        <div className="card-top-row">
-          <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
-            <span className="card-cat">{category}</span>
-            {(collegeVerified || isVerified) && <VerifiedStudentBadge />}
-            {currentUser && userProfile?.college && sellerCollege && userProfile.college.trim().toLowerCase() === sellerCollege.trim().toLowerCase() && (
-              <SameCampusBadge />
-            )}
-            {sellerSuccessfulSales >= 3 && (
-              <TrustedSellerBadge />
-            )}
-          </div>
+      <div className="card-body" style={{ gap: "2px", padding: "10px 12px 12px" }}>
+        <div className="card-top-row" style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", justifyContent: "flex-start", marginBottom: 0 }}>
+          <span className="card-cat">{category}</span>
           {cond && !isSold && (
             <span className="card-cond-badge" style={{ background:cond.bg, color:cond.color }}>
               <span className="card-cond-dot" style={{ background:cond.dot }} />
               {cond.label}
             </span>
           )}
+          {(collegeVerified || isVerified) && <VerifiedStudentBadge />}
+          {currentUser && userProfile?.college && sellerCollege && userProfile.college.trim().toLowerCase() === sellerCollege.trim().toLowerCase() && (
+            <SameCampusBadge />
+          )}
+          {sellerSuccessfulSales >= 3 && (
+            <TrustedSellerBadge />
+          )}
         </div>
 
-        <div className="card-title" title={title}>{title}</div>
+        <div className="card-title" title={title} style={{ marginTop: "2px", marginBottom: "4px" }}>{title}</div>
 
         {sellerCollege && (
-          <div className="card-college">
+          <div className="card-college" style={{ marginBottom: "8px" }}>
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink:0, color: "var(--muted)" }}>
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             </svg>
@@ -150,24 +148,24 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOve
           </div>
         )}
 
-        <div className="card-footer">
+        <div className="card-footer" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px", paddingTop: "8px" }}>
           <div className={`card-price ${isFree ? "free" : ""} ${isSold ? "sold" : ""}`}>
             {isSold ? "Sold" : isFree ? "Free" : isRent ? `Rs ${Number(rentPerDay || 0).toLocaleString("en-IN")}/day` : (
               <>Rs {price?.toLocaleString("en-IN")}</>
             )}
           </div>
-          <div className="card-seller-info">
+          <div className="card-seller-info" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <div className="card-seller-avatar" title={sellerName}>{(sellerName || "?")[0].toUpperCase()}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-              <span className="card-seller-name-inline">{sellerName}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span className="card-seller-name-inline" style={{ fontSize: "13px", fontWeight: "600", color: "var(--txt)" }}>{sellerName}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "11px" }}>
                 {sellerRating > 0 && (
-                  <span className="card-rating">
+                  <span className="card-rating" style={{ color: "var(--yel)", fontWeight: "600" }}>
                     ★ {sellerRating.toFixed(1)}
                   </span>
                 )}
-                <span className="card-trust-score" title={`Trust Score: ${trustScore}% based on verification, ratings, and sales`}>
-                  🛡️ {trustScore}%
+                <span className="card-trust-score" style={{ color: "var(--p)", fontWeight: "600", background: "var(--p-light)", padding: "1px 6px", borderRadius: "8px" }} title={`Trust Score: ${trustScore}% based on verification, ratings, and sales`}>
+                  ✓ Verified {trustScore}%
                 </span>
               </div>
             </div>

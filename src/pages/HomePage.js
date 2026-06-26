@@ -481,23 +481,23 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
 
     if (isAdminReview) {
       return (
-        <div style={{ display: "flex", gap: "6px" }}>
-          <button className="btn btn-outline btn-sm" onClick={handleCopyId} title="Copy ID" type="button" style={{ padding: "4px 8px" }}><Copy size={14} /></button>
-          <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); setPage("listing", listing); }} title="Review" type="button" style={{ padding: "4px 8px" }}><ShieldCheck size={14} /></button>
-        </div>
+        <>
+          <button className="btn btn-glass btn-sm action-override-btn" onClick={handleCopyId} title="Copy ID" type="button"><Copy size={16} /></button>
+          <button className="btn btn-glass btn-sm action-override-btn" onClick={(e) => { e.stopPropagation(); setPage("listing", listing); }} title="Review" type="button"><ShieldCheck size={16} /></button>
+        </>
       );
     }
 
     if (isSupportReview) {
       return (
-        <div style={{ display: "flex", gap: "6px" }}>
-          <button className="btn btn-outline btn-sm" onClick={handleCopyId} title="Copy ID" type="button" style={{ padding: "4px 8px" }}><Copy size={14} /></button>
-          <button className="btn btn-primary btn-sm" onClick={(e) => {
+        <>
+          <button className="btn btn-glass btn-sm action-override-btn" onClick={handleCopyId} title="Copy ID" type="button"><Copy size={16} /></button>
+          <button className="btn btn-glass btn-sm action-override-btn" onClick={(e) => {
              e.stopPropagation();
              navigator.clipboard.writeText(`${window.location.origin}/?listing=${listing.id}`);
              toast("Link copied to share!", "success");
-          }} title="Share" type="button" style={{ padding: "4px 8px" }}><ExternalLink size={14} /></button>
-        </div>
+          }} title="Share" type="button"><ExternalLink size={16} /></button>
+        </>
       );
     }
     return null;

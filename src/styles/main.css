@@ -1140,29 +1140,30 @@ input,textarea,select { font-family:inherit }
   width:100%; height:180px; background:var(--light);
   display:flex; align-items:center; justify-content:center;
   position:relative; overflow:hidden;
+  padding: 4px;
 }
-.card-img img { width:100%; height:100%; object-fit:cover; transition:transform .5s var(--ease) }
+.card-img img { width:100%; height:100%; object-fit:cover; border-radius: var(--r-md); transition:transform .5s var(--ease) }
 .listing-card:hover .card-img img { transform:scale(1.07) }
 .card-img-placeholder { font-size:48px; opacity:.35; transition:transform .3s var(--ease) }
 .listing-card:hover .card-img-placeholder { transform:scale(1.1) }
 .card-img-placeholder-img { width:100%; height:100%; object-fit:cover; transition:transform .5s var(--ease); opacity:.92; }
 .listing-card:hover .card-img-placeholder-img { transform:scale(1.07) }
 .free-badge {
-  position:absolute; top:10px; left:10px;
+  position:absolute; top:12px; left:12px;
   background:linear-gradient(135deg,#22c55e,#4ade80); color:#fff;
   font-size:11px; font-weight:800; padding:3px 10px;
   border-radius:var(--r-full); letter-spacing:.3px;
   box-shadow:0 2px 8px rgba(34,197,94,.4);
 }
 .sold-badge {
-  position:absolute; top:10px; left:10px;
+  position:absolute; top:12px; left:12px;
   background:rgba(15,23,42,.8); color:#fff;
   font-size:11px; font-weight:800; padding:3px 10px;
   border-radius:var(--r-full); backdrop-filter:blur(4px);
 }
 .condition-badge-new { display:none } /* replaced by card-cond-badge */
 .heart-btn {
-  position:absolute; top:8px; right:8px;
+  position:absolute; top:12px; right:12px;
   background:rgba(255,255,255,.85); border:none; border-radius:50%;
   width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
   color:var(--muted); transition:all var(--dur) var(--spring);
@@ -1170,6 +1171,21 @@ input,textarea,select { font-family:inherit }
 }
 .heart-btn:hover { transform:scale(1.15); color:var(--red); }
 .heart-btn.wishlisted { background:var(--red-light); color:var(--red); }
+
+.card-action-override {
+  position:absolute; top:12px; right:12px;
+  display:flex; flex-direction:column; gap:8px; z-index:10;
+}
+.action-override-btn {
+  background:rgba(255,255,255,.85); border:none; border-radius:50%;
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  color:var(--muted); transition:all var(--dur) var(--spring);
+  box-shadow:0 2px 8px rgba(0,0,0,.12); backdrop-filter:blur(4px);
+  padding:0;
+}
+.action-override-btn:hover { transform:scale(1.15); color:var(--p); }
+[data-theme="dark"] .action-override-btn { background:rgba(15,23,42,.8); color:var(--muted); }
+[data-theme="dark"] .action-override-btn:hover { color:var(--p-mid); }
 .card-body { padding:13px 14px 14px; flex:1; display:flex; flex-direction:column; gap:3px }
 .card-top-row {
   display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:2px;
@@ -2336,7 +2352,7 @@ input,textarea,select { font-family:inherit }
   margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .card-posted-badge {
-  position:absolute; bottom:8px; left:8px;
+  position:absolute; bottom:12px; left:12px;
   background:rgba(15,23,42,.6); color:#fff;
   font-size:10px; font-weight:700; padding:3px 8px;
   border-radius:var(--r-full); backdrop-filter:blur(4px);
@@ -2558,7 +2574,7 @@ input,textarea,select { font-family:inherit }
    LISTING CARD — college + posted badge
 ════════════════════════════════════════════════════ */
 .card-posted-badge {
-  position:absolute; bottom:8px; left:8px;
+  position:absolute; bottom:12px; left:12px;
   background:rgba(15,23,42,.6); color:#fff;
   font-size:10px; font-weight:700; padding:2px 8px;
   border-radius:var(--r-full); backdrop-filter:blur(4px);
