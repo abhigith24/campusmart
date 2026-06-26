@@ -189,18 +189,36 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const role = userProfile?.role || "user";
   const roleConfig = getRoleConfig(role);
 
+  const isStaff = role === "admin" || role === "support";
+  const nameToUse = userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student");
+  const initials = nameToUse.charAt(0).toUpperCase();
+
   // Helper to map section/icon to the dropdown format
   const generateMenuItems = () => {
-    return roleConfig.navigation.map(item => ({
-      label: item.label,
-      icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>{item.icon}</span>,
-      action: () => { setPage(item.id); setMenuOpen(false); }
-    })).concat({
+    const items = roleConfig.navigation
+      .filter(item => item.section !== "admin" && item.section !== "support")
+      .map(item => ({
+        label: item.label,
+        icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>{item.icon}</span>,
+        action: () => { setPage(item.id); setMenuOpen(false); }
+      }));
+
+    if (isStaff) {
+      items.unshift({
+        label: "Admin Console",
+        icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>🛡️</span>,
+        action: () => { setPage(role === "admin" ? "admin" : "support"); setMenuOpen(false); }
+      });
+    }
+
+    items.push({
       label: "Logout",
       icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>🚪</span>,
       action: handleLogout,
       danger: true
     });
+
+    return items;
   };
 
   const menuItems = generateMenuItems();
