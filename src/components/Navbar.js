@@ -301,8 +301,8 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
                 <div className="nav-avatar-wrap" ref={menuRef}>
                   <button className="nav-avatar" onClick={() => setMenuOpen(o => !o)} title="Account" type="button">
-                    {currentUser?.photoURL
-                      ? <img src={currentUser.photoURL} alt="" />
+                    {(userProfile?.photoURL || currentUser?.photoURL)
+                      ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" />
                       : <span>{initials}</span>}
                     {(userProfile?.collegeVerified || userProfile?.isVerified) && <span className="nav-verified-dot" title="Verified Student" />}
                   </button>
@@ -311,8 +311,8 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   <div className="nav-dropdown">
                     <div className="nav-dropdown-user">
                       <div className="nav-dropdown-avatar">
-                        {currentUser?.photoURL
-                          ? <img src={currentUser.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                        {(userProfile?.photoURL || currentUser?.photoURL)
+                          ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                           : <span>{initials}</span>}
                       </div>
                       <div>
@@ -379,8 +379,8 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             <div className="drawer-header-modern" onClick={() => { setPage("profile"); setDrawerOpen(false); }} style={{ cursor: "pointer" }}>
               <div className="drawer-header-top-row">
                 <div className="drawer-user-avatar">
-                  {currentUser?.photoURL ? (
-                    <img src={currentUser.photoURL} alt="" />
+                  {(userProfile?.photoURL || currentUser?.photoURL) ? (
+                    <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" />
                   ) : (
                     <span>{currentUser ? initials : "?"}</span>
                   )}

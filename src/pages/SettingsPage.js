@@ -134,7 +134,7 @@ export default function SettingsPage({ setPage }) {
 
   const handleSaveAccount = async (e) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!name || !String(name).trim()) {
       toast("Name cannot be empty. ❌", "error");
       return;
     }
@@ -147,9 +147,9 @@ export default function SettingsPage({ setPage }) {
       }
 
       await updateDoc(doc(db, "users", currentUser.uid), {
-        name: name.trim(),
-        college: college.trim(),
-        phoneNumber: phone.trim(),
+        name: String(name || "").trim(),
+        college: String(college || "").trim(),
+        phoneNumber: String(phone || "").trim(),
         photoURL: finalPhotoURL
       });
 
@@ -159,7 +159,7 @@ export default function SettingsPage({ setPage }) {
       toast("Account settings updated successfully!", "success");
     } catch (err) {
       console.error(err);
-      toast("Failed to update profile. ❌", "error");
+      toast(`Failed to update profile: ${err.message || "Unknown error"}`, "error");
     } finally {
       setSavingAccount(false);
     }
@@ -688,30 +688,32 @@ export default function SettingsPage({ setPage }) {
         </section>
 
         {/* ================= ADVANCED ACCOUNT ACTIONS (DANGER ZONE) ================= */}
-        <section className="form-card" style={{ padding: "24px", border: "1.5px solid rgba(239, 68, 68, 0.4)", background: "rgba(239, 68, 68, 0.02)" }}>
-          <button 
-            type="button"
-            onClick={() => setAdvancedActionsExpanded(o => !o)}
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-          >
-            <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "var(--red)" }}>⚙️ Advanced Account Actions</h2>
-            <span style={{ color: "var(--red)", fontSize: "14px" }}>{advancedActionsExpanded ? "▲" : "▼"}</span>
-          </button>
-          
-          {advancedActionsExpanded && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px", borderTop: "1px solid rgba(239,68,68,0.2)", paddingTop: "16px" }}>
-              <p style={{ fontSize: "13px", color: "var(--txt-2)" }}>Destructive settings and permanent profile deletions.</p>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <button className="btn btn-danger" onClick={() => setShowDeactivateModal(true)} type="button">
-                  Deactivate Account
-                </button>
-                <button className="btn btn-danger" onClick={() => setDeleteStep(1)} style={{ background: "transparent", color: "var(--red)", border: "1.5px solid var(--red)" }} type="button">
-                  Delete Account
-                </button>
+        {userProfile?.role !== "admin" && (
+          <section className="form-card" style={{ padding: "24px", border: "1.5px solid rgba(239, 68, 68, 0.4)", background: "rgba(239, 68, 68, 0.02)" }}>
+            <button 
+              type="button"
+              onClick={() => setAdvancedActionsExpanded(o => !o)}
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+            >
+              <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "var(--red)" }}>⚙️ Advanced Account Actions</h2>
+              <span style={{ color: "var(--red)", fontSize: "14px" }}>{advancedActionsExpanded ? "▲" : "▼"}</span>
+            </button>
+            
+            {advancedActionsExpanded && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px", borderTop: "1px solid rgba(239,68,68,0.2)", paddingTop: "16px" }}>
+                <p style={{ fontSize: "13px", color: "var(--txt-2)" }}>Destructive settings and permanent profile deletions.</p>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button className="btn btn-danger" onClick={() => setShowDeactivateModal(true)} type="button">
+                    Deactivate Account
+                  </button>
+                  <button className="btn btn-danger" onClick={() => setDeleteStep(1)} style={{ background: "transparent", color: "var(--red)", border: "1.5px solid var(--red)" }} type="button">
+                    Delete Account
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        )}
 
       </div>
 

@@ -135,6 +135,7 @@ export function AuthProvider({ children }) {
     loginWithEmail,
     resetPassword,
     logout,
+    fetchProfile,
     hasPermission: boundHasPermission,
     hasFeature: boundHasFeature,
     canAccessRoute: boundCanAccessRoute
