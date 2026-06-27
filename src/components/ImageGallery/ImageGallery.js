@@ -1,4 +1,4 @@
-import React, { useState, useRef, memo } from "react";
+import React, { useState, useRef, memo, useEffect } from "react";
 import { optimizeCloudinaryUrl } from "../../utils/cloudinary";
 import ShareButton from "../ShareButton";
 import { Heart } from "lucide-react";
@@ -26,8 +26,23 @@ const ImageGallery = memo(({
 }) => {
   const [activeImg, setActiveImg] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hoverLeft, setHoverLeft] = useState(false);
+  const [hoverRight, setHoverRight] = useState(false);
+  
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const thumbContainerRef = useRef(null);
+
+  const hasImages = images && images.length > 0;
+
+  useEffect(() => {
+    if (thumbContainerRef.current && hasImages) {
+      const activeThumb = thumbContainerRef.current.children[activeImg];
+      if (activeThumb) {
+        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeImg, hasImages]);
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.changedTouches[0].screenX;
@@ -40,14 +55,34 @@ const ImageGallery = memo(({
   const handleTouchEnd = () => {
     if (!images || images.length <= 1) return;
     if (touchStartX.current - touchEndX.current > 50) {
-      setActiveImg((prev) => (prev + 1) % images.length);
+      nextImage();
     }
     if (touchStartX.current - touchEndX.current < -50) {
-      setActiveImg((prev) => (prev - 1 + images.length) % images.length);
+      prevImage();
     }
   };
 
-  const hasImages = images && images.length > 0;
+  const prevImage = () => {
+    if (!hasImages || images.length <= 1) return;
+    setActiveImg((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const nextImage = () => {
+    if (!hasImages || images.length <= 1) return;
+    setActiveImg((prev) => (prev + 1) % images.length);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!hasImages) return;
+    if (e.key === "ArrowLeft") {
+      prevImage();
+    } else if (e.key === "ArrowRight") {
+      nextImage();
+    } else if (e.key === "Enter") {
+      setIsModalOpen(true);
+    }
+  };
+
   const currentImg = hasImages ? optimizeCloudinaryUrl(images[activeImg], "f_auto,q_auto,w_800") : (CAT_IMAGES[category] || null);
 
   return (
@@ -63,11 +98,9 @@ const ImageGallery = memo(({
             if (hasImages) setIsModalOpen(true);
           }}
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && hasImages) setIsModalOpen(true);
-          }}
-          role="button"
-          aria-label="View fullscreen image"
+          onKeyDown={handleKeyDown}
+          role="region"
+          aria-label="Image Gallery"
         >
           {currentImg ? (
             <img src={currentImg} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
@@ -75,8 +108,54 @@ const ImageGallery = memo(({
             <span style={{ fontSize: 64 }}>📦</span>
           )}
 
+          {/* Left Click Zone */}
+          {hasImages && images.length > 1 && (
+            <div 
+              style={{
+                position: "absolute", top: 0, bottom: 0, left: 0, width: "35%",
+                cursor: "pointer", zIndex: 2, display: "flex", alignItems: "center", paddingLeft: "16px"
+              }}
+              onClick={(e) => { e.stopPropagation(); prevImage(); }}
+              onMouseEnter={() => setHoverLeft(true)}
+              onMouseLeave={() => setHoverLeft(false)}
+              aria-label="Previous image"
+              role="button"
+            >
+              <div style={{
+                color: "white", background: "rgba(0,0,0,0.3)", borderRadius: "50%",
+                width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: hoverLeft ? 1 : 0, transition: "opacity 0.2s", pointerEvents: "none", fontSize: "24px"
+              }}>
+                ‹
+              </div>
+            </div>
+          )}
+
+          {/* Right Click Zone */}
+          {hasImages && images.length > 1 && (
+            <div 
+              style={{
+                position: "absolute", top: 0, bottom: 0, right: 0, width: "35%",
+                cursor: "pointer", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: "16px"
+              }}
+              onClick={(e) => { e.stopPropagation(); nextImage(); }}
+              onMouseEnter={() => setHoverRight(true)}
+              onMouseLeave={() => setHoverRight(false)}
+              aria-label="Next image"
+              role="button"
+            >
+              <div style={{
+                color: "white", background: "rgba(0,0,0,0.3)", borderRadius: "50%",
+                width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: hoverRight ? 1 : 0, transition: "opacity 0.2s", pointerEvents: "none", fontSize: "24px"
+              }}>
+                ›
+              </div>
+            </div>
+          )}
+
           {!isSold && (
-            <div className="gallery-overlay-actions">
+            <div className="gallery-overlay-actions" style={{ zIndex: 3 }}>
               <button
                 className={`action-overlay-btn btn-wishlist-overlay ${wishlisted ? "wishlisted" : ""}`}
                 onClick={(e) => { e.stopPropagation(); onToggleWishlist(); }}
@@ -88,7 +167,7 @@ const ImageGallery = memo(({
                 <Heart size={16} fill={wishlisted ? "currentColor" : "none"} />
               </button>
               
-              <div className="action-overlay-btn btn-share-overlay" onClick={e => e.stopPropagation()} style={{ minHeight: "44px", minWidth: "44px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div className="action-overlay-btn btn-share-overlay" onClick={e => e.stopPropagation()} style={{ minHeight: "44px", minWidth: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                 <ShareButton listing={listing} currentUserId={currentUser?.uid} iconOnly={true} />
               </div>
             </div>
@@ -98,35 +177,12 @@ const ImageGallery = memo(({
             <div style={{
               position: "absolute", inset: 0, background: "rgba(0,0,0,.45)",
               display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
-              borderRadius: "var(--r-md)", zIndex: 5
+              borderRadius: "var(--r-md)", zIndex: 5, pointerEvents: "none"
             }}>
               <span style={{ color: "#fff", fontSize: 22, fontWeight: 900, background: "#22c55e", padding: "8px 24px", borderRadius: 30 }}>
                 ✅ SOLD
               </span>
             </div>
-          )}
-
-          {hasImages && images.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="gallery-nav-btn prev"
-                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev - 1 + images.length) % images.length); }}
-                aria-label="Previous image"
-                style={{ minHeight: "44px", minWidth: "44px" }}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="gallery-nav-btn next"
-                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev + 1) % images.length); }}
-                aria-label="Next image"
-                style={{ minHeight: "44px", minWidth: "44px" }}
-              >
-                ›
-              </button>
-            </>
           )}
 
           {hasImages && images.length > 1 && (
@@ -146,13 +202,13 @@ const ImageGallery = memo(({
         </div>
 
         {hasImages && images.length > 1 && (
-          <div className="detail-thumbs" style={{ scrollSnapType: "x mandatory", overflowX: "auto", display: "flex", gap: "8px" }}>
+          <div ref={thumbContainerRef} className="detail-thumbs" style={{ scrollSnapType: "x mandatory", overflowX: "auto", display: "flex", gap: "8px", scrollBehavior: "smooth" }}>
             {images.map((url, i) => (
               <button 
                 key={i} 
                 className={`detail-thumb ${activeImg === i ? "active" : ""}`} 
                 onClick={() => setActiveImg(i)}
-                style={{ scrollSnapAlign: "start", border: "none", background: "none", padding: 0, cursor: "pointer" }}
+                style={{ scrollSnapAlign: "start", border: "none", background: "none", padding: 0, cursor: "pointer", flexShrink: 0 }}
                 aria-label={`View image ${i + 1}`}
               >
                 <img src={optimizeCloudinaryUrl(url, "f_auto,q_auto,w_100,c_fill")} alt="" loading="lazy" />

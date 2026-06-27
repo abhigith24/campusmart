@@ -427,7 +427,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
     if (purchaseRequest.status === REQUEST_STATUS.PENDING) {
       return (
-        <div style={{ background: "var(--status-pending-bg)", border: "1px solid var(--warn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+        <div style={{ background: "var(--status-pending-bg)", border: "1px solid var(--warn)", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
           <div style={{ fontWeight: 800, color: "var(--status-pending-txt)", marginBottom: 4 }}>✓ Request Sent</div>
           <div style={{ fontSize: 13, color: "var(--muted-2)", lineHeight: 1.5 }}>Waiting for seller response.</div>
         </div>
@@ -435,7 +435,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     }
     if (purchaseRequest.status === REQUEST_STATUS.ACCEPTED) {
       return (
-        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
           <div style={{ fontWeight: 800, color: "var(--status-accepted-txt)", marginBottom: 4 }}>✓ Request Accepted</div>
           <div style={{ fontSize: 13, color: "var(--status-accepted-txt)", lineHeight: 1.5 }}>Seller accepted your request.</div>
         </div>
@@ -443,7 +443,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     }
     if (purchaseRequest.status === REQUEST_STATUS.DECLINED) {
       return (
-        <div style={{ background: "var(--status-rejected-bg)", border: "1px solid var(--danger)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+        <div style={{ background: "var(--status-rejected-bg)", border: "1px solid var(--danger)", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
           <div style={{ fontWeight: 800, color: "var(--status-rejected-txt)", marginBottom: 4 }}>Request Declined</div>
           <div style={{ fontSize: 13, color: "var(--status-rejected-txt)", lineHeight: 1.5 }}>Allow another request if business rules permit.</div>
         </div>
@@ -451,7 +451,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     }
     if (purchaseRequest.status === REQUEST_STATUS.EXCHANGED) {
       return (
-        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
           <div style={{ fontWeight: 800, color: "var(--status-accepted-txt)", marginBottom: 4 }}>✓ Transaction Completed</div>
           <div style={{ fontSize: 13, color: "var(--status-accepted-txt)", lineHeight: 1.5 }}>You can now rate the seller.</div>
         </div>
@@ -477,10 +477,10 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         </div>
 
         {/* Title */}
-        <h1 className="premium-title" style={{ marginBottom: 12 }}>{listing.title}</h1>
+        <h1 className="premium-title" style={{ marginBottom: 8 }}>{listing.title}</h1>
 
         {/* Condition & Availability Row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           {COND_META[listing.condition] && (
             <span className="premium-cond-badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color }}>
               {COND_META[listing.condition].label}
@@ -492,14 +492,14 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         </div>
 
         {/* Price */}
-        <div className="premium-price-row" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 16 }}>
+        <div className="premium-price-row" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 12 }}>
           <div className={`premium-price ${listing.isFree ? "free" : ""}`}>
             {listing.isFree ? "Free 💚" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
           </div>
         </div>
 
         {/* Metadata Section */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "var(--light)", padding: "16px", borderRadius: "8px", marginBottom: "24px", fontSize: "13px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "var(--light)", padding: "12px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>
            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
              <span style={{ color: "var(--muted)", fontWeight: 600 }}>Posted</span>
              <span style={{ color: "var(--txt)", fontWeight: 700 }}>{listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}</span>
@@ -559,7 +559,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               )
             ) : hasFeature("showPurchaseRequests") && !isOwner && listing.status === "active" ? (
               /* ACTIVE — buyer actions (always show full 3-button stack) */
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {/* 1. Request to Buy / ✓ Request Sent */}
                 {purchaseRequest?.status === REQUEST_STATUS.PENDING ? (
                   <button className="btn-primary-premium" disabled style={{ height: "48px", opacity: 0.7 }}>
@@ -631,7 +631,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               </>
             ) : (
               /* SOLD / RESERVED STATE — buyer actions */
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {(purchaseRequest?.status === REQUEST_STATUS.EXCHANGED || purchaseRequest?.status === REQUEST_STATUS.ACCEPTED) && (
                   <>
                     {purchaseRequest.status === REQUEST_STATUS.EXCHANGED ? (
@@ -787,7 +787,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           <div style={{ textAlign: "center", marginTop: "12px" }}>
             <button 
               className="btn-link" 
-              onClick={() => requireAuth(null, () => setShowReportSeller(true))} 
+              onClick={(e) => { e.stopPropagation(); requireAuth(null, () => setShowReportSeller(true)); }}
               style={{ color: "var(--muted)", fontSize: "12px", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", minHeight: "44px", padding: "8px" }}
             >
               Report Seller

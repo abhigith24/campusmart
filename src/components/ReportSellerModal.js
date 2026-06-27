@@ -4,11 +4,12 @@ import { useToast } from "../context/ToastContext";
 import { transactionService } from "../services/transactionService";
 
 const REPORT_REASONS = [
-  "Fake Listing / Scam",
-  "Spam / Duplicate",
-  "Offensive Content",
-  "Wrong Item Description",
-  "Seller did not show up",
+  "Scam or Fraud",
+  "Fake Listing",
+  "Inappropriate Content",
+  "Spam",
+  "Harassment",
+  "Counterfeit Item",
   "Other"
 ];
 
