@@ -43,9 +43,9 @@ import { getLandingPage }                from "./config/accessControl";
 import "./styles/main.css";
 
 // Pages that should NOT show Footer
-const NO_FOOTER = ["chat"];
+const NO_FOOTER = ["chat", "auth"];
 // Pages that fill full viewport height
-const FULL_HEIGHT = ["chat"];
+const FULL_HEIGHT = ["chat", "auth"];
 
 // Pages that require authentication
 const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics", "support"];
@@ -371,11 +371,13 @@ function Main() {
 
   return (
     <div className="app-layout">
-      <Navbar
-        page={page} setPage={navigateTo}
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-        requireAuth={requireAuth}
-      />
+      {page !== "auth" && (
+        <Navbar
+          page={page} setPage={navigateTo}
+          searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+          requireAuth={requireAuth}
+        />
+      )}
 
       <div className={`main-content ${isFullHeight ? "no-pad" : ""}`}>
         <React.Suspense fallback={

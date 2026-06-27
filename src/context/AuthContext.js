@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
@@ -39,6 +40,9 @@ export function AuthProvider({ children }) {
     await updateProfile(result.user, { displayName: name });
     await createOrUpdateProfile(result.user, { college, branch, year });
     await fetchProfile(result.user.uid);
+    await sendEmailVerification(result.user);
+    await signOut(auth);
+    setUserProfile(null);
     trackSignUp("email");
     return result;
   }

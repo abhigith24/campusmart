@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
 import { generateChatResponse } from "../../services/ai/aiService";
 
+import { useAuth } from "../../context/AuthContext";
+
 const QUICK_CHIPS = [
   { label: "🔍 Find electronics", query: "find electronics" },
   { label: "📚 Find books", query: "find books" },
@@ -18,8 +20,9 @@ const formatPrice = (p) =>
  * and searches real listings when users ask for products.
  */
 export default function MateGeniFloatingAssistant({ listings = [] }) {
+  const { currentUser } = useAuth();
   const isEnabled = MATEGENI_CONFIG.featureFlags.enableMateGeniAssistant;
-  if (!isEnabled) return null;
+  if (!isEnabled || !currentUser) return null;
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
