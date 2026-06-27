@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import { detectFraudRisk } from "../services/ai/aiService";
+import { usePurchaseRequest } from "../hooks/usePurchaseRequest";
 
 export default function ChatPage({ initialChatWith, setPage }) {
   const { currentUser, userProfile } = useAuth();
@@ -20,6 +21,15 @@ export default function ChatPage({ initialChatWith, setPage }) {
   const [activeTab,      setActiveTab]      = useState("buying"); // "buying" | "selling"
   const [otherProfile,   setOtherProfile]   = useState(null);
   const [fraudWarning,   setFraudWarning]   = useState(null); // { riskLevel, safetyTip, flaggedPhrases }
+
+  const { request: purchaseRequest } = usePurchaseRequest(activeChat?.buyerId, activeChat?.listingId);
+
+  const isMessagingAllowed = () => {
+    if (!activeChat) return false;
+    if (!activeChat.listingId || !activeChat.buyerId) return true;
+    if (purchaseRequest?.status === "ACCEPTED" || purchaseRequest?.status === "EXCHANGED") return true;
+    return false;
+  };
 
   useEffect(() => {
     if (!activeChat || !currentUser) {
@@ -270,12 +280,26 @@ export default function ChatPage({ initialChatWith, setPage }) {
         createdAt:  serverTimestamp()
       });
       // Update chat meta so both users see latest message in sidebar
+      const otherId = activeChat.participants?.find(id => id !== currentUser.uid);
       await updateDoc(doc(db, "chats", activeChat.id), {
         lastMessage:     text,
         lastMessageTime: serverTimestamp(),
         // Mark as unread for the OTHER participant
-        [`unread_${activeChat.participants?.find(id => id !== currentUser.uid)}`]: true
+        [`unread_${otherId}`]: true
       });
+
+      if (otherId) {
+        const isSeller = currentUser.uid === activeChat.sellerId;
+        await addDoc(collection(db, "notifications"), {
+          type: "NEW_MESSAGE",
+          sellerId: isSeller ? currentUser.uid : otherId,
+          buyerId: isSeller ? otherId : currentUser.uid,
+          listingId: activeChat.listingId,
+          listingTitle: activeChat.listingTitle || "an item",
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (err) {
       console.error("Send error:", err.code, err.message);
     }
@@ -417,12 +441,16 @@ export default function ChatPage({ initialChatWith, setPage }) {
           <>
             {/* Header */}
             {(() => {
-              const otherTrustScore = otherProfile ? Math.round(
-                50 +
-                ((otherProfile.collegeVerified || otherProfile.isVerified) ? 20 : 0) +
-                (Number(otherProfile.successfulSales || otherProfile.completedTradesCount || 0) >= 3 ? 15 : 0) +
-                (Number(otherProfile.rating || 0) > 0 ? (Number(otherProfile.rating) / 5) * 15 : 0)
-              ) : 50;
+              const otherTrustScore = otherProfile 
+                ? (otherProfile.trustScore !== undefined 
+                    ? otherProfile.trustScore 
+                    : Math.round(
+                        50 +
+                        ((otherProfile.collegeVerified || otherProfile.isVerified) ? 20 : 0) +
+                        (Number(otherProfile.successfulSales || otherProfile.completedTradesCount || 0) >= 3 ? 15 : 0) +
+                        (Number(otherProfile.rating || 0) > 0 ? (Number(otherProfile.rating) / 5) * 15 : 0)
+                      ))
+                : 50;
 
               return (
                 <div className="chat-header" style={{ padding: "10px 16px", display: "flex", alignItems: "center", borderBottom: "1px solid var(--bdr)", gap: "12px", minHeight: "68px" }}>
@@ -546,24 +574,30 @@ export default function ChatPage({ initialChatWith, setPage }) {
             </div>
 
             {/* Input */}
-            <div className="chat-input-bar">
-              <textarea
-                ref={inputRef}
-                className="chat-input"
-                rows={1}
-                placeholder="Type a message..."
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <button
-                className={`chat-send-btn ${input.trim() ? "active" : ""}`}
-                onClick={sendMessage}
-                disabled={!input.trim() || sending}
-              >
-                {sending ? "..." : "↑"}
-              </button>
-            </div>
+            {!isMessagingAllowed() ? (
+              <div className="chat-input-bar" style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "var(--card-bg)", color: "var(--muted)", padding: "16px", fontSize: "13px", borderTop: "1px solid var(--bdr)", textAlign: "center" }}>
+                Chat becomes available after seller accepts your request.
+              </div>
+            ) : (
+              <div className="chat-input-bar">
+                <textarea
+                  ref={inputRef}
+                  className="chat-input"
+                  rows={1}
+                  placeholder="Type a message..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <button
+                  className={`chat-send-btn ${input.trim() ? "active" : ""}`}
+                  onClick={sendMessage}
+                  disabled={!input.trim() || sending}
+                >
+                  {sending ? "..." : "↑"}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

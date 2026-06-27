@@ -15,11 +15,17 @@ import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import SameCampusBadge from "../components/SameCampusBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import ShareButton from "../components/ShareButton";
+import ImageGallery from "../components/ImageGallery/ImageGallery";
 import { Heart, MapPin, ShieldCheck, Eye, Calendar, MessageCircle, Star, ShoppingCart, ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { getWorkspace, isReviewWorkspace, isAdminReviewWorkspace, isSupportReviewWorkspace } from "../utils/workspace";
 import StaffWorkspaceBanner from "../components/StaffWorkspaceBanner";
 import ReadOnlyWorkspacePanel from "../components/ReadOnlyWorkspacePanel";
 import ModerationDialog from "../components/ModerationDialog";
+import ReportSellerModal from "../components/ReportSellerModal";
+import { usePurchaseRequest } from "../hooks/usePurchaseRequest";
+import { transactionService } from "../services/transactionService";
+import { LISTING_STATUS } from "../constants/listingStatus";
+import { REQUEST_STATUS } from "../constants/requestStatus";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
@@ -42,6 +48,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   const { currentUser, userProfile, hasFeature, hasPermission } = useAuth();
   const toast   = useToast();
   const { isWishlisted, toggleWishlist } = useWishlist();
+  
+  const { request: purchaseRequest, loading: reqLoading } = usePurchaseRequest(currentUser?.uid, listing?.id);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const workspace = getWorkspace(userProfile, "listing");
   const isReview = isReviewWorkspace(userProfile, "listing");
@@ -50,11 +59,11 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   const [showModerationDialog, setShowModerationDialog] = useState(false);
 
-  const [activeImg,      setActiveImg]      = useState(0);
   const [sellerData,     setSellerData]     = useState(null);
   const [contactLoading, setContactLoading] = useState(false);
   const [showRating,     setShowRating]     = useState(false);
   const [showBuyModal,   setShowBuyModal]   = useState(false);
+  const [showReportSeller, setShowReportSeller] = useState(false);
   const [buyLoading,     setBuyLoading]     = useState(false);
   const [isEligibleBuyer,setIsEligibleBuyer]= useState(false);
   const [alreadyRated,   setAlreadyRated]   = useState(false);
@@ -79,48 +88,14 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   // Scroll to top when detail page opens
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-    setActiveImg(0);
     const t = setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "instant" });
     }, 100);
     return () => clearTimeout(t);
   }, [listing.id]);
 
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const touchEndX = useRef(0);
-  const touchEndY = useRef(0);
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    touchEndX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = () => {
-    if (!images || images.length <= 1) return;
-    const diffX = touchStartX.current - touchEndX.current;
-    const diffY = touchStartY.current - touchEndY.current;
-
-    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
-      if (diffX > 0) {
-        // Swipe left -> Next image
-        setActiveImg((prev) => (prev + 1) % images.length);
-      } else {
-        // Swipe right -> Prev image
-        setActiveImg((prev) => (prev - 1 + listing.images.length) % listing.images.length);
-      }
-    }
-  };
-
   const isOwner    = currentUser?.uid === listing?.sellerId;
-  const isSold     = listing?.status === "sold";
+  const isSold     = listing?.status === "sold" || listing?.status === "exchanged";
   const wishlisted = listing?.id ? isWishlisted(listing.id) : false;
 
   // Save to recently viewed
@@ -239,11 +214,11 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             where("buyerId",   "==", currentUser.uid)
           );
           const reqSnap = await getDocs(reqQ);
-          const hasAccepted = reqSnap.docs.some(d => d.data().status === "accepted");
-          setIsEligibleBuyer(hasAccepted);
+          const hasExchanged = reqSnap.docs.some(d => d.data().status === "EXCHANGED");
+          setIsEligibleBuyer(hasExchanged);
 
           // Check if already rated
-          if (hasAccepted) {
+          if (hasExchanged) {
             const ratingQ = query(
               collection(db, "ratings"),
               where("listingId", "==", listing.id),
@@ -284,6 +259,17 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           lastMessageTime: serverTimestamp(),
           createdAt:       serverTimestamp()
         });
+
+        // Notify the seller that a new chat started
+        await setDoc(doc(collection(db, "notifications")), {
+          type: "NEW_CHAT",
+          sellerId: listing.sellerId,
+          buyerId: currentUser.uid,
+          listingId: listing.id,
+          listingTitle: listing.title,
+          read: false,
+          createdAt: serverTimestamp()
+        });
       }
       setChatWith({ chatId, listing, seller: sellerData });
       setPage("chat");
@@ -298,36 +284,16 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   async function confirmBuy() {
     setBuyLoading(true);
     try {
-      const reqRef = await addDoc(collection(db, "purchaseRequests"), {
-        listingId:    listing.id,
-        listingTitle: listing.title,
-        listingImage: listing.images?.[0] || "",
-        price:        listing.price,
-        isFree:       listing.isFree,
-        buyerId:      currentUser.uid,
-        buyerName:    userProfile?.name || currentUser.displayName,
-        sellerId:     listing.sellerId,
-        sellerName:   listing.sellerName,
-        status:       "pending",
-        createdAt:    serverTimestamp()
-      });
-      await addDoc(collection(db, "notifications"), {
-        type:         "purchase_request",
-        sellerId:     listing.sellerId,
-        buyerId:      currentUser.uid,
-        buyerName:    userProfile?.name || currentUser.displayName,
-        listingId:    listing.id,
-        listingTitle: listing.title,
-        requestId:    reqRef.id,
-        read:         false,
-        createdAt:    serverTimestamp()
-      });
-      toast("Purchase request sent! 🎉 Opening chat...", "success");
+      await transactionService.createPurchaseRequest(
+        currentUser.uid,
+        userProfile?.name || currentUser.displayName || "Buyer",
+        listing
+      );
+      toast("Purchase request sent! 🎉", "success");
       setShowBuyModal(false);
-      await openChat();
     } catch (err) {
       console.error(err);
-      toast("Failed to send request", "error");
+      toast(err.message || "Failed to send request", "error");
     }
     setBuyLoading(false);
   }
@@ -430,156 +396,136 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   const images = listing?.images?.length > 0 ? listing.images : null;
 
-  const trustScore = Math.round(
-    50 +
-    ((sellerData?.collegeVerified || sellerData?.isVerified || listing?.collegeVerified || listing?.isVerified) ? 20 : 0) +
-    (Number(sellerData?.successfulSales || listing?.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
-    (Number(sellerData?.rating || listing?.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing?.sellerRating || 0) / 5) * 15 : 0)
-  );
+  const trustScore = sellerData?.trustScore !== undefined 
+    ? sellerData.trustScore 
+    : Math.round(
+        50 +
+        ((sellerData?.collegeVerified || sellerData?.isVerified || listing?.collegeVerified || listing?.isVerified) ? 20 : 0) +
+        (Number(sellerData?.successfulSales || listing?.sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
+        (Number(sellerData?.rating || listing?.sellerRating || 0) > 0 ? (Number(sellerData?.rating || listing?.sellerRating || 0) / 5) * 15 : 0)
+      );
 
   // ── RENDER SUBSECTIONS ───────────────────────────────────────────────────
 
   const renderImageGallery = () => {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        <div
-          className="detail-imgs"
-          style={{ position: "relative", touchAction: "pan-y" }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {images ? (
-            <img src={optimizeCloudinaryUrl(images[activeImg], "f_auto,q_auto,w_800")} alt={listing.title} />
-          ) : CAT_IMAGES[listing.category] ? (
-            <img src={CAT_IMAGES[listing.category]} alt={listing.category} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <span style={{ fontSize: 64 }}>📦</span>
-          )}
-
-          {/* Overlaid Actions Group (Save & Share overlaid on image top-right in vertical stack) */}
-          {!isSold && (
-            <div className="gallery-overlay-actions">
-              <button
-                className={`action-overlay-btn btn-wishlist-overlay ${wishlisted ? "wishlisted" : ""}`}
-                onClick={(e) => { e.stopPropagation(); requireAuth(null, () => toggleWishlist(listing.id)); }}
-                title={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-                type="button"
-              >
-                <Heart size={16} fill={wishlisted ? "currentColor" : "none"} />
-              </button>
-              
-              <div className="action-overlay-btn btn-share-overlay">
-                <ShareButton listing={listing} currentUserId={currentUser?.uid} iconOnly={true} />
-              </div>
-            </div>
-          )}
-
-          {isSold && (
-            <div style={{
-              position: "absolute", inset: 0, background: "rgba(0,0,0,.45)",
-              display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
-              borderRadius: "var(--r-md)", zIndex: 5
-            }}>
-              <span style={{ color: "#fff", fontSize: 22, fontWeight: 900, background: "#22c55e", padding: "8px 24px", borderRadius: 30 }}>
-                ✅ SOLD
-              </span>
-            </div>
-          )}
-
-          {images && images.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="gallery-nav-btn prev"
-                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev - 1 + images.length) % images.length); }}
-                aria-label="Previous image"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="gallery-nav-btn next"
-                onClick={(e) => { e.stopPropagation(); setActiveImg(prev => (prev + 1) % images.length); }}
-                aria-label="Next image"
-              >
-                ›
-              </button>
-            </>
-          )}
-
-          {images && images.length > 1 && (
-            <div className="gallery-dots" style={{
-              position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
-              display: "flex", gap: 6, zIndex: 10, background: "rgba(0,0,0,0.35)", padding: "5px 10px", borderRadius: 12
-            }}>
-              {images.map((_, i) => (
-                <span key={i} className={`gallery-dot ${activeImg === i ? "active" : ""}`} style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: activeImg === i ? "#fff" : "rgba(255,255,255,0.4)",
-                  transition: "background 0.2s"
-                }} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {images && images.length > 1 && (
-          <div className="detail-thumbs">
-            {images.map((url, i) => (
-              <div key={i} className={`detail-thumb ${activeImg === i ? "active" : ""}`} onClick={() => setActiveImg(i)}>
-                <img src={optimizeCloudinaryUrl(url, "f_auto,q_auto,w_100,c_fill")} alt="" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ImageGallery
+        images={images}
+        category={listing.category}
+        title={listing.title}
+        isSold={isSold}
+        wishlisted={wishlisted}
+        onToggleWishlist={() => requireAuth(null, () => toggleWishlist(listing.id))}
+        listing={listing}
+        currentUser={currentUser}
+      />
     );
   };
 
+  const renderBuyerStatusCard = () => {
+    if (isOwner || !purchaseRequest) return null;
+
+    if (purchaseRequest.status === REQUEST_STATUS.PENDING) {
+      return (
+        <div style={{ background: "var(--status-pending-bg)", border: "1px solid var(--warn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontWeight: 800, color: "var(--status-pending-txt)", marginBottom: 4 }}>✓ Request Sent</div>
+          <div style={{ fontSize: 13, color: "var(--muted-2)", lineHeight: 1.5 }}>Waiting for seller response.</div>
+        </div>
+      );
+    }
+    if (purchaseRequest.status === REQUEST_STATUS.ACCEPTED) {
+      return (
+        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontWeight: 800, color: "var(--status-accepted-txt)", marginBottom: 4 }}>✓ Request Accepted</div>
+          <div style={{ fontSize: 13, color: "var(--status-accepted-txt)", lineHeight: 1.5 }}>Seller accepted your request.</div>
+        </div>
+      );
+    }
+    if (purchaseRequest.status === REQUEST_STATUS.DECLINED) {
+      return (
+        <div style={{ background: "var(--status-rejected-bg)", border: "1px solid var(--danger)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontWeight: 800, color: "var(--status-rejected-txt)", marginBottom: 4 }}>Request Declined</div>
+          <div style={{ fontSize: 13, color: "var(--status-rejected-txt)", lineHeight: 1.5 }}>Allow another request if business rules permit.</div>
+        </div>
+      );
+    }
+    if (purchaseRequest.status === REQUEST_STATUS.EXCHANGED) {
+      return (
+        <div style={{ background: "var(--status-accepted-bg)", border: "1px solid var(--grn)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+          <div style={{ fontWeight: 800, color: "var(--status-accepted-txt)", marginBottom: 4 }}>✓ Transaction Completed</div>
+          <div style={{ fontSize: 13, color: "var(--status-accepted-txt)", lineHeight: 1.5 }}>You can now rate the seller.</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderProductInfoCard = () => {
+    const availabilityMap = {
+      [LISTING_STATUS.ACTIVE]: { label: "Available", bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)" },
+      [LISTING_STATUS.RESERVED]: { label: "Reserved", bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)" },
+      [LISTING_STATUS.SOLD]: { label: "Sold", bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)" },
+      [LISTING_STATUS.EXCHANGED]: { label: "Exchanged", bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)" },
+    };
+    const statusObj = availabilityMap[listing.status] || availabilityMap[LISTING_STATUS.ACTIVE];
+
     return (
       <div className="detail-card-premium">
-        {/* Category + Condition Badge Row */}
-        <div className="premium-tag-row">
+        {/* Category */}
+        <div style={{ marginBottom: 8 }}>
           <span className="premium-cat">{listing.category}</span>
-          <div style={{ display: "flex", gap: "6px" }}>
-            {COND_META[listing.condition] && (
-              <span className="premium-cond-badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color }}>
-                {COND_META[listing.condition].label}
-              </span>
-            )}
-            {listing.isFree && (
-              <span className="premium-cond-badge" style={{ background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)" }}>
-                Free
-              </span>
-            )}
-            {isSold && (
-              <span className="premium-cond-badge" style={{ background: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)" }}>
-                Sold
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Title */}
-        <h1 className="premium-title">{listing.title}</h1>
+        <h1 className="premium-title" style={{ marginBottom: 12 }}>{listing.title}</h1>
 
-        {/* Price block */}
-        <div className="premium-price-row">
+        {/* Condition & Availability Row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          {COND_META[listing.condition] && (
+            <span className="premium-cond-badge" style={{ background: COND_META[listing.condition].bg, color: COND_META[listing.condition].color }}>
+              {COND_META[listing.condition].label}
+            </span>
+          )}
+          <span className="premium-cond-badge" style={{ background: statusObj.bg, color: statusObj.color }}>
+            {statusObj.label}
+          </span>
+        </div>
+
+        {/* Price */}
+        <div className="premium-price-row" style={{ borderBottom: "none", paddingBottom: 0, marginBottom: 16 }}>
           <div className={`premium-price ${listing.isFree ? "free" : ""}`}>
-            {isSold ? "Item Sold ✅" : listing.isFree ? "Free 💚" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
-          </div>
-          <div className="premium-views-posted">
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <Eye size={13} /> {listing.views || 0}
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <Calendar size={13} /> {listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}
-            </span>
+            {listing.isFree ? "Free 💚" : listing.listingType === "rent" ? `₹${listing.rentPerDay}/day` : `₹${listing.price}`}
           </div>
         </div>
+
+        {/* Metadata Section */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "var(--light)", padding: "16px", borderRadius: "8px", marginBottom: "24px", fontSize: "13px" }}>
+           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+             <span style={{ color: "var(--muted)", fontWeight: 600 }}>Posted</span>
+             <span style={{ color: "var(--txt)", fontWeight: 700 }}>{listing.createdAt?.toDate ? new Date(listing.createdAt.toDate()).toLocaleDateString("en-IN") : "Recently"}</span>
+           </div>
+           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+             <span style={{ color: "var(--muted)", fontWeight: 600 }}>Category</span>
+             <span style={{ color: "var(--txt)", fontWeight: 700 }}>{listing.category}</span>
+           </div>
+           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+             <span style={{ color: "var(--muted)", fontWeight: 600 }}>Condition</span>
+             <span style={{ color: "var(--txt)", fontWeight: 700 }}>{listing.condition}</span>
+           </div>
+           {listing.sellerCollege && (
+             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+               <span style={{ color: "var(--muted)", fontWeight: 600 }}>Campus</span>
+               <span style={{ color: "var(--txt)", fontWeight: 700 }}>{listing.sellerCollege}</span>
+             </div>
+           )}
+           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+             <span style={{ color: "var(--muted)", fontWeight: 600 }}>Views</span>
+             <span style={{ color: "var(--txt)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}><Eye size={14}/> {listing.views || 0}</span>
+           </div>
+        </div>
+
+        {/* Buyer Request Status Card */}
+        {renderBuyerStatusCard()}
 
         {/* Action buttons */}
         {isReview ? (
@@ -596,9 +542,8 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         ) : (
           <div className="premium-cta-container">
             {isOwner ? (
-            /* OWNER ACTIONS */
-            <>
-              {!isSold ? (
+              /* OWNER ACTIONS */
+              !isSold ? (
                 <button className="btn btn-outline" onClick={() => { setSelectedListing(listing); setPage("edit"); }} style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                   <Edit size={16} /> Edit Listing
                 </button>
@@ -609,96 +554,142 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
                   fontSize: 13, color: "var(--status-pending-txt)", fontWeight: 600, lineHeight: 1.5,
                   textAlign: "center"
                 }}>
-                  🔒 This listing has been sold and cannot be edited.
+                  🔒 This listing is sold and locked from editing.
                 </div>
-              )}
-              {!isSold && (
-                <button className="btn btn-green" onClick={handleMarkSold} style={{ height: "46px", fontWeight: "700" }}>
-                  ✅ Mark as Sold
-                </button>
-              )}
-              <button className="btn btn-danger" onClick={handleDelete} style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                <Trash2 size={16} /> Delete Listing
-              </button>
-            </>
-          ) : hasFeature("showPurchaseRequests") && !isOwner && listing.status === "active" ? (
-             <button className="btn-primary-premium" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "48px" }}>
-                <ShoppingCart size={16} /> Request to Buy
-              </button>
-          ) : (!hasPermission("canBuy") && currentUser) ? (
-            /* STAFF ACTIONS */
-            <>
-              {isSold && (
-                <div style={{
-                  background: "var(--status-accepted-bg)", border: "1.5px solid var(--grn)",
-                  borderRadius: "8px", padding: "12px", marginBottom: "8px",
-                  textAlign: "center", fontWeight: 700, color: "var(--status-accepted-txt)",
-                  fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
-                }}>
-                  <span>🎉</span> This item has been sold
-                </div>
-              )}
-              <div style={{
-                background: "var(--light)", border: "1px solid var(--bdr)",
-                borderRadius: "8px", padding: "12px",
-                fontSize: 13, color: "var(--txt-2)", fontWeight: 600, textAlign: "center"
-              }}>
-                🔒 Staff cannot buy or sell items
-              </div>
-            </>
-          ) : isSold ? (
-            /* SOLD STATE — buyer actions */
-            <>
-              <div style={{
-                background: "var(--status-accepted-bg)", border: "1.5px solid var(--grn)",
-                borderRadius: "8px", padding: "12px",
-                textAlign: "center", fontWeight: 700, color: "var(--status-accepted-txt)",
-                fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
-              }}>
-                <span>🎉</span> This item has been sold
-              </div>
-
-              {isEligibleBuyer && (
-                alreadyRated ? (
-                  <div style={{
-                    background: "var(--status-accepted-bg)", border: "1px solid var(--grn)",
-                    borderRadius: "8px", padding: "12px",
-                    fontSize: 13, color: "var(--status-accepted-txt)", fontWeight: 600, textAlign: "center"
-                  }}>
-                    ✅ You've already reviewed this seller
-                  </div>
-                ) : (
-                  <button className="btn-primary-premium" onClick={() => requireAuth(null, () => setShowRating(true))}>
-                    <Star size={16} fill="currentColor" /> Rate Seller
+              )
+            ) : hasFeature("showPurchaseRequests") && !isOwner && listing.status === "active" ? (
+              /* ACTIVE — buyer actions (always show full 3-button stack) */
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {/* 1. Request to Buy / ✓ Request Sent */}
+                {purchaseRequest?.status === REQUEST_STATUS.PENDING ? (
+                  <button className="btn-primary-premium" disabled style={{ height: "48px", opacity: 0.7 }}>
+                    <ShoppingCart size={16} /> ✓ Request Sent
                   </button>
-                )
-              )}
+                ) : purchaseRequest?.status === REQUEST_STATUS.ACCEPTED ? (
+                  <button className="btn-primary-premium" disabled style={{ height: "48px", opacity: 0.7 }}>
+                    <ShoppingCart size={16} /> ✓ Accepted
+                  </button>
+                ) : (
+                  <button className="btn-primary-premium" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} disabled={buyLoading} style={{ height: "48px" }}>
+                    <ShoppingCart size={16} /> {buyLoading ? "Sending..." : "Request to Buy"}
+                  </button>
+                )}
 
-              <button className="btn-secondary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading}>
-                <MessageCircle size={16} /> {contactLoading ? "Opening..." : "View Chat"}
-              </button>
-            </>
-          ) : (
-            /* ACTIVE — buyer actions */
-            <>
-              <button className="btn-primary-premium" onClick={() => requireAuth(null, () => { trackInitiatePurchase(listing); setShowBuyModal(true); })} style={{ height: "48px" }}>
-                <ShoppingCart size={16} /> Buy Now
-              </button>
-              <button className="btn-secondary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "46px" }}>
-                <MessageCircle size={16} /> {contactLoading ? "Opening Chat..." : "Message Seller"}
-              </button>
-              <button
-                className={`btn ${wishlisted ? "btn-danger" : "btn-outline"}`}
-                onClick={() => requireAuth(null, () => toggleWishlist(listing.id))}
-                style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%" }}
-                type="button"
-              >
-                <Heart size={15} fill={wishlisted ? "currentColor" : "none"} />
-                <span>{wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}</span>
-              </button>
-            </>
-          )}
-        </div>
+                {/* 2. Wishlist — always visible */}
+                <button
+                  className="btn-outline"
+                  onClick={() => {
+                    if (isWishlisted(listing.id)) {
+                      setPage("wishlist");
+                    } else {
+                      requireAuth(null, () => toggleWishlist(listing.id));
+                    }
+                  }}
+                  style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%" }}
+                  type="button"
+                >
+                  <Heart size={15} fill={isWishlisted(listing.id) ? "var(--danger)" : "none"} color={isWishlisted(listing.id) ? "var(--danger)" : "currentColor"} />
+                  <span>{isWishlisted(listing.id) ? "View Wishlist" : "Add to Wishlist"}</span>
+                </button>
+
+                {/* 3. Chat — disabled until ACCEPTED, with helper text */}
+                {purchaseRequest?.status === REQUEST_STATUS.ACCEPTED ? (
+                  <button className="btn-secondary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "46px" }}>
+                    <MessageCircle size={16} /> {contactLoading ? "Opening..." : "Continue Chat"}
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                    <button className="btn-secondary-premium" disabled style={{ height: "46px", width: "100%" }}>
+                      <MessageCircle size={16} /> Chat with Seller
+                    </button>
+                    <span style={{ fontSize: "11px", color: "var(--muted-2)", fontWeight: 500 }}>
+                      Chat becomes available after seller accepts your request.
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (!hasPermission("canBuy") && currentUser) ? (
+              /* STAFF ACTIONS */
+              <>
+                {isSold && (
+                  <div style={{
+                    background: "var(--status-accepted-bg)", border: "1.5px solid var(--grn)",
+                    borderRadius: "8px", padding: "12px", marginBottom: "8px",
+                    textAlign: "center", fontWeight: 700, color: "var(--status-accepted-txt)",
+                    fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                  }}>
+                    <span>🎉</span> This item has been sold
+                  </div>
+                )}
+                <div style={{
+                  background: "var(--light)", border: "1px solid var(--bdr)",
+                  borderRadius: "8px", padding: "12px",
+                  fontSize: 13, color: "var(--txt-2)", fontWeight: 600, textAlign: "center"
+                }}>
+                  🔒 Staff cannot buy or sell items
+                </div>
+              </>
+            ) : (
+              /* SOLD / RESERVED STATE — buyer actions */
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {(purchaseRequest?.status === REQUEST_STATUS.EXCHANGED || purchaseRequest?.status === REQUEST_STATUS.ACCEPTED) && (
+                  <>
+                    {purchaseRequest.status === REQUEST_STATUS.EXCHANGED ? (
+                      alreadyRated ? (
+                        <div style={{
+                          background: "var(--status-accepted-bg)", border: "1px solid var(--grn)",
+                          borderRadius: "8px", padding: "12px",
+                          fontSize: 13, color: "var(--status-accepted-txt)", fontWeight: 600, textAlign: "center"
+                        }}>
+                          ✅ You've already reviewed this seller
+                        </div>
+                      ) : (
+                        <button className="btn-primary-premium" onClick={() => requireAuth(null, () => setShowRating(true))} style={{ height: "48px" }}>
+                          <Star size={16} fill="currentColor" /> Rate Seller
+                        </button>
+                      )
+                    ) : (
+                      /* ACCEPTED — Chat is active */
+                      <button className="btn-primary-premium" onClick={() => requireAuth(null, openChat)} disabled={contactLoading} style={{ height: "48px" }}>
+                        <MessageCircle size={16} /> {contactLoading ? "Opening..." : "Continue Chat"}
+                      </button>
+                    )}
+
+                    {/* Wishlist always visible */}
+                    <button
+                      className="btn-outline"
+                      onClick={() => {
+                        if (isWishlisted(listing.id)) {
+                          setPage("wishlist");
+                        } else {
+                          requireAuth(null, () => toggleWishlist(listing.id));
+                        }
+                      }}
+                      style={{ height: "44px", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%" }}
+                      type="button"
+                    >
+                      <Heart size={15} fill={isWishlisted(listing.id) ? "var(--danger)" : "none"} color={isWishlisted(listing.id) ? "var(--danger)" : "currentColor"} />
+                      <span>{isWishlisted(listing.id) ? "❤️ View Wishlist" : "Add to Wishlist"}</span>
+                    </button>
+                  </>
+                )}
+
+                {/* If a different buyer requested it (and not the current user) */}
+                {!purchaseRequest || (purchaseRequest.status !== REQUEST_STATUS.EXCHANGED && purchaseRequest.status !== REQUEST_STATUS.ACCEPTED) ? (
+                  <div style={{
+                    background: isSold ? "var(--status-accepted-bg)" : "var(--status-pending-bg)",
+                    border: `1.5px solid ${isSold ? "var(--grn)" : "var(--warn)"}`,
+                    borderRadius: "8px", padding: "12px",
+                    textAlign: "center", fontWeight: 700,
+                    color: isSold ? "var(--status-accepted-txt)" : "var(--status-pending-txt)",
+                    fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                  }}>
+                    <span>{isSold ? "🎉" : "🔒"}</span> {isSold ? "This item has been exchanged" : "This item is reserved"}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
         )}
       </div>
     );
@@ -787,11 +778,36 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           className="seller-view-profile-btn"
           onClick={(e) => { e.stopPropagation(); setViewProfileUserId(listing.sellerId); setPage("profile"); }}
           type="button"
+          style={{ minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
         >
           View Seller Profile →
         </button>
+
+        {!isOwner && (
+          <div style={{ textAlign: "center", marginTop: "12px" }}>
+            <button 
+              className="btn-link" 
+              onClick={() => requireAuth(null, () => setShowReportSeller(true))} 
+              style={{ color: "var(--muted)", fontSize: "12px", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", minHeight: "44px", padding: "8px" }}
+            >
+              Report Seller
+            </button>
+          </div>
+        )}
       </div>
     );
+  };
+
+  const formatDescription = (text) => {
+    if (!text || text.trim() === "") return <span style={{ color: "var(--muted-2)", fontStyle: "italic" }}>No description provided for this listing.</span>;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: "var(--p)", textDecoration: "underline" }}>{part}</a>;
+      }
+      return part;
+    });
   };
 
   const renderDescriptionBlock = () => {
@@ -800,9 +816,9 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         <h4 style={{ fontWeight: 800, marginBottom: 10, fontSize: "15px", color: "var(--txt)", display: "flex", alignItems: "center", gap: "8px" }}>
           <span>📄</span> Product Description
         </h4>
-        <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--muted)", whiteSpace: "pre-wrap" }}>
-          {listing.description}
-        </p>
+        <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--muted)", whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
+          {formatDescription(listing.description)}
+        </div>
       </div>
     );
   };
@@ -932,10 +948,12 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
               {renderSafetyGuidelinesBlock()}
             </div>
 
-            {/* Right Column (sticky): Info card + Seller Trust card directly below it */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px", position: "sticky", top: "84px" }}>
+            {/* Right Column: Info card + Sticky Seller Trust card */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {renderProductInfoCard()}
-              {renderSellerTrustCard()}
+              <div style={{ position: "sticky", top: "84px" }}>
+                {renderSellerTrustCard()}
+              </div>
             </div>
           </div>
 
@@ -962,6 +980,16 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
             setShowRating(false);
             setAlreadyRated(true); // optimistic update
           }}
+        />
+      )}
+
+      {/* Report Seller Modal */}
+      {showReportSeller && (
+        <ReportSellerModal
+          onClose={() => setShowReportSeller(false)}
+          sellerId={listing.sellerId}
+          sellerName={sellerData?.name || listing.sellerName || "Seller"}
+          listingId={listing.id}
         />
       )}
 

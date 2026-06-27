@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import {
   collection, query, where, onSnapshot, doc, updateDoc, writeBatch
 } from "firebase/firestore";
@@ -32,8 +32,16 @@ export function NotificationsProvider({ children }) {
     function merge(key, docs) {
       results[key] = docs;
       const all = [...(results.seller || []), ...(results.buyer || [])];
-      all.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setNotifications(all);
+      const unique = [];
+      const seen = new Set();
+      for (const item of all) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          unique.push(item);
+        }
+      }
+      unique.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setNotifications(unique);
       setLoading(false);
     }
 
@@ -42,16 +50,16 @@ export function NotificationsProvider({ children }) {
     return () => { u1(); u2(); };
   }, [currentUser]);
 
-  async function markAsRead(notifId) {
+  const markAsRead = useCallback(async (notifId) => {
     try {
       await updateDoc(doc(db, "notifications", notifId), { read: true });
     } catch (err) {
       console.error("Error marking notification as read:", err);
       toast("Failed to update notification status ❌", "error");
     }
-  }
+  }, [toast]);
 
-  async function markAllAsRead() {
+  const markAllAsRead = useCallback(async () => {
     try {
       const batch = writeBatch(db);
       notifications.filter(n => !n.read).forEach(n => {
@@ -63,10 +71,18 @@ export function NotificationsProvider({ children }) {
       console.error("Error marking all notifications as read:", err);
       toast("Failed to update notifications ❌", "error");
     }
-  }
+  }, [notifications, toast]);
+
+  const value = useMemo(() => ({
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    loading
+  }), [notifications, unreadCount, markAsRead, markAllAsRead, loading]);
 
   return (
-    <NotifContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, loading }}>
+    <NotifContext.Provider value={value}>
       {children}
     </NotifContext.Provider>
   );

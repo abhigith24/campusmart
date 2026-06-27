@@ -122,7 +122,7 @@ function SkeletonCard() {
   );
 }
 
-export default function ProfilePage({ setPage, setSelectedListing, initialTab, viewUserId, requireAuth }) {
+export default function ProfilePage({ setPage, setSelectedListing, setChatWith, initialTab, viewUserId, requireAuth }) {
   const { currentUser, userProfile, fetchProfile } = useAuth();
   const toast = useToast();
   const { wishlistDocs } = useWishlist();
@@ -142,6 +142,8 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const [loading,       setLoading]       = useState(true);
   const [editing,       setEditing]       = useState(false);
   const [profileData,   setProfileData]   = useState(isSelf ? userProfile : null);
+  const [transactions,  setTransactions]  = useState([]);
+  const [reviewedListingIds, setReviewedListingIds] = useState(new Set());
   
   const isStaffProfile = profileData?.role === "admin" || profileData?.role === "support";
 
@@ -150,7 +152,13 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const [editBranch,  setEditBranch]  = useState("");
   const [editYear,    setEditYear]    = useState("");
 
-
+  const handleOpenChat = (tx) => {
+    const chatId = [tx.buyerId, tx.sellerId].sort().join("_") + "_" + tx.listingId;
+    if (setChatWith) {
+      setChatWith({ chatId });
+      setPage("chat");
+    }
+  };
 
   useEffect(() => {
     if (!isSelf) {
@@ -163,9 +171,10 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
       setProfileData(userProfile);
     } else if (viewUserId) {
       setLoading(true);
-      getDoc(doc(db, "users", viewUserId)).then(snap => {
+      const unsub = onSnapshot(doc(db, "users", viewUserId), (snap) => {
         if (snap.exists()) setProfileData(snap.data());
-      }).catch(err => console.error("Error loading public profile:", err));
+      }, err => console.error("Error listening to public profile:", err));
+      return unsub;
     }
   }, [viewUserId, userProfile, isSelf]);
 
@@ -178,6 +187,64 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
       setLoading(false);
     });
     return unsub;
+  }, [targetUid]);
+
+  useEffect(() => {
+    if (!targetUid) return;
+
+    const q1 = query(
+      collection(db, "purchaseRequests"),
+      where("sellerId", "==", targetUid),
+      where("status", "==", "EXCHANGED")
+    );
+    const q2 = query(
+      collection(db, "purchaseRequests"),
+      where("buyerId", "==", targetUid),
+      where("status", "==", "EXCHANGED")
+    );
+
+    let list1 = [];
+    let list2 = [];
+
+    const handleMerge = () => {
+      const merged = [...list1];
+      const seen = new Set(list1.map(x => x.id));
+      for (const item of list2) {
+        if (!seen.has(item.id)) {
+          merged.push(item);
+        }
+      }
+      merged.sort((a, b) => {
+        const ta = a.updatedAt?.seconds || 0;
+        const tb = b.updatedAt?.seconds || 0;
+        return tb - ta;
+      });
+      setTransactions(merged);
+    };
+
+    const unsub1 = onSnapshot(q1, snap => {
+      list1 = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      handleMerge();
+    });
+
+    const unsub2 = onSnapshot(q2, snap => {
+      list2 = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      handleMerge();
+    });
+
+    const q3 = query(
+      collection(db, "ratings"),
+      where("buyerId", "==", targetUid)
+    );
+    const unsub3 = onSnapshot(q3, snap => {
+      setReviewedListingIds(new Set(snap.docs.map(d => d.data().listingId)));
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+      unsub3();
+    };
   }, [targetUid]);
 
   useEffect(() => {
@@ -226,7 +293,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   }
 
   const activeListings = listings.filter(l => l.status === "active");
-  const soldListings   = listings.filter(l => l.status === "sold");
+  const soldListings   = listings.filter(l => l.status === "sold" || l.status === "exchanged");
   let displayListings  = tab === "active" ? activeListings : tab === "sold" ? soldListings : [];
   const initials = (profileData?.name || "?")[0]?.toUpperCase();
 
@@ -272,6 +339,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   const TABS = isSelf ? [
     { id:"active",    label:`Active (${activeListings.length})` },
     { id:"sold",      label:`Sold (${soldListings.length})` },
+    { id:"history",   label:`📜 History (${transactions.length})` },
     { id:"analytics", label:"📊 Analytics" },
     { id:"wishlist",  label:`❤️ Wishlist (${wishlistDocs.length})` },
     { id:"requests",  label:"🛒 Requests" },
@@ -279,6 +347,7 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
   ] : [
     { id:"active",    label:`Active (${activeListings.length})` },
     { id:"sold",      label:`Sold (${soldListings.length})` },
+    { id:"history",   label:`📜 History (${transactions.length})` },
   ];
 
   if (loading && !profileData) {
@@ -343,12 +412,13 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
       )}
 
       {/* Profile Header */}
-      <div className="profile-header" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "24px" }}>
-        <div style={{ display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap" }}>
-          <div className="profile-avatar">
-            {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
-          </div>
-          <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
+      <div className="profile-header" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "16px" }}>
+        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
+            <div className="profile-avatar">
+              {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
+            </div>
+            <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
             {editing ? (
               isStaffProfile ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -449,6 +519,10 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
                     <span>{currentUser?.email}</span>
                   </div>
                 )}
+                <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", fontSize: "13px", color: "var(--muted)" }}>
+                  <span style={{ fontSize: "14px", opacity: 0.8 }} title="Joined">📅</span>
+                  <span>Joined {getMemberSince(profileData?.joinedAt)}</span>
+                </div>
                 {profileData?.rating > 0 && (
                   <div className="profile-rating-display">
                     <div className="profile-stars">
@@ -463,8 +537,9 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
               </>
             )}
           </div>
+          </div>
           {!editing && isSelf && (
-            <button className="btn btn-outline btn-sm profile-edit-btn" onClick={startEdit}>✏️ Edit</button>
+            <button className="btn btn-outline btn-sm profile-edit-btn" onClick={startEdit} style={{ margin: 0 }}>✏️ Edit Profile</button>
           )}
         </div>
 
@@ -505,41 +580,57 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         ) : (
           <div className="trust-statistics-row" style={{ margin: 0 }}>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-                {profileData?.collegeVerified || profileData?.isVerified ? "🟢 Verified" : 
-                 profileData?.verificationStatus === "pending" ? "🟡 Pending" : 
-                 profileData?.verificationStatus === "rejected" ? "🔴 Rejected" : "⚪ Unverified"}
-              </div>
-              <div className="trust-stat-label">Student Status</div>
-              <div className="trust-stat-desc">College ID verification</div>
-            </div>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
               <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-                {profileData?.rating > 0 ? `★ ${profileData.rating.toFixed(1)}` : "N/A"}
+                🛡️ {Math.round(
+                  50 +
+                  ((profileData?.collegeVerified || profileData?.isVerified) ? 20 : 0) +
+                  (Number(profileData?.successfulSales || 0) >= 3 ? 15 : 0) +
+                  (Number(profileData?.rating || 0) > 0 ? (Number(profileData.rating) / 5) * 15 : 0)
+                )}%
               </div>
-              <div className="trust-stat-label">Seller Rating</div>
-              <div className="trust-stat-desc">Based on feedback</div>
+              <div className="trust-stat-label">Trust Score</div>
+              <div className="trust-stat-desc">Overall credibility score</div>
             </div>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-                {getMemberSince(profileData?.joinedAt)}
-              </div>
-              <div className="trust-stat-label">Member Since</div>
-              <div className="trust-stat-desc">Registration date</div>
+              {profileData?.rating > 0 ? (
+                <>
+                  <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                    ★ {profileData.rating.toFixed(1)}
+                  </div>
+                  <div className="trust-stat-label">Seller Rating</div>
+                  <div className="trust-stat-desc">Based on {profileData.totalRatings} feedback</div>
+                </>
+              ) : (
+                <>
+                  <div className="trust-stat-num" style={{ fontSize: "20px", color: "var(--muted)" }}>—</div>
+                  <div className="trust-stat-label">Seller Rating</div>
+                  <div className="trust-stat-desc">No ratings yet</div>
+                </>
+              )}
             </div>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
               <div className="trust-stat-num" style={{ fontSize: "20px" }}>
                 {listings.length}
               </div>
               <div className="trust-stat-label">Total Listings</div>
-              <div className="trust-stat-desc">All items posted</div>
+              <div className="trust-stat-desc">{listings.length === 0 ? "No active listings" : "All items posted"}</div>
             </div>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "20px" }}>
-                {soldListings.length}
-              </div>
-              <div className="trust-stat-label">Completed Trades</div>
-              <div className="trust-stat-desc">Items marked as sold</div>
+              {soldListings.length > 0 ? (
+                <>
+                  <div className="trust-stat-num" style={{ fontSize: "20px" }}>
+                    {soldListings.length}
+                  </div>
+                  <div className="trust-stat-label">Completed Trades</div>
+                  <div className="trust-stat-desc">Items marked as sold</div>
+                </>
+              ) : (
+                <>
+                  <div className="trust-stat-num" style={{ fontSize: "20px", color: "var(--muted)" }}>—</div>
+                  <div className="trust-stat-label">Completed Trades</div>
+                  <div className="trust-stat-desc">No completed trades</div>
+                </>
+              )}
             </div>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
               <div className="trust-stat-num" style={{ fontSize: "20px" }}>
@@ -628,14 +719,87 @@ export default function ProfilePage({ setPage, setSelectedListing, initialTab, v
         )
       )}
 
+      {tab === "history" && (
+        transactions.length === 0 ? (
+          <div className="empty-state" style={{ gridColumn: "1 / -1" }}>
+            <div className="empty-state-icon">📜</div>
+            <h3>No transaction history</h3>
+            <p>Completed trades and purchases will be listed here.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", gridColumn: "1 / -1" }}>
+            {transactions.map(tx => {
+              const isBuyer = tx.buyerId === targetUid;
+              const dateStr = tx.updatedAt ? new Date(tx.updatedAt.seconds * 1000).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
+              const reviewSubmitted = reviewedListingIds.has(tx.listingId);
+              return (
+                <div key={tx.id} className="transaction-history-card" style={{
+                  background: "var(--card-bg)",
+                  border: "1px solid var(--bdr)",
+                  borderRadius: "var(--r-md)",
+                  padding: "16px",
+                  display: "flex",
+                  gap: "16px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  boxShadow: "var(--s1)"
+                }}>
+                  {tx.listingImage ? (
+                    <img src={tx.listingImage} alt="" style={{ width: "80px", height: "80px", borderRadius: "8px", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: "80px", height: "80px", borderRadius: "8px", background: "var(--light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>📦</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: "200px" }}>
+                    <div style={{ fontSize: "16px", fontWeight: "700", color: "var(--txt)", marginBottom: "4px" }}>{tx.listingTitle}</div>
+                    <div style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "4px" }}>
+                      {isBuyer ? `🛍️ Bought from ${tx.sellerName}` : `🏪 Sold to ${tx.buyerName}`}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--muted-2)", display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                      <span>📍 {tx.sellerCollege || "Main Campus"}</span>
+                      <span>📅 {dateStr}</span>
+                      {isBuyer && (
+                        <span style={{
+                          fontWeight: "750",
+                          color: reviewSubmitted ? "var(--grn)" : "var(--warn)"
+                        }}>
+                          {reviewSubmitted ? "★ Reviewed" : "★ Pending Review"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px", minWidth: "120px", marginLeft: "auto" }}>
+                    <div style={{ fontSize: "18px", fontWeight: "850", color: "var(--p)" }}>
+                      {tx.isFree ? "Free" : `₹${tx.price}`}
+                    </div>
+                    <span style={{
+                      padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "700",
+                      background: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)"
+                    }}>
+                      Exchanged 🤝
+                    </span>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleOpenChat(tx)}
+                      style={{ fontSize: "12px", padding: "4px 10px", marginTop: "4px", width: "100%", justifyContent: "center" }}
+                    >
+                      💬 Open Chat
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
       {tab === "requests" && (
-        <div style={{ textAlign:"center", paddingTop:20 }}>
+        <div style={{ textAlign:"center", paddingTop:20, gridColumn: "1 / -1" }}>
           <button className="btn btn-primary" onClick={() => setPage("purchase-requests")}>🛒 Open Purchase Requests Dashboard</button>
         </div>
       )}
 
       {tab === "notifs" && (
-        <div style={{ textAlign:"center", paddingTop:20 }}>
+        <div style={{ textAlign:"center", paddingTop:20, gridColumn: "1 / -1" }}>
           <button className="btn btn-primary" onClick={() => setPage("notifications")}>
             🔔 Open Notifications
             {unreadCount > 0 && <span className="notif-badge-inline">{unreadCount}</span>}

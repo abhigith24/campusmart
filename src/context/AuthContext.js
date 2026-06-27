@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import {
   signInWithPopup,
   signOut,
@@ -114,19 +114,19 @@ export function AuthProvider({ children }) {
 
   const role = userProfile?.role || "user";
 
-  const boundHasPermission = (permission) => {
+  const boundHasPermission = useCallback((permission) => {
     return hasPermission(role, permission);
-  };
+  }, [role]);
 
-  const boundHasFeature = (feature) => {
+  const boundHasFeature = useCallback((feature) => {
     return hasFeature(role, feature);
-  };
+  }, [role]);
 
-  const boundCanAccessRoute = (route) => {
+  const boundCanAccessRoute = useCallback((route) => {
     return canAccessRoute(role, route);
-  };
+  }, [role]);
 
-  const value = {
+  const value = useMemo(() => ({
     currentUser,
     userProfile,
     loading,
@@ -139,7 +139,7 @@ export function AuthProvider({ children }) {
     hasPermission: boundHasPermission,
     hasFeature: boundHasFeature,
     canAccessRoute: boundCanAccessRoute
-  };
+  }), [currentUser, userProfile, loading, boundHasPermission, boundHasFeature, boundCanAccessRoute]);
 
   return (
     <AuthContext.Provider value={value}>

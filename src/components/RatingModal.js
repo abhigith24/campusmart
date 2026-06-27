@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import {
-  doc, updateDoc, getDoc, addDoc,
+  doc, setDoc, updateDoc, getDoc, addDoc,
   collection, query, where, getDocs, serverTimestamp
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { trustService } from "../services/trustService";
 
 const STAR_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
@@ -16,10 +17,17 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
   const [rating,   setRating]   = useState(0);
   const [hover,    setHover]    = useState(0);
   const [review,   setReview]   = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
   const [loading,  setLoading]  = useState(false);
   const [checking, setChecking] = useState(true);
   const [canRate,  setCanRate]  = useState(false);
   const [reason,   setReason]   = useState("");
+
+  const PREDEFINED_TAGS = ["Friendly", "Responsive", "Recommended", "On Time", "Item as Described", "Good Communication"];
+
+  const toggleTag = (tag) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
 
   useEffect(() => {
     if (!currentUser || !listingId) {
@@ -41,48 +49,37 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
         setReason("Listing not found."); setCanRate(false); setChecking(false); return;
       }
       const listingData = listingSnap.data();
-      if (listingData.status !== "sold") {
-        setReason("Rating is only available after the item is sold."); setCanRate(false); setChecking(false); return;
+      if (listingData.status !== "exchanged" && listingData.status !== "sold") {
+        setReason("Rating is only available after the item is sold or exchanged."); setCanRate(false); setChecking(false); return;
       }
       // 2. Must not be own listing
       if (listingData.sellerId === currentUser.uid) {
         setReason("You cannot rate your own listing."); setCanRate(false); setChecking(false); return;
       }
 
-      // 3. Must have an accepted purchase request — fetch all requests for this listing+buyer
-      //    Use TWO separate where() to avoid needing a composite index with status
-      const reqQ = query(
-        collection(db, "purchaseRequests"),
-        where("listingId", "==", listingId),
-        where("buyerId",   "==", currentUser.uid)
-      );
-      const reqSnap = await getDocs(reqQ);
-      // Filter accepted client-side (avoids needing 3-field index)
-      const hasAccepted = reqSnap.docs.some(d => d.data().status === "accepted");
-      if (!hasAccepted) {
-        setReason("Only the buyer with an accepted request can rate the seller."); setCanRate(false); setChecking(false); return;
+      // 3. Must have an accepted/exchanged purchase request
+      const reqRef = doc(db, "purchaseRequests", `${currentUser.uid}_${listingId}`);
+      const reqSnap = await getDoc(reqRef);
+      if (!reqSnap.exists()) {
+        setReason("Only the buyer with an accepted or exchanged request can rate the seller."); setCanRate(false); setChecking(false); return;
+      }
+      
+      const reqData = reqSnap.data();
+      if (reqData.status !== "EXCHANGED") {
+        setReason("Rating is only available after the transaction is marked as exchanged."); setCanRate(false); setChecking(false); return;
       }
 
-      // 4. No duplicate rating
-      const dupQ = query(
-        collection(db, "ratings"),
-        where("listingId", "==", listingId),
-        where("buyerId",   "==", currentUser.uid)
-      );
-      const dupSnap = await getDocs(dupQ);
-      if (!dupSnap.empty) {
+      // 4. No duplicate rating (use composite ID for ratings too)
+      const ratingRef = doc(db, "ratings", `${currentUser.uid}_${listingId}`);
+      const dupSnap = await getDoc(ratingRef);
+      if (dupSnap.exists()) {
         setReason("You have already rated this transaction."); setCanRate(false); setChecking(false); return;
       }
 
       setCanRate(true);
     } catch (err) {
       console.error("Eligibility check error:", err.code, err.message);
-      // If it's a missing-index error, give a helpful message
-      if (err.code === "failed-precondition" || err.message?.includes("index")) {
-        setReason("Database index not ready yet. Please wait a few minutes and try again. (Firebase index deploying)");
-      } else {
-        setReason(`Could not verify eligibility: ${err.message}`);
-      }
+      setReason(`Could not verify eligibility: ${err.message}`);
       setCanRate(false);
     }
     setChecking(false);
@@ -92,14 +89,16 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
     if (rating === 0) { toast("Please select a star rating", "error"); return; }
     setLoading(true);
     try {
-      // Write the rating document
-      await addDoc(collection(db, "ratings"), {
+      // Write the rating document with composite ID
+      const ratingRef = doc(db, "ratings", `${currentUser.uid}_${listingId}`);
+      await setDoc(ratingRef, {
         listingId,
         sellerId,
         buyerId:   currentUser.uid,
         buyerName: currentUser.displayName || "Student",
         stars:     rating,
         review:    review.trim(),
+        tags:      selectedTags,
         createdAt: serverTimestamp()
       });
 
@@ -124,6 +123,20 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
         totalRatings: allStars.length,
       });
 
+      // Recalculate dynamic trust score
+      await trustService.recalculateTrustScore(sellerId);
+
+      // Create notification for seller
+      await addDoc(collection(db, "notifications"), {
+        type: "REVIEW_RECEIVED",
+        sellerId,
+        buyerId: currentUser.uid,
+        listingId,
+        listingTitle,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+
       toast("⭐ Rating submitted! Thank you.", "success");
       onClose();
     } catch (err) {
@@ -141,7 +154,7 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal rating-modal" onClick={e => e.stopPropagation()}>
+      <div className="modal rating-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`Rate ${sellerName}`}>
         <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
 
         <div className="rating-modal-header">
@@ -182,6 +195,33 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
               </div>
               <div className="rating-label" style={{ minHeight: 22 }}>
                 {active > 0 ? STAR_LABELS[active] : "Tap a star to rate"}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div style={{ marginBottom: 16 }}>
+              <label className="form-label" style={{ marginBottom: 8, display: "block" }}>What went well? <span style={{ color: "var(--muted-2)", fontWeight: 400, fontSize: 12 }}>— optional</span></label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {PREDEFINED_TAGS.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    style={{
+                      background: selectedTags.includes(tag) ? "var(--p-light)" : "var(--surface)",
+                      color: selectedTags.includes(tag) ? "var(--p)" : "var(--txt-2)",
+                      border: `1px solid ${selectedTags.includes(tag) ? "var(--p)" : "var(--bdr)"}`,
+                      borderRadius: "16px",
+                      padding: "4px 12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
             </div>
 

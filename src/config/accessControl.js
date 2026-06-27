@@ -14,14 +14,14 @@ export const ACCESS_CONFIG = {
       "showAdminDashboard", "showSupportDashboard", "showMarketplace", "showSearch"
     ],
     navigation: [
-      { id: "admin", label: "Dashboard", icon: "⚙️", section: "admin" },
-      { id: "admin-verifications", label: "Verification Requests", icon: "🎓", section: "admin" },
-      { id: "admin-users", label: "User Management", icon: "👥", section: "admin" },
-      { id: "admin-analytics", label: "Analytics", icon: "📊", section: "admin" },
-      { id: "support", label: "Support Dashboard", icon: "🎧", section: "support" },
-      { id: "marketplace-review", label: "Marketplace Review", icon: "👁️", section: "review", route: "home" },
-      { id: "notifications", label: "Notifications", icon: "🔔", section: "primary" },
-      { id: "settings", label: "Settings", icon: "⚙️", section: "primary" }
+      { id: "admin", label: "Dashboard", icon: "LayoutDashboard", section: "admin" },
+      { id: "admin-verifications", label: "Verification Requests", icon: "UserCheck", section: "admin" },
+      { id: "admin-users", label: "User Management", icon: "Users", section: "admin" },
+      { id: "admin-analytics", label: "Analytics", icon: "BarChart", section: "admin" },
+      { id: "support", label: "Support Dashboard", icon: "Headset", section: "admin" },
+      { id: "marketplace-review", label: "Marketplace Review", icon: "Eye", section: "review", route: "home" },
+      { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" },
+      { id: "settings", label: "Settings", icon: "Settings", section: "account" }
     ]
   },
   support: {
@@ -37,11 +37,11 @@ export const ACCESS_CONFIG = {
       "showSupportDashboard", "showMarketplace", "showSearch"
     ],
     navigation: [
-      { id: "support", label: "Support Dashboard", icon: "🎧", section: "support" },
-      { id: "marketplace-review", label: "Marketplace Review", icon: "👁️", section: "review", route: "home" },
-      { id: "notifications", label: "Notifications", icon: "🔔", section: "primary" },
-      { id: "profile", label: "Profile", icon: "👤", section: "primary" },
-      { id: "settings", label: "Settings", icon: "⚙️", section: "primary" }
+      { id: "support", label: "Support Dashboard", icon: "Headset", section: "admin" },
+      { id: "marketplace-review", label: "Marketplace Review", icon: "Eye", section: "review", route: "home" },
+      { id: "profile", label: "Profile", icon: "User", section: "account" },
+      { id: "settings", label: "Settings", icon: "Settings", section: "account" },
+      { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" }
     ]
   },
   user: {
@@ -59,16 +59,17 @@ export const ACCESS_CONFIG = {
       "showMarketplace", "showWishlist", "showPurchaseRequests", "showPostItemButton", "showSearch", "showChat"
     ],
     navigation: [
-      { id: "home", label: "Home", icon: "🏠", section: "primary" },
-      { id: "my-listings", label: "My Listings", icon: "📦", section: "primary" },
-      { id: "wishlist", label: "Wishlist", icon: "❤️", section: "primary" },
-      { id: "notifications", label: "Notifications", icon: "🔔", section: "primary" },
-      { id: "profile", label: "Profile", icon: "👤", section: "primary" },
-      { id: "settings", label: "Settings", icon: "⚙️", section: "primary" },
-      { id: "purchase-requests", label: "My Purchases", icon: "🛒", section: "marketplace" },
-      { id: "my-sales", label: "My Sales", icon: "💰", section: "marketplace" },
-      { id: "saved-items", label: "Saved Items", icon: "⭐", section: "marketplace" },
-      { id: "my-college-listings", label: "My College Listings", icon: "📍", section: "marketplace" }
+      { id: "profile", label: "Profile", icon: "User", section: "account" },
+      { id: "settings", label: "Settings", icon: "Settings", section: "account" },
+      
+      { id: "my-listings", label: "Seller Workspace", icon: "Package", section: "marketplace" },
+      { id: "wishlist", label: "Wishlist", icon: "Heart", section: "marketplace" },
+      { id: "purchase-requests", label: "My Purchases", icon: "ShoppingBag", section: "marketplace" },
+      { id: "my-sales", label: "My Sales", icon: "DollarSign", section: "marketplace" },
+      
+      { id: "my-college-listings", label: "My College Listings", icon: "MapPin", section: "campus" },
+
+      { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" }
     ]
   }
 };

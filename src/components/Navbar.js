@@ -4,18 +4,23 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import { useToast } from "../context/ToastContext";
 import { useNotifications } from "../context/NotificationsContext";
+import { useWishlist } from "../context/WishlistContext";
 import { trackSearch } from "../utils/analytics";
 import { useTheme } from "../context/ThemeContext";
 import VerifiedStudentBadge from "./VerifiedStudentBadge";
 import TrustedSellerBadge from "./TrustedSellerBadge";
 import OfficialStaffBadge from "./OfficialStaffBadge";
 import { getRoleConfig, getDashboardRoute } from "../config/accessControl";
+import * as LucideIcons from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import ConfirmModal from "./ConfirmModal";
 
 export default function Navbar({ page, setPage, searchQuery, setSearchQuery, requireAuth }) {
   const { currentUser, userProfile, logout } = useAuth();
   const { theme, themeMode, setThemeMode, toggleTheme } = useTheme();
   const toast = useToast();
   const { unreadCount } = useNotifications();
+  const { wishlistDocs } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [adminControlsExpanded, setAdminControlsExpanded] = useState(false);
@@ -30,17 +35,26 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     function h(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
     }
+    function k(e) {
+      if (e.key === "Escape") {
+        setShowLogoutConfirm(false);
+      }
+    }
     document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    window.addEventListener("keydown", k);
+    return () => {
+      document.removeEventListener("mousedown", h);
+      window.removeEventListener("keydown", k);
+    };
   }, []);
 
   useEffect(() => { setDrawerOpen(false); setShowMobileSearchOverlay(false); }, [page]);
 
-  async function handleLogout() {
-    await logout();
-    toast("Logged out");
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
+  function handleLogout() {
+    setShowLogoutConfirm(true);
     setMenuOpen(false);
-    setPage("home");
   }
 
     const [recentSearches, setRecentSearches] = useState([]);
@@ -192,36 +206,15 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
   const isStaff = role === "admin" || role === "support";
   const nameToUse = userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student");
   const initials = nameToUse.charAt(0).toUpperCase();
-
-  // Helper to map section/icon to the dropdown format
-  const generateMenuItems = () => {
-    const items = roleConfig.navigation
-      .filter(item => item.section !== "admin" && item.section !== "support")
-      .map(item => ({
-        label: item.label,
-        icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>{item.icon}</span>,
-        action: () => { setPage(item.route || item.id); setMenuOpen(false); }
-      }));
-
-    if (isStaff) {
-      items.unshift({
-        label: "Admin Console",
-        icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>🛡️</span>,
-        action: () => { setPage(role === "admin" ? "admin" : "support"); setMenuOpen(false); }
-      });
-    }
-
-    items.push({
-      label: "Logout",
-      icon: <span style={{ fontSize: "16px", display: "inline-block", width: "20px", textAlign: "center", marginRight: "8px" }}>🚪</span>,
-      action: handleLogout,
-      danger: true
-    });
-
-    return items;
+  const renderIcon = (iconName, size = 16) => {
+    const IconCmp = LucideIcons[iconName] || LucideIcons.Circle;
+    return <IconCmp size={size} className="nav-icon" style={{ minWidth: `${size}px`, marginRight: "8px" }} />;
   };
 
-  const menuItems = generateMenuItems();
+  const getDropdownSections = () => {
+    const navItems = roleConfig.navigation.filter(item => item.section !== "admin" && item.section !== "support");
+    return Array.from(new Set(navItems.map(i => i.section)));
+  };
 
   return (
     <>
@@ -291,6 +284,13 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
 
+                <button className="nav-icon-btn" onClick={() => setPage("wishlist")} aria-label="Wishlist" type="button">
+                  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                  {wishlistDocs?.length > 0 && <span className="nav-badge">{wishlistDocs.length > 9 ? "9+" : wishlistDocs.length}</span>}
+                </button>
+
                 {hasFeature("showChat") && (
                   <button className="nav-icon-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
                     <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -308,33 +308,20 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   </button>
 
                 {menuOpen && (
-                  <div className="nav-dropdown">
-                    <div className="nav-dropdown-user">
-                      <div className="nav-dropdown-avatar">
-                        {(userProfile?.photoURL || currentUser?.photoURL)
-                          ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                          : <span>{initials}</span>}
-                      </div>
-                      <div>
-                        <div className="nav-dropdown-name">
-                          {userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student")}
-                          {(userProfile?.collegeVerified || userProfile?.isVerified) && <VerifiedStudentBadge size="sm" />}
-                          <OfficialStaffBadge role={userProfile?.role} size="sm" />
-                        </div>
-                        {!isStaff && <div className="nav-dropdown-college">{userProfile?.college || "Student"}</div>}
-                        {userProfile?.rating > 0 && (
-                          <div className="nav-dropdown-rating">{userProfile.rating.toFixed(1)} ({userProfile.totalRatings})</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="nav-dropdown-divider" />
-                    {menuItems.map((item, i) => (
-                      <button key={i} className={`nav-dropdown-item ${item.danger ? "danger" : ""}`} onClick={item.action} type="button">
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <ProfileDropdown
+                    userProfile={userProfile}
+                    currentUser={currentUser}
+                    isStaff={isStaff}
+                    initials={initials}
+                    roleConfig={roleConfig}
+                    page={page}
+                    setPage={setPage}
+                    setMenuOpen={setMenuOpen}
+                    handleLogout={handleLogout}
+                    role={role}
+                    wishlistCount={wishlistDocs?.length || 0}
+                    unreadCount={unreadCount || 0}
+                  />
                 )}
                 </div>
               </>
@@ -442,7 +429,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                     <div className="drawer-card-verify" style={{ display: "flex", flexDirection: "column", gap: "2px", padding: "8px 10px", margin: "2px 0" }}>
                       {items.map(item => (
                          <button key={item.id} className={`drawer-item-btn ${page === (item.route || item.id) ? "active" : ""}`} onClick={() => { setPage(item.route || item.id); setDrawerOpen(false); }}>
-                           <span className="drawer-item-icon">{item.icon}</span> {item.label}
+                           <span className="drawer-item-icon" style={{ display: "flex", alignItems: "center" }}>{renderIcon(item.icon, 18)}</span> {item.label}
                            {item.id === "notifications" && unreadCount > 0 && <span className="drawer-badge-count">{unreadCount}</span>}
                          </button>
                       ))}
@@ -462,6 +449,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                       checked={theme === "dark"} 
                       onChange={toggleTheme}
                       style={{ opacity: 0, width: 0, height: 0 }}
+                      aria-label="Toggle Dark Mode"
                     />
                     <span className={`slider ${theme === "dark" ? "active" : ""}`} style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: theme === "dark" ? "var(--p)" : "var(--bdr-2)", transition: ".2s", borderRadius: "24px" }}>
                       <span style={{ position: "absolute", content: "", height: "16px", width: "16px", left: theme === "dark" ? "20px" : "4px", bottom: "4px", background: "white", transition: ".2s", borderRadius: "50%" }}></span>
@@ -540,35 +528,36 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
         </div>
       )}
 
-      {/* ================= LOGOUT CONFIRM MODAL ================= */}
-      {showLogoutConfirm && (
-        <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.5)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", backdropFilter: "blur(2px)" }}>
-          <div className="modal" style={{ width: "100%", maxWidth: "400px", padding: "24px", borderRadius: "var(--r-md)", background: "var(--surface)", border: "1px solid var(--bdr)" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--txt)", marginBottom: "10px" }}>Sign Out?</h3>
-            <p style={{ fontSize: "14px", color: "var(--txt-2)", lineHeight: "1.5", marginBottom: "20px" }}>
-              Are you sure you want to sign out of your CampusMart account?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button className="btn btn-outline" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => {
-                  setShowLogoutConfirm(false);
-                  setDrawerOpen(false);
-                  handleLogout();
-                }}
-              >
-                Yes, Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Logout"
+        message={`Are you sure you want to logout from CampusMart?\n\nYou'll need to sign in again to access your account.`}
+        confirmText={logoutLoading ? "Logging out..." : "Logout"}
+        cancelText="Cancel"
+        danger={true}
+        disabled={logoutLoading}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          setLogoutLoading(true);
+          try {
+            await logout();
+            toast("Logged out successfully.", "success");
+            setShowLogoutConfirm(false);
+            setDrawerOpen(false);
+            setPage("home");
+          } catch (err) {
+            console.error(err);
+            toast("Logout failed. Please try again.", "error");
+          } finally {
+            setLogoutLoading(false);
+          }
+        }}
+      />
 
       {/* ================= DEACTIVATE CONFIRM MODAL ================= */}
       {showDeactivateConfirm && (
         <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.5)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", backdropFilter: "blur(2px)" }}>
-          <div className="modal" style={{ width: "100%", maxWidth: "450px", padding: "24px", borderRadius: "var(--r-md)", background: "var(--surface)", border: "1px solid var(--bdr)" }}>
+          <div className="modal" style={{ width: "100%", maxWidth: "450px", padding: "24px", borderRadius: "var(--r-md)", background: "var(--surface)", border: "1px solid var(--bdr)" }} role="dialog" aria-modal="true" aria-label="Deactivate Account Confirmation">
             <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--txt)", marginBottom: "10px" }}>Deactivate Account?</h3>
             <p style={{ fontSize: "14px", color: "var(--txt-2)", lineHeight: "1.5", marginBottom: "20px" }}>
               Deactivating your account will temporarily hide your profile and active listings. You can reactivate by logging back in.

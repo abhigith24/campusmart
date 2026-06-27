@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from "react";
-import {
-  collection, query, where, onSnapshot,
-  doc, updateDoc, addDoc, serverTimestamp, increment, getDoc, getDocs
-} from "firebase/firestore";
+import React, { useState, useEffect, useMemo } from "react";
+import { collection, query, where, onSnapshot, doc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { transactionService } from "../services/transactionService";
+import { REQUEST_STATUS } from "../constants/requestStatus";
+import { 
+  Inbox, ShoppingCart, Clock, CheckCircle, XCircle, DollarSign, 
+  Search, User, MessageSquare, ShieldCheck, XOctagon 
+} from "lucide-react";
 
 const STATUS_STYLE = {
-  pending:  { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "⏳ Pending" },
-  accepted: { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "✅ Accepted" },
-  rejected: { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "❌ Rejected" },
+  [REQUEST_STATUS.PENDING]:   { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "⏳ Pending" },
+  [REQUEST_STATUS.ACCEPTED]:  { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "✅ Accepted" },
+  [REQUEST_STATUS.DECLINED]:  { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "❌ Declined" },
+  [REQUEST_STATUS.CANCELLED]: { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "🚫 Cancelled" },
+  [REQUEST_STATUS.EXCHANGED]: { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "🤝 Exchanged" },
 };
 
 function timeAgo(ts) {
@@ -23,16 +28,23 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-export default function PurchaseRequestsPage({ setPage, setChatWith }) {
+export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProfileUserId }) {
   const { currentUser } = useAuth();
   const toast = useToast();
+  
   const [tab, setTab] = useState("incoming"); // incoming (seller) | outgoing (buyer)
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const [loading, setLoading] = useState(true);
 
+  // Search & Filtering
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  // Fetch Requests
   useEffect(() => {
     if (!currentUser) return;
+    setLoading(true);
 
     const q1 = query(collection(db, "purchaseRequests"), where("sellerId", "==", currentUser.uid));
     const q2 = query(collection(db, "purchaseRequests"), where("buyerId",  "==", currentUser.uid));
@@ -51,153 +63,364 @@ export default function PurchaseRequestsPage({ setPage, setChatWith }) {
     return () => { u1(); u2(); };
   }, [currentUser]);
 
-  async function handleAccept(req) {
+  // Request actions
+  const handleAccept = async (req) => {
     try {
-      // 1. Update request status
-      await updateDoc(doc(db, "purchaseRequests", req.id), { status: "accepted" });
-      // 2. Mark listing as sold
-      await updateDoc(doc(db, "listings", req.listingId), { status: "sold" });
-
-      // 3. Increment successfulSales on seller profile
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, {
-        successfulSales: increment(1)
-      });
-
-      // 4. Sync successfulSales count to all active listings of this seller
-      const q = query(
-        collection(db, "listings"),
-        where("sellerId", "==", currentUser.uid),
-        where("status", "==", "active")
-      );
-      const snap = await getDocs(q);
-
-      // Fetch the updated user profile to get the latest sales count
-      const userSnap = await getDoc(userRef);
-      const currentSales = userSnap.exists() ? (userSnap.data().successfulSales || 0) : 0;
-
-      for (const d of snap.docs) {
-        await updateDoc(doc(db, "listings", d.id), {
-          sellerSuccessfulSales: currentSales
-        });
-      }
-
-      // 5. Notify buyer
-      await addDoc(collection(db, "notifications"), {
-        type:         "request_accepted",
-        sellerId:     currentUser.uid,
-        buyerId:      req.buyerId,
-        buyerName:    req.buyerName,
-        listingId:    req.listingId,
-        listingTitle: req.listingTitle,
-        requestId:    req.id,
-        read:         false,
-        createdAt:    serverTimestamp()
-      });
-      toast("Request accepted! Item marked as sold. 🎉", "success");
+      await transactionService.acceptPurchaseRequest(currentUser.uid, req);
+      toast("Request accepted! Item marked as reserved. 🎉", "success");
     } catch (err) {
       console.error(err);
       toast("Failed to accept request", "error");
     }
-  }
+  };
 
-  async function handleReject(req) {
+  const handleReject = async (req) => {
     try {
-      await updateDoc(doc(db, "purchaseRequests", req.id), { status: "rejected" });
-      await addDoc(collection(db, "notifications"), {
-        type:         "request_rejected",
-        sellerId:     currentUser.uid,
-        buyerId:      req.buyerId,
-        buyerName:    req.buyerName,
-        listingId:    req.listingId,
-        listingTitle: req.listingTitle,
-        requestId:    req.id,
-        read:         false,
-        createdAt:    serverTimestamp()
-      });
-      toast("Request rejected.", "success");
-    } catch {
-      toast("Failed to reject request", "error");
+      await transactionService.declinePurchaseRequest(currentUser.uid, req);
+      toast("Request declined.", "success");
+    } catch (err) {
+      console.error(err);
+      toast("Failed to decline request", "error");
     }
-  }
+  };
 
-  const requests = tab === "incoming" ? incoming : outgoing;
+  const handleCancelAcceptance = async (req) => {
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, "purchaseRequests", req.id), {
+        status: REQUEST_STATUS.CANCELLED,
+        updatedAt: serverTimestamp()
+      });
+      batch.update(doc(db, "listings", req.listingId), {
+        status: "active",
+        updatedAt: serverTimestamp()
+      });
+      await batch.commit();
+      toast("Acceptance cancelled. Listing is active again! 🔄", "success");
+    } catch (err) {
+      console.error(err);
+      toast("Failed to cancel acceptance", "error");
+    }
+  };
+
+  const handleMarkExchanged = async (req) => {
+    if (!window.confirm("Are you sure you want to mark this transaction as completed?")) return;
+    try {
+      await transactionService.markListingExchanged(currentUser.uid, req);
+      toast("Item marked as exchanged! 🎉", "success");
+    } catch (err) {
+      console.error(err);
+      toast("Failed to mark as exchanged", "error");
+    }
+  };
+
+  const handleOpenChat = (req) => {
+    const chatId = [req.buyerId, req.sellerId].sort().join("_") + "_" + req.listingId;
+    setChatWith({
+      chatId,
+      listingId: req.listingId,
+      listingTitle: req.listingTitle,
+      buyerId: req.buyerId,
+      sellerId: req.sellerId,
+      participants: [req.buyerId, req.sellerId]
+    });
+    setPage("chat");
+  };
+
+  const handleViewProfile = (userId) => {
+    if (setViewProfileUserId) {
+      setViewProfileUserId(userId);
+      setPage("profile");
+    }
+  };
+
+  // Metrics calculation
+  const metrics = useMemo(() => {
+    const activeRequests = tab === "incoming" ? incoming : outgoing;
+    const pending = activeRequests.filter(r => r.status === REQUEST_STATUS.PENDING).length;
+    const accepted = activeRequests.filter(r => r.status === REQUEST_STATUS.ACCEPTED).length;
+    const declined = activeRequests.filter(r => r.status === REQUEST_STATUS.DECLINED || r.status === REQUEST_STATUS.CANCELLED).length;
+    const completed = activeRequests.filter(r => r.status === REQUEST_STATUS.EXCHANGED).length;
+    
+    // Earnings based on EXCHANGED requests
+    const earnings = activeRequests.filter(r => r.status === REQUEST_STATUS.EXCHANGED).reduce((sum, r) => sum + (r.price || 0), 0);
+    
+    // Mock response rate
+    const responseRate = "96%";
+
+    return { total: activeRequests.length, pending, accepted, declined, completed, earnings, responseRate };
+  }, [incoming, outgoing, tab]);
+
+  // Filtering and searching logic
+  const filteredRequests = useMemo(() => {
+    let result = tab === "incoming" ? [...incoming] : [...outgoing];
+
+    // Search query filter
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(r => 
+        r.listingTitle?.toLowerCase().includes(q) ||
+        r.buyerName?.toLowerCase().includes(q) ||
+        r.sellerName?.toLowerCase().includes(q)
+      );
+    }
+
+    // Filter Chips
+    if (activeFilter !== "All") {
+      const filterLower = activeFilter.toLowerCase();
+      result = result.filter(r => {
+        if (filterLower === "pending") return r.status === REQUEST_STATUS.PENDING;
+        if (filterLower === "accepted") return r.status === REQUEST_STATUS.ACCEPTED;
+        if (filterLower === "declined") return r.status === REQUEST_STATUS.DECLINED || r.status === REQUEST_STATUS.CANCELLED;
+        if (filterLower === "completed") return r.status === REQUEST_STATUS.EXCHANGED;
+        return true;
+      });
+    }
+
+    return result;
+  }, [incoming, outgoing, tab, searchTerm, activeFilter]);
 
   return (
-    <div className="container" style={{ maxWidth: 800, paddingTop: 28, paddingBottom: 40 }}>
-      <div className="page-header">
-        <h2>🛒 Purchase Requests</h2>
-        <p>Manage buy requests for your listings</p>
+    <div className="container" style={{ maxWidth: 1000, paddingTop: 28, paddingBottom: 80 }}>
+      {/* Title */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+        <button 
+          className="btn btn-ghost" 
+          onClick={() => setPage("home")} 
+          style={{ padding: "6px 10px", fontSize: "18px" }}
+          type="button"
+          aria-label="Back to home"
+        >
+          ←
+        </button>
+        <div>
+          <h2 style={{ margin: 0 }}>🛒 Purchase Requests Dashboard</h2>
+          <p style={{ fontSize: "13px", color: "var(--muted)", marginTop: "4px" }}>Manage transaction offers and exchanges</p>
+        </div>
       </div>
 
-      <div className="profile-tabs" style={{ marginBottom: 24 }}>
-        <button className={`profile-tab ${tab === "incoming" ? "active" : ""}`} onClick={() => setTab("incoming")}>
-          Incoming ({incoming.filter(r => r.status === "pending").length} pending)
+      {/* Navigation tabs */}
+      <div className="profile-tabs" style={{ marginBottom: "20px" }}>
+        <button className={`profile-tab ${tab === "incoming" ? "active" : ""}`} onClick={() => { setTab("incoming"); setActiveFilter("All"); }}>
+          Incoming Offers ({incoming.filter(r => r.status === REQUEST_STATUS.PENDING).length} pending)
         </button>
-        <button className={`profile-tab ${tab === "outgoing" ? "active" : ""}`} onClick={() => setTab("outgoing")}>
-          My Requests ({outgoing.length})
+        <button className={`profile-tab ${tab === "outgoing" ? "active" : ""}`} onClick={() => { setTab("outgoing"); setActiveFilter("All"); }}>
+          My Buy Requests ({outgoing.length})
         </button>
       </div>
 
-      {loading ? (
-        <div className="loading-center"><div className="spinner" /></div>
-      ) : requests.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">{tab === "incoming" ? "📬" : "🛍️"}</div>
-          <h3>{tab === "incoming" ? "No incoming requests" : "No requests sent"}</h3>
-          <p>{tab === "incoming"
-            ? "When buyers click 'Buy Now' on your listings, requests appear here."
-            : "Browse listings and click 'Buy Now' to send a purchase request."}
-          </p>
-          {tab === "outgoing" && (
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("home")}>
-              Browse Listings
+      {/* ================= SUMMARY STATISTIC CARDS ================= */}
+      <div className="seller-summary-grid" style={{ marginBottom: "20px" }}>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><Inbox size={14} style={{ color: "var(--p)" }} /> Total</div>
+          <div className="seller-summary-value">{metrics.total}</div>
+        </div>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><Clock size={14} style={{ color: "var(--warn)" }} /> Pending</div>
+          <div className="seller-summary-value">{metrics.pending}</div>
+        </div>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><CheckCircle size={14} style={{ color: "var(--grn)" }} /> Accepted</div>
+          <div className="seller-summary-value">{metrics.accepted}</div>
+        </div>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><XOctagon size={14} style={{ color: "var(--red)" }} /> Cancelled</div>
+          <div className="seller-summary-value">{metrics.declined}</div>
+        </div>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><CheckCircle size={14} style={{ color: "#3b82f6" }} /> Exchanged</div>
+          <div className="seller-summary-value">{metrics.completed}</div>
+        </div>
+        <div className="seller-summary-card">
+          <div className="seller-summary-header"><DollarSign size={14} style={{ color: "var(--grn)" }} /> Total Value</div>
+          <div className="seller-summary-value" style={{ fontSize: "16px", paddingTop: "4px" }}>
+            {metrics.earnings > 0 ? `₹${metrics.earnings.toLocaleString("en-IN")}` : "₹0.00"}
+          </div>
+        </div>
+      </div>
+
+      {/* ================= SEARCH & FILTERS ================= */}
+      <div className="seller-search-filter-bar">
+        <div className="seller-search-row">
+          <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
+            <Search size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+            <input 
+              className="form-input" 
+              type="text" 
+              placeholder="Search buyer or listing..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: "38px" }}
+            />
+          </div>
+        </div>
+
+        {/* Filter Chips */}
+        <div className="seller-filter-chips">
+          {["All", "Pending", "Accepted", "Declined", "Completed"].map(chip => (
+            <button
+              key={chip}
+              className={`seller-chip ${activeFilter === chip ? "active" : ""}`}
+              onClick={() => setActiveFilter(chip)}
+              type="button"
+            >
+              {chip}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ================= REQ LIST ================= */}
+      {loading ? (
+        <div className="loading-center" style={{ padding: "40px" }}><div className="spinner" /></div>
+      ) : filteredRequests.length === 0 ? (
+        <div className="empty-state">
+          {tab === "incoming" ? (
+            <>
+              <div style={{ fontSize: "40px", marginBottom: "12px" }}>📭</div>
+              <h3>No Incoming Requests Yet</h3>
+              <p>Requests from buyers will appear here when they make offers.</p>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: "40px", marginBottom: "12px" }}>🛒</div>
+              <h3>You haven't requested any listings yet</h3>
+              <p>Browse the marketplace and submit purchase offers.</p>
+              <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("home")}>
+                Browse Marketplace
+              </button>
+            </>
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {requests.map(req => {
-            const s = STATUS_STYLE[req.status] || STATUS_STYLE.pending;
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {filteredRequests.map(req => {
+            const s = STATUS_STYLE[req.status] || STATUS_STYLE[REQUEST_STATUS.PENDING];
+            const priceVal = req.isFree ? "Free 💚" : req.price !== undefined ? `₹${req.price.toLocaleString("en-IN")}` : "Price Not Available";
+            
+            // Mock trust score calculation for buyer
+            const mockTrustScore = Math.round(70 + ((req.buyerName?.length || 0) % 25));
+
             return (
-              <div key={req.id} className="request-card">
-                {req.listingImage && (
-                  <img src={req.listingImage} alt="" className="request-img" />
+              <div key={req.id} className="request-card" style={{ display: "flex", gap: "16px", background: "var(--card-bg)", border: "1px solid var(--bdr)", padding: "16px", borderRadius: "var(--r-xl)", flexWrap: "wrap", position: "relative" }}>
+                
+                {/* Image */}
+                {req.listingImage ? (
+                  <img src={req.listingImage} alt="" className="request-img" style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "var(--r-lg)", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: "90px", height: "90px", background: "var(--light)", borderRadius: "var(--r-lg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>📦</div>
                 )}
-                <div className="request-body">
-                  <div className="request-title">{req.listingTitle}</div>
-                  <div className="request-meta">
-                    {tab === "incoming"
-                      ? <>👤 <strong>{req.buyerName}</strong> wants to buy</>
-                      : <>🏪 Seller: <strong>{req.sellerName}</strong></>}
+
+                {/* Body */}
+                <div style={{ flex: 1, minWidth: "220px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ fontSize: "16px", fontWeight: "750", color: "var(--txt)" }}>{req.listingTitle}</div>
+                  
+                  {/* Participant info */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    {tab === "incoming" ? (
+                      <>
+                        <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", background: "var(--light)", border: "1px solid var(--bdr)" }}>
+                          {req.buyerPhoto ? <img src={req.buyerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (req.buyerName || "?")[0].toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: "13px", color: "var(--txt)" }}>
+                          Buyer: <strong>{req.buyerName}</strong>
+                        </span>
+                        {req.buyerCollege && (
+                          <span style={{ fontSize: "12px", color: "var(--muted)" }}>🎓 {req.buyerCollege}</span>
+                        )}
+                        <span style={{ fontSize: "11px", color: "var(--p)", background: "var(--p-light)", padding: "1px 6px", borderRadius: "8px" }}>
+                          Trust Score: {mockTrustScore}%
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: "13px", color: "var(--txt)" }}>
+                          Store: <strong>{req.sellerName}</strong>
+                        </span>
+                        {req.sellerCollege && (
+                          <span style={{ fontSize: "12px", color: "var(--muted)" }}>🎓 {req.sellerCollege}</span>
+                        )}
+                      </>
+                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "var(--p)" }}>
-                      {req.isFree ? "Free 💚" : `₹${req.price}`}
+
+                  {/* Price, Badge, Time */}
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", marginTop: "4px" }}>
+                    <span style={{ fontSize: "18px", fontWeight: "850", color: "var(--p)" }}>{priceVal}</span>
+                    <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "700", background: s.bg, color: s.color }}>
+                      {s.label}
+                    </span>
+                    <span style={{ fontSize: "12px", color: "var(--muted)" }}>
+                      Requested {timeAgo(req.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* ================= WORKFLOW TIMELINE ================= */}
+                  {req.status !== REQUEST_STATUS.DECLINED && req.status !== REQUEST_STATUS.CANCELLED ? (
+                    <div className="request-timeline">
+                      <span className={`request-timeline-step ${req.status === REQUEST_STATUS.PENDING ? "active" : "completed"}`}>Requested</span>
+                      <span className={`request-timeline-step ${req.status === REQUEST_STATUS.ACCEPTED ? "active" : req.status === REQUEST_STATUS.EXCHANGED ? "completed" : ""}`}>Accepted</span>
+                      <span className={`request-timeline-step ${req.status === REQUEST_STATUS.ACCEPTED ? "active" : req.status === REQUEST_STATUS.EXCHANGED ? "completed" : ""}`}>Chat Enabled</span>
+                      <span className={`request-timeline-step ${req.status === REQUEST_STATUS.EXCHANGED ? "completed" : ""}`}>Exchanged</span>
                     </div>
-                    <span style={{
-                      padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 800,
-                      background: s.bg, color: s.color
-                    }}>{s.label}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{timeAgo(req.createdAt)}</div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--red)", fontWeight: "650", marginTop: "8px" }}>
+                      <XOctagon size={14} /> Request de-listed / cancelled
+                    </div>
+                  )}
                 </div>
-                {tab === "incoming" && req.status === "pending" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                    <button className="btn btn-green btn-sm" onClick={() => handleAccept(req)}>✅ Accept</button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleReject(req)}>❌ Reject</button>
-                  </div>
-                )}
-                {tab === "outgoing" && req.status === "accepted" && (
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--grn)", textAlign: "center", padding: "0 8px" }}>
-                    Accepted!<br/>Check your chat 💬
-                  </div>
-                )}
+
+                {/* Actions Panel */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", justifyContent: "center", minWidth: "120px", flexShrink: 0 }}>
+                  
+                  {/* Pending Incoming state actions */}
+                  {tab === "incoming" && req.status === REQUEST_STATUS.PENDING && (
+                    <>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleAccept(req)}>Accept Offer</button>
+                      <button className="btn btn-outline btn-sm" style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.2)" }} onClick={() => handleReject(req)}>Decline</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleViewProfile(req.buyerId)}>View Profile</button>
+                    </>
+                  )}
+
+                  {/* Accepted Incoming state actions */}
+                  {tab === "incoming" && req.status === REQUEST_STATUS.ACCEPTED && (
+                    <>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                        <MessageSquare size={13} /> Continue Chat
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleMarkExchanged(req)}>Mark Exchanged</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleCancelAcceptance(req)} style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.2)" }}>Cancel Acceptance</button>
+                    </>
+                  )}
+
+                  {/* Outgoing Accepted action */}
+                  {tab === "outgoing" && req.status === REQUEST_STATUS.ACCEPTED && (
+                    <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                      <MessageSquare size={13} /> Chat with Seller
+                    </button>
+                  )}
+
+                  {/* Completed transaction review options */}
+                  {req.status === REQUEST_STATUS.EXCHANGED && (
+                    <>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                        <MessageSquare size={13} /> View Chat logs
+                      </button>
+                      {tab === "outgoing" && (
+                        <button className="btn btn-primary btn-sm" onClick={() => setPage("reviews", { sellerId: req.sellerId })}>
+                          Leave Review
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
               </div>
             );
           })}
         </div>
       )}
+
     </div>
   );
 }

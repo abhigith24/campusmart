@@ -1,6 +1,7 @@
 import React from "react";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
+import { Eye, Heart, ShoppingBag, Edit, Share2, Trash2, CheckCircle, RefreshCw } from "lucide-react";
 
 const CAT_ICONS = {
   Books: "📚",
@@ -54,27 +55,34 @@ function timeAgo(ts) {
   return d.toLocaleDateString("en-IN", { day:"numeric", month:"short" });
 }
 
-function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOverride }) {
+function ListingCard({ 
+  listing, onClick, requireAuth, layout = "grid", actionOverride,
+  isSellerDashboard = false, viewsCount = 0, wishlistCountVal = 0, requestsCountVal = 0,
+  onEdit, onShare, onViewRequests, onToggleStatus, onDelete,
+  postedOverride, hideSameCampusBadge = false
+}) {
   const { currentUser, userProfile } = useAuth();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const {
     id, title, price, isFree, category, condition,
     images, sellerName, sellerCollege, sellerRating,
-    status, createdAt, isVerified, collegeVerified, sellerSuccessfulSales, listingType, rentPerDay
+    status, createdAt, isVerified, collegeVerified, sellerSuccessfulSales, listingType, rentPerDay, updatedAt
   } = listing;
 
   const icon = CAT_ICONS[category] || "Item";
   const wishlisted = isWishlisted(id);
-  const isSold = status === "sold";
+  const isSold = status === "sold" || status === "exchanged";
   const cond = COND_META[condition];
-  const posted = timeAgo(createdAt);
+  const posted = postedOverride || timeAgo(createdAt);
   const isRent = listingType === "rent";
-  const trustScore = Math.round(
-    50 +
-    ((collegeVerified || isVerified) ? 20 : 0) +
-    (Number(sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
-    (Number(sellerRating || 0) > 0 ? (Number(sellerRating) / 5) * 15 : 0)
-  );
+  const trustScore = listing.sellerTrustScore !== undefined 
+    ? listing.sellerTrustScore 
+    : Math.round(
+        50 +
+        ((collegeVerified || isVerified) ? 20 : 0) +
+        (Number(sellerSuccessfulSales || 0) >= 3 ? 15 : 0) +
+        (Number(sellerRating || 0) > 0 ? (Number(sellerRating) / 5) * 15 : 0)
+      );
 
   function handleHeart(e) {
     e.stopPropagation();
@@ -99,8 +107,17 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOve
         {isRent && !isSold && <span className="rent-badge">RENT</span>}
         {isSold && <span className="sold-badge">SOLD</span>}
         {posted && !isSold && <span className="card-posted-badge">{posted}</span>}
+        {isSellerDashboard && (
+          <span className={`seller-status-badge ${status || "active"}`}>
+            {status === "active" ? "🟢 Active" : 
+             status === "pending" ? "🟡 Pending" : 
+             status === "reserved" ? "🟠 Reserved" : 
+             status === "sold" ? "🔴 Sold" : 
+             status === "exchanged" ? "🔵 Exchanged" : "⚪ Under Review"}
+          </span>
+        )}
 
-        {actionOverride ? (
+        {isSellerDashboard ? null : actionOverride ? (
           <div className="card-action-override">
             {actionOverride}
           </div>
@@ -129,7 +146,7 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOve
             </span>
           )}
           {(collegeVerified || isVerified) && <VerifiedStudentBadge />}
-          {currentUser && userProfile?.college && sellerCollege && userProfile.college.trim().toLowerCase() === sellerCollege.trim().toLowerCase() && (
+          {!hideSameCampusBadge && currentUser && userProfile?.college && sellerCollege && userProfile.college.trim().toLowerCase() === sellerCollege.trim().toLowerCase() && (
             <SameCampusBadge />
           )}
           {sellerSuccessfulSales >= 3 && (
@@ -154,26 +171,57 @@ function ListingCard({ listing, onClick, requireAuth, layout = "grid", actionOve
               <>Rs {price?.toLocaleString("en-IN")}</>
             )}
           </div>
-          <div className="card-seller-info" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <div className="card-seller-avatar" title={sellerName}>{(sellerName || "?")[0].toUpperCase()}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <span className="card-seller-name-inline" style={{ fontSize: "13px", fontWeight: "600", color: "var(--txt)" }}>{sellerName}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "11px" }}>
-                {sellerRating > 0 && (
-                  <span className="card-rating" style={{ color: "var(--yel)", fontWeight: "600" }}>
-                    ★ {sellerRating.toFixed(1)}
+          
+          {isSellerDashboard ? (
+            <>
+              <div className="card-seller-analytics">
+                <div className="card-seller-analytic-item"><Eye size={13} /> {viewsCount} Views</div>
+                <div className="card-seller-analytic-item"><Heart size={13} /> {wishlistCountVal} Saves</div>
+                <div className="card-seller-analytic-item"><ShoppingBag size={13} /> {requestsCountVal} Requests</div>
+                <div className="card-seller-analytic-item" style={{ fontSize: "10px", gridColumn: "1 / -1" }}>
+                  Updated {timeAgo(updatedAt || createdAt)}
+                </div>
+              </div>
+              <div className="card-seller-actions" onClick={e => e.stopPropagation()}>
+                <button className="btn btn-outline" onClick={() => onEdit(listing)} title="Edit Listing"><Edit size={13} /></button>
+                <button className="btn btn-outline" onClick={() => onShare(listing)} title="Share Listing"><Share2 size={13} /></button>
+                <button className="btn btn-outline" onClick={() => onViewRequests(listing)} title="View Requests"><ShoppingBag size={13} /></button>
+                <button className="btn btn-outline" onClick={() => onToggleStatus(listing)} title="Toggle Exchanged Status"><CheckCircle size={13} /></button>
+                <button className="btn btn-outline" onClick={() => onDelete(listing)} style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.2)" }} title="Delete Listing"><Trash2 size={13} /></button>
+              </div>
+            </>
+          ) : (
+            <div className="card-seller-info" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <div className="card-seller-avatar" title={sellerName}>{(sellerName || "?")[0].toUpperCase()}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span className="card-seller-name-inline" style={{ fontSize: "13px", fontWeight: "600", color: "var(--txt)" }}>{sellerName}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "11px" }}>
+                  {sellerRating > 0 && (
+                    <span className="card-rating" style={{ color: "var(--yel)", fontWeight: "600" }}>
+                      ★ {sellerRating.toFixed(1)}
+                    </span>
+                  )}
+                  <span className="card-trust-score" style={{ color: "var(--p)", fontWeight: "600", background: "var(--p-light)", padding: "1px 6px", borderRadius: "8px" }} title={`Trust Score: ${trustScore}% based on verification, ratings, and sales`}>
+                    ✓ Verified {trustScore}%
                   </span>
-                )}
-                <span className="card-trust-score" style={{ color: "var(--p)", fontWeight: "600", background: "var(--p-light)", padding: "1px 6px", borderRadius: "8px" }} title={`Trust Score: ${trustScore}% based on verification, ratings, and sales`}>
-                  ✓ Verified {trustScore}%
-                </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default React.memo(ListingCard);
+export default React.memo(ListingCard, (prevProps, nextProps) => {
+  return (
+    prevProps.listing.id === nextProps.listing.id &&
+    prevProps.listing.status === nextProps.listing.status &&
+    prevProps.layout === nextProps.layout &&
+    prevProps.isSellerDashboard === nextProps.isSellerDashboard &&
+    prevProps.viewsCount === nextProps.viewsCount &&
+    prevProps.wishlistCountVal === nextProps.wishlistCountVal &&
+    prevProps.requestsCountVal === nextProps.requestsCountVal
+  );
+});

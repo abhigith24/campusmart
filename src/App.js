@@ -7,7 +7,7 @@ import Navbar                            from "./components/Navbar";
 import Footer                            from "./components/Footer";
 import CookieConsent                     from "./components/CookieConsent";
 import FloatingActionGroup               from "./components/FloatingActionGroup";
-import HomePage                          from "./pages/HomePage";
+const HomePage = React.lazy(() => import("./pages/HomePage"));
 import AuthModal                         from "./components/AuthModal";
 import ProtectedRoute                  from "./components/ProtectedRoute";
 
@@ -202,6 +202,13 @@ function Main() {
     }
   };
 
+  useEffect(() => {
+    window.__navigateTo = navigateTo;
+    return () => {
+      delete window.__navigateTo;
+    };
+  }, [navigateTo]);
+
   // Sync state with browser back/forward buttons
   useEffect(() => {
     const handlePopState = (event) => {
@@ -300,7 +307,7 @@ function Main() {
     edit:              "Edit Listing",
     chat:              "Messages",
     profile:           "My Profile",
-    "my-listings":     "My Listings",
+    "my-listings":     "Seller Workspace",
     wishlist:          "Wishlist",
     "college-verification": "College Verification",
     "my-sales":        "My Sales",
@@ -404,6 +411,7 @@ function Main() {
           {page === "profile" && (
             <ProfilePage
               setPage={navigateTo} setSelectedListing={setSelectedListing}
+              setChatWith={setChatWith}
               initialTab="active"
               viewUserId={viewProfileUserId}
               requireAuth={requireAuth}
@@ -419,7 +427,7 @@ function Main() {
             <NotificationsPage setPage={navigateTo} setSelectedListing={setSelectedListing} />
           )}
           {page === "purchase-requests" && (
-            <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} />
+            <PurchaseRequestsPage setPage={navigateTo} setChatWith={setChatWith} setViewProfileUserId={setViewProfileUserId} />
           )}
           {page === "admin"   && <ProtectedRoute route="admin"><AdminDashboardPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "admin-verifications" && <ProtectedRoute route="admin-verifications"><VerificationRequestsPage setPage={navigateTo} /></ProtectedRoute>}

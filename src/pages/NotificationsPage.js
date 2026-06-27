@@ -5,10 +5,25 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
 const TYPE_META = {
-  purchase_request: { icon: "🛒", label: "New Purchase Request" },
-  request_accepted: { icon: "✅", label: "Request Accepted" },
-  request_rejected: { icon: "❌", label: "Request Rejected" },
-  item_sold:        { icon: "💸", label: "Item Marked Sold" },
+  // Uppercase
+  PURCHASE_REQUEST:  { icon: "🛒", label: "New Purchase Request" },
+  REQUEST_SENT:      { icon: "📨", label: "Purchase Request Sent" },
+  REQUEST_ACCEPTED:  { icon: "✅", label: "Request Accepted" },
+  REQUEST_DECLINED:  { icon: "❌", label: "Request Declined" },
+  LISTING_EXCHANGED: { icon: "🤝", label: "Listing Exchanged" },
+  REVIEW_RECEIVED:   { icon: "⭐", label: "New Review" },
+  REVIEW_REMINDER:   { icon: "📝", label: "Review Reminder" },
+  SELLER_REPORTED:   { icon: "⚠️", label: "Report Status Update" },
+  NEW_CHAT:          { icon: "💬", label: "New Chat Started" },
+  NEW_MESSAGE:       { icon: "📩", label: "New Message" },
+
+  // Lowercase compatibility
+  purchase_request:  { icon: "🛒", label: "New Purchase Request" },
+  request_accepted:  { icon: "✅", label: "Request Accepted" },
+  request_rejected:  { icon: "❌", label: "Request Rejected" },
+  request_declined:  { icon: "❌", label: "Request Declined" },
+  listing_exchanged: { icon: "🤝", label: "Listing Exchanged" },
+  item_sold:         { icon: "💸", label: "Item Marked Sold" },
 };
 
 function timeAgo(ts) {
@@ -37,14 +52,34 @@ function SkeletonNotificationItem() {
 
 export default function NotificationsPage({ setPage, setSelectedListing }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
   const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
 
   // Filter out marketplace notifications for staff
-  const marketplaceTypes = ['purchase_request', 'request_accepted', 'request_rejected', 'item_sold'];
-  const displayNotifications = isStaff 
-    ? notifications.filter(n => !marketplaceTypes.includes(n.type))
-    : notifications;
+  const displayNotifications = notifications.filter(n => {
+    if (isStaff) {
+      const marketplaceTypes = [
+        'purchase_request', 'request_accepted', 'request_rejected', 'item_sold', 'request_declined', 'listing_exchanged',
+        'PURCHASE_REQUEST', 'REQUEST_ACCEPTED', 'REQUEST_DECLINED', 'LISTING_EXCHANGED', 'REVIEW_RECEIVED', 'SELLER_REPORTED'
+      ];
+      return !marketplaceTypes.includes(n.type);
+    }
+    
+    const isSeller = currentUser?.uid === n.sellerId;
+    const isBuyer = currentUser?.uid === n.buyerId;
+
+    if (n.type === "PURCHASE_REQUEST" || n.type === "purchase_request") return isSeller;
+    if (n.type === "REQUEST_SENT") return isBuyer;
+    if (n.type === "REQUEST_ACCEPTED" || n.type === "request_accepted") return isBuyer;
+    if (n.type === "REQUEST_DECLINED" || n.type === "request_rejected" || n.type === "request_declined") return isBuyer;
+    if (n.type === "LISTING_EXCHANGED" || n.type === "listing_exchanged" || n.type === "item_sold") return isBuyer || isSeller;
+    if (n.type === "REVIEW_RECEIVED" || n.type === "SELLER_REPORTED") return isSeller;
+    if (n.type === "REVIEW_REMINDER") return isBuyer;
+    if (n.type === "NEW_CHAT") return isBuyer;
+    if (n.type === "NEW_MESSAGE") return isSeller || isBuyer;
+    
+    return true;
+  });
 
   async function handleClick(n) {
     await markAsRead(n.id);
@@ -86,13 +121,8 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
         </div>
       ) : displayNotifications.length === 0 ? (
         <div className="empty-state">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--muted-2)", marginBottom: 16 }}>
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            <line x1="1" y1="1" x2="23" y2="23" stroke="var(--muted-2)" strokeWidth="1.5"/>
-          </svg>
-          <h3>No notifications yet</h3>
-          <p>You'll be notified when someone wants to buy your items or when sellers respond.</p>
+          <h3>🔔 No notifications yet</h3>
+          <p>You're all caught up.<br />We'll notify you when something important happens.</p>
           <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("home")}>Browse Marketplace</button>
         </div>
       ) : (
@@ -109,17 +139,35 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
                 <div className="notif-body">
                   <div className="notif-label">{meta.label}</div>
                   <div className="notif-text">
-                    {n.type === "purchase_request" && (
+                    { (n.type === "purchase_request" || n.type === "PURCHASE_REQUEST") && (
                       <><strong>{n.buyerName}</strong> wants to buy <strong>{n.listingTitle}</strong></>
                     )}
-                    {n.type === "request_accepted" && (
+                    { n.type === "REQUEST_SENT" && (
+                      <>You sent a purchase request for <strong>{n.listingTitle}</strong>.</>
+                    )}
+                    { (n.type === "request_accepted" || n.type === "REQUEST_ACCEPTED") && (
                       <>Your request for <strong>{n.listingTitle}</strong> was accepted! Chat with the seller.</>
                     )}
-                    {n.type === "request_rejected" && (
-                      <>Your request for <strong>{n.listingTitle}</strong> was rejected.</>
+                    { (n.type === "request_rejected" || n.type === "REQUEST_DECLINED" || n.type === "request_declined") && (
+                      <>Your request for <strong>{n.listingTitle}</strong> was declined.</>
                     )}
-                    {n.type === "item_sold" && (
-                      <>Your item <strong>{n.listingTitle}</strong> has been marked as sold.</>
+                    { (n.type === "item_sold" || n.type === "LISTING_EXCHANGED") && (
+                      <>Transaction marked as completed for <strong>{n.listingTitle}</strong>.</>
+                    )}
+                    { n.type === "REVIEW_RECEIVED" && (
+                      <>You received a new review for <strong>{n.listingTitle}</strong>.</>
+                    )}
+                    { n.type === "REVIEW_REMINDER" && (
+                      <>Don't forget to rate your experience for <strong>{n.listingTitle}</strong>!</>
+                    )}
+                    { n.type === "SELLER_REPORTED" && (
+                      <>Your report regarding <strong>{n.listingTitle}</strong> has been received and is under review.</>
+                    )}
+                    { n.type === "NEW_CHAT" && (
+                      <>You can now chat regarding <strong>{n.listingTitle}</strong>.</>
+                    )}
+                    { n.type === "NEW_MESSAGE" && (
+                      <>You have a new message about <strong>{n.listingTitle}</strong>.</>
                     )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
