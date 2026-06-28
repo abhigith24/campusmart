@@ -35,7 +35,7 @@ const CATEGORY_SHORTCUTS = [
   { val: "Hostel", label: "Hostel", emoji: "🏠" },
 ];
 
-function DropdownBtn({ label, options, selected, onSelect, ariaLabel }) {
+function DropdownBtn({ label, options, selected, onSelect, ariaLabel, icon }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const [alignRight, setAlignRight] = useState(false);
@@ -88,7 +88,8 @@ function DropdownBtn({ label, options, selected, onSelect, ariaLabel }) {
         aria-label={ariaLabel || label}
       >
         {isActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-        {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>▾</span>
+        {!isActive && icon && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7}}>{icon}</span>}
+        {label} <span className={`dd-chevron ${open ? "flipped" : ""}`}>⌄</span>
       </button>
       {open && (
         <div className={`dd-menu ${alignRight ? "dd-align-right" : "dd-align-left"}`} role="listbox">
@@ -271,7 +272,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
   );
 }
 
-function CategoryDropdown({ label, options, selected, onSelect }) {
+function CategoryDropdown({ label, options, selected, onSelect, icon }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -346,10 +347,11 @@ function CategoryDropdown({ label, options, selected, onSelect }) {
         aria-label="Filter by category"
       >
         {isActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
+        {!isActive && icon && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7}}>{icon}</span>}
         {isActive
           ? <><span aria-hidden="true">{CATEGORY_ICONS[selected] || "📦"}</span> {label}</>
-          : "Category"}
-        <span className={`dd-chevron ${open ? "flipped" : ""}`}>▾</span>
+          : label}
+        <span className={`dd-chevron ${open ? "flipped" : ""}`}>⌄</span>
       </button>
       {open && (
         <div
@@ -1264,7 +1266,12 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
               title="Grid View"
               aria-label="Switch to Grid View"
             >
-              田
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
             </button>
             <button 
               type="button" 
@@ -1273,7 +1280,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
               title="List View"
               aria-label="Switch to List View"
             >
-              ☰
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="4" y1="12" x2="20" y2="12"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+              </svg>
             </button>
           </div>
         </div>
@@ -1285,10 +1296,11 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           <div className="filter-bar">
             <div className="filter-controls-scroll">
               <CategoryDropdown
-                label={category === "All" ? "Category" : category}
+                label="Category"
                 options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
                 selected={category}
                 onSelect={setCategory}
+                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>}
               />
 
               <DropdownBtn
@@ -1297,6 +1309,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                 selected={sortBy}
                 onSelect={setSortBy}
                 ariaLabel="Sort listings"
+                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 11V3M7 3L4 6M7 3L10 6M17 13V21M17 21L14 18M17 21L20 18"/></svg>}
               />
 
               <DropdownBtn
@@ -1305,9 +1318,16 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                 selected={condition}
                 onSelect={setCondition}
                 ariaLabel="Filter by condition"
+                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg>}
               />
 
-              <CollegeDropdown label={collegeLabel} options={collegeOptions} selected={college} onSelect={handleSelectCollege} />
+              <CollegeDropdown 
+                label={collegeLabel} 
+                options={collegeOptions} 
+                selected={college} 
+                onSelect={handleSelectCollege} 
+                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}
+              />
 
               <div className="dd-wrap" ref={priceRef} style={{ position: "relative" }}>
                 <button
@@ -1318,8 +1338,9 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                   aria-label="Filter by price range"
                 >
                   {priceFilterActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-                  {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}{" "}
-                  <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>▾</span>
+                  {!priceFilterActive && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
+                  {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}
+                  <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>⌄</span>
                 </button>
                 {showPriceFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceFilter(false)} />}
                 {showPriceFilter && (
@@ -1376,68 +1397,72 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                   <span className="filter-toggle-knob" />
                 </button>
               </div>
+            </div>
 
-              {/* Active Filter Chips */}
-              {activeFilters > 0 && (
-                <div className="active-filters-chips-list">
-                  {category !== "All" && (
-                    <span className="active-filter-chip">
-                      {category}
-                      <button type="button" onClick={() => setCategory("All")} aria-label="Remove category filter">×</button>
-                    </span>
-                  )}
-                  {condition !== "All" && (
-                    <span className="active-filter-chip">
-                      {condition}
-                      <button type="button" onClick={() => setCondition("All")} aria-label="Remove condition filter">×</button>
-                    </span>
-                  )}
-                  {college !== "All" && (
-                    <span className="active-filter-chip">
-                      {collegeLabel}
-                      <button type="button" onClick={() => handleSelectCollege("All")} aria-label="Remove college filter">×</button>
-                    </span>
-                  )}
-                  {freeOnly && (
-                    <span className="active-filter-chip">
-                      Free Only
-                      <button type="button" onClick={() => setFreeOnly(false)} aria-label="Remove free only filter">×</button>
-                    </span>
-                  )}
-                  {priceFilterActive && (
-                    <span className="active-filter-chip">
-                      ₹{priceMin || 0} - ₹{priceMax || "any"}
-                      <button type="button" onClick={() => { setPriceMin(""); setPriceMax(""); }} aria-label="Remove price filter">×</button>
-                    </span>
-                  )}
-                  {sortBy !== "newest" && (
-                    <span className="active-filter-chip">
-                      {SORT_OPTS.find(o => o.val === sortBy)?.label}
-                      <button type="button" onClick={() => setSortBy("newest")} aria-label="Remove sorting filter">×</button>
-                    </span>
-                  )}
-                </div>
+            {/* Results count is anchored to the far right inside the 52px sticky bar */}
+            {(activeFilters > 0 || !!searchQuery) && (
+              <span className="filter-count" aria-live="polite">
+                {filtered.length} item{filtered.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Dedicated row for Active Filter Chips beneath the sticky toolbar */}
+        {activeFilters > 0 && (
+          <div className="active-filters-row">
+            <div className="active-filters-chips-list">
+              {category !== "All" && (
+                <span className="active-filter-chip">
+                  {category}
+                  <button type="button" onClick={() => setCategory("All")} aria-label="Remove category filter">×</button>
+                </span>
               )}
-
-              {activeFilters > 0 && (
-                <span className="filter-count-badge" aria-live="polite" aria-atomic="true" style={{ alignSelf: "center", marginLeft: "auto" }}>
-                  Filters ({activeFilters})
+              {condition !== "All" && (
+                <span className="active-filter-chip">
+                  {condition}
+                  <button type="button" onClick={() => setCondition("All")} aria-label="Remove condition filter">×</button>
+                </span>
+              )}
+              {college !== "All" && (
+                <span className="active-filter-chip">
+                  {collegeLabel}
+                  <button type="button" onClick={() => handleSelectCollege("All")} aria-label="Remove college filter">×</button>
+                </span>
+              )}
+              {freeOnly && (
+                <span className="active-filter-chip">
+                  Free Only
+                  <button type="button" onClick={() => setFreeOnly(false)} aria-label="Remove free only filter">×</button>
+                </span>
+              )}
+              {priceFilterActive && (
+                <span className="active-filter-chip">
+                  ₹{priceMin || 0} - ₹{priceMax || "any"}
+                  <button type="button" onClick={() => { setPriceMin(""); setPriceMax(""); }} aria-label="Remove price filter">×</button>
+                </span>
+              )}
+              {sortBy !== "newest" && (
+                <span className="active-filter-chip">
+                  {SORT_OPTS.find(o => o.val === sortBy)?.label}
+                  <button type="button" onClick={() => setSortBy("newest")} aria-label="Remove sorting filter">×</button>
                 </span>
               )}
 
-              {activeFilters > 0 && (
-                <button type="button" className="filter-clear-btn" onClick={clearAllFilters} aria-label={`Clear all ${activeFilters} active filters`}>
-                  Clear {activeFilters} filter{activeFilters > 1 ? "s" : ""}
-                </button>
-              )}
-
-              {(activeFilters > 0 || !!searchQuery) && (
-                <span className="filter-count" aria-live="polite">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
-              )}
+              <button
+                type="button"
+                className="clear-all-text-btn"
+                onClick={() => {
+                  clearAllFilters();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                aria-label="Clear all filters"
+              >
+                Clear All
+              </button>
             </div>
-
           </div>
-        </div>
+        )}
 
         {totalCount === 0 ? (
           /* Empty state for the entire marketplace (issue 9) */
