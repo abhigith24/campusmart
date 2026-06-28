@@ -1,4 +1,4 @@
-﻿# 📚 CampusMart — College Marketplace
+# 📚 CampusMart — College Marketplace
 
 > A student-focused buy, sell & rent marketplace built with React + Firebase.
 > Comparable in UX quality to Facebook Marketplace, OLX, and Etsy — designed specifically for campus life.
@@ -110,7 +110,7 @@
 |---|---|
 | Smart Recommendations | `aiService.js` suggestion engine based on browsing patterns |
 | AI Event Analytics | Engagement tracking for recommendation interactions |
-| MateGeni | AI assistant component for campus queries |
+| MartGeni | AI assistant component for campus queries |
 
 ---
 
@@ -189,8 +189,8 @@ src/
 │   ├── TrustedSellerBadge.js        ← Blue shield trusted seller badge
 │   ├── SameCampusBadge.js           ← Same campus indicator badge
 │   ├── Footer.js                    ← Site footer with links
-│   └── MateGeni/
-│       └── MateGeniCard.js          ← AI assistant component
+│   └── MartGeni/
+│       └── MartGeniCard.js          ← AI assistant component
 ├── context/
 │   ├── AuthContext.js               ← Firebase Auth + Firestore user profile
 │   ├── WishlistContext.js           ← Global wishlist state management

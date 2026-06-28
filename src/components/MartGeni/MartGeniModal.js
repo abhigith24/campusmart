@@ -1,13 +1,13 @@
 import React from "react";
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 
 /**
- * Reusable MateGeni Prompt/Interactive Modal overlay
+ * Reusable MartGeni Prompt/Interactive Modal overlay
  * 
  * Shows interactive dialogs or outputs. Renders conditionally based on config flags.
  */
-export default function MateGeniModal({ flag, isOpen, onClose, title, children }) {
-  const isEnabled = flag ? MATEGENI_CONFIG.featureFlags[flag] : false;
+export default function MartGeniModal({ flag, isOpen, onClose, title, children }) {
+  const isEnabled = flag ? MARTGENI_CONFIG.featureFlags[flag] : false;
   if (!isEnabled || !isOpen) return null;
 
   return (
@@ -64,7 +64,7 @@ export default function MateGeniModal({ flag, isOpen, onClose, title, children }
               gap: "6px"
             }}
           >
-            <span>✨</span> {title || "MateGeni Assistant"}
+            <span>✨</span> {title || "MartGeni Assistant"}
           </h3>
           <button
             onClick={onClose}

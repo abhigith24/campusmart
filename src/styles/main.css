@@ -278,7 +278,9 @@ body, .navbar, .listing-card, .detail-card, .form-card, .modal, .dd-menu, .btn, 
 [data-theme="dark"] .post-cat-btn,
 [data-theme="dark"] .post-cond-btn,
 [data-theme="dark"] .post-type-btn,
-[data-theme="dark"] .post-meetup-btn {
+[data-theme="dark"] .post-meetup-btn,
+[data-theme="dark"] .category-checkbox-card,
+[data-theme="dark"] .budget-radio-card {
   background: var(--surface) !important;
   border-color: var(--bdr) !important;
   color: var(--txt) !important;
@@ -286,7 +288,9 @@ body, .navbar, .listing-card, .detail-card, .form-card, .modal, .dd-menu, .btn, 
 [data-theme="dark"] .post-cat-btn:hover,
 [data-theme="dark"] .post-cond-btn:hover,
 [data-theme="dark"] .post-type-btn:hover,
-[data-theme="dark"] .post-meetup-btn:hover {
+[data-theme="dark"] .post-meetup-btn:hover,
+[data-theme="dark"] .category-checkbox-card:hover,
+[data-theme="dark"] .budget-radio-card:hover {
   background: var(--light) !important;
   border-color: var(--bdr-2) !important;
 }
@@ -705,7 +709,7 @@ input,textarea,select { font-family:inherit }
   box-shadow:0 2px 8px rgba(37,99,235,.25);
 }
 .nav-search {
-  flex:1; max-width:480px;
+  flex:1; max-width:430px; margin: 0 auto;
   background:var(--light); border:1.5px solid transparent;
   border-radius:var(--r-full); padding:8px 16px;
   display:flex; align-items:center; gap:9px;
@@ -728,7 +732,7 @@ input,textarea,select { font-family:inherit }
 }
 .search-clear-btn:hover { background:var(--red-light); color:var(--red) }
 .search-clear-btn svg { pointer-events:none }
-.nav-links { display:flex; align-items:center; gap:4px; margin-left:auto }
+.nav-links { display:flex; align-items:center; gap:16px; margin:0 }
 .nav-hamburger {
   display:none; background:var(--light); border:none;
   width:38px; height:38px; border-radius:var(--r-sm);
@@ -797,6 +801,32 @@ input,textarea,select { font-family:inherit }
 .btn-outline:hover:not(:disabled) { border-color:var(--p); color:var(--p); background:var(--p-light) }
 .btn-ghost { background:transparent; color:var(--muted) }
 .btn-ghost:hover:not(:disabled) { background:var(--light); color:var(--txt) }
+
+.action-row-btn {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r-md);
+  color: var(--txt);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.action-row-btn:hover {
+  background: var(--light);
+  border-color: var(--muted);
+  transform: translateX(4px);
+}
+.action-row-btn:focus-visible {
+  outline: 2px solid var(--p);
+  outline-offset: 2px;
+}
 .btn-green { background:linear-gradient(135deg,#22c55e,#4ade80); color:#fff; box-shadow:0 2px 8px rgba(34,197,94,.3) }
 .btn-green:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 4px 14px rgba(34,197,94,.4) }
 .btn-danger { background:linear-gradient(135deg,#ef4444,#f87171); color:#fff; box-shadow:0 2px 8px rgba(239,68,68,.3) }
@@ -817,18 +847,20 @@ input,textarea,select { font-family:inherit }
 }
 .avatar img { width:100%; height:100%; object-fit:cover }
 .nav-icon-btn {
-  position:relative; background:var(--light); border:none;
-  width:38px; height:38px; border-radius:var(--r-sm);
+  position:relative; background:var(--light); border:2px solid transparent;
+  width:44px; height:44px; border-radius:50%;
   display:inline-flex; align-items:center; justify-content:center;
   font-size:18px; transition:all var(--dur) var(--ease); color:var(--txt-2);
+  cursor:pointer;
 }
-.nav-icon-btn:hover { background:var(--p-light); color:var(--p) }
+.nav-icon-btn:hover, .nav-icon-btn:focus-visible { background:var(--p-light); color:var(--p); border-color:var(--p); box-shadow:0 0 0 3px var(--p-glow); outline:none; }
+.nav-icon-btn:hover .nav-badge, .nav-icon-btn:focus-visible .nav-badge { border-color:var(--p-light); }
 .nav-badge {
-  position:absolute; top:-3px; right:-3px;
+  position:absolute; top:-2px; right:-2px;
   background:var(--red); color:#fff; font-size:10px; font-weight:800;
-  min-width:17px; height:17px; border-radius:var(--r-full);
+  min-width:18px; height:18px; border-radius:var(--r-full);
   display:inline-flex; align-items:center; justify-content:center;
-  padding:0 4px; border:2px solid #fff;
+  padding:0 4px; border:2px solid var(--light); transition:border-color var(--dur) var(--ease);
 }
 .notif-badge-inline {
   display:inline-flex; align-items:center; justify-content:center;
@@ -1691,10 +1723,10 @@ input,textarea,select { font-family:inherit }
 /* ════════════════════════════════════════════════════
    FOOTER
 ════════════════════════════════════════════════════ */
-.site-footer { background:#0f172a; color:#e2e8f0; margin-top:auto }
+.site-footer { background:#0f172a; color:#e2e8f0; margin-top:auto; padding-bottom:96px; }
 .footer-grid {
-  display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr;
-  gap:40px; padding:40px 0 28px;
+  display:grid; grid-template-columns:1.4fr repeat(4, 1fr);
+  gap:28px; padding:40px 0 24px;
 }
 .footer-logo {
   display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:14px;
@@ -1704,37 +1736,39 @@ input,textarea,select { font-family:inherit }
   width:fit-content;
 }
 .footer-logo-icon { font-size:22px; -webkit-text-fill-color:initial }
-.footer-tagline { font-size:13px; color:#94a3b8; line-height:1.7; margin-bottom:26px; max-width:260px }
+.footer-tagline { font-size:13px; color:#94a3b8; line-height:1.7; margin-bottom:16px; max-width:260px }
 .footer-badge {
   display:inline-block; padding:5px 12px;
   background:rgba(249,115,22,.15); color:#fb923c;
   border-radius:var(--r-full); font-size:12px; font-weight:700;
-  border:1px solid rgba(249,115,22,.25);
+  border:1px solid rgba(249,115,22,.25); margin-bottom: 8px;
 }
 .footer-col-title {
-  font-size:11px; font-weight:700; color:#64748b;
+  font-size:11px; font-weight:800; color:#94a3b8;
   text-transform:uppercase; letter-spacing:.8px; margin-bottom:14px;
 }
 .footer-link {
   display:block; font-size:13px; color:#cbd5e1; font-weight:500;
   border:none; background:transparent; cursor:pointer;
   padding:8px 0; text-align:left; font-family:inherit;
-  text-decoration:none; transition:color .15s; width:100%;
+  text-decoration:none; transition:all .2s ease; width:100%; outline:none;
 }
-.footer-link:hover { color:#f97316 }
-.footer-divider { height:1px; background:rgba(255,255,255,.06) }
+.footer-link:hover { color:#fff; text-decoration:underline; }
+.footer-link:focus-visible { color:#fff; text-decoration:underline; outline:2px solid var(--p); outline-offset:2px; border-radius:4px; }
+.footer-divider { height:1px; background:rgba(255,255,255,.15) }
 .footer-bottom {
-  padding:16px 0 20px; display:flex;
-  align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap;
+  padding:20px 0 24px; display:flex;
+  align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
 }
 .footer-copyright p { font-size:13px; color:#94a3b8; font-weight:500 }
 .footer-copyright p strong { color:#cbd5e1 }
 .footer-legal-note { font-size:11px; color:#475569; line-height:1.7; margin-top:8px; max-width:680px }
-.footer-badges { display:flex; gap:12px; flex-wrap:wrap; flex-shrink:0; padding-right:24px }
+.footer-badges { display:flex; gap:12px; flex-wrap:wrap; flex-shrink:0; align-items:center; }
 .footer-trust-badge {
-  padding:5px 12px; background:rgba(255,255,255,.05);
+  padding:0 14px; background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.1); border-radius:var(--r-full);
   font-size:12px; color:#94a3b8; font-weight:600; white-space:nowrap;
+  display:flex; align-items:center; justify-content:center; height:32px;
 }
 
 /* ════════════════════════════════════════════════════
@@ -2321,16 +2355,16 @@ input,textarea,select { font-family:inherit }
 }
 
 /* ── AI Price Suggestion actions row ── */
-.mategeni-price-actions {
+.martgeni-price-actions {
   display:flex; gap:8px; margin-top:8px;
 }
-.mategeni-price-dismiss-btn {
+.martgeni-price-dismiss-btn {
   flex:1; padding:8px 14px; border-radius:var(--r-sm);
   border:1.5px solid var(--bdr); background:var(--card-bg);
   font-size:13px; font-weight:600; color:var(--txt-2);
   cursor:pointer; transition:all .15s ease;
 }
-.mategeni-price-dismiss-btn:hover { border-color:var(--red); color:var(--red); }
+.martgeni-price-dismiss-btn:hover { border-color:var(--red); color:var(--red); }
 
 /* ── Quality score card ── */
 .post-quality-card {
@@ -2445,17 +2479,17 @@ input,textarea,select { font-family:inherit }
   background:linear-gradient(135deg,#ea580c,#f97316);
   transform:translateY(-1px); box-shadow:0 4px 16px rgba(249,115,22,.5);
 }
-.nav-avatar-wrap { position:relative }
+.nav-avatar-wrap { position:relative; margin-left:8px; }
 .nav-avatar {
-  width:36px; height:36px; border-radius:50%; overflow:hidden;
+  width:44px; height:44px; border-radius:50%; overflow:hidden;
   border:2px solid var(--p-mid); cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   font-weight:800; font-size:14px; color:var(--p);
   background:linear-gradient(135deg,var(--p-mid),var(--p-light));
   flex-shrink:0; transition:all var(--dur) var(--ease);
-  position:relative;
+  position:relative; outline:none;
 }
-.nav-avatar:hover { border-color:var(--p); box-shadow:0 0 0 3px var(--p-glow) }
+.nav-avatar:hover, .nav-avatar:focus-visible { border-color:var(--p); box-shadow:0 0 0 3px var(--p-glow); }
 .nav-avatar img { width:100%; height:100%; object-fit:cover }
 .nav-verified-dot {
   position:absolute; bottom:0; right:0;
@@ -5427,9 +5461,9 @@ button {
 }
 
 /* ════════════════════════════════════════════════════
-   MATEGENI AI ASSISTANT
+   MARTGENI AI ASSISTANT
    ════════════════════════════════════════════════════ */
-.mategeni-container {
+.martgeni-container {
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -5437,7 +5471,7 @@ button {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.mategeni-fab {
+.martgeni-fab {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -5452,16 +5486,16 @@ button {
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
   transition: all 0.3s var(--spring);
 }
-.mategeni-fab:hover {
+.martgeni-fab:hover {
   transform: scale(1.05) translateY(-2px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
 }
-.mategeni-fab-icon {
+.martgeni-fab-icon {
   font-size: 16px;
-  animation: mategeni-pulse 2s infinite ease-in-out;
+  animation: martgeni-pulse 2s infinite ease-in-out;
 }
 
-.mategeni-window {
+.martgeni-window {
   position: absolute;
   bottom: 60px;
   right: 0;
@@ -5474,14 +5508,14 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: mategeni-slide-in 0.3s var(--spring);
+  animation: martgeni-slide-in 0.3s var(--spring);
 }
-[data-theme="dark"] .mategeni-window {
+[data-theme="dark"] .martgeni-window {
   background: var(--surface) !important;
   border-color: var(--bdr) !important;
 }
 
-.mategeni-header {
+.martgeni-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5489,15 +5523,15 @@ button {
   background: linear-gradient(135deg, var(--p) 0%, var(--ind) 100%);
   color: #ffffff;
 }
-.mategeni-header-title {
+.martgeni-header-title {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.mategeni-header-icon {
+.martgeni-header-icon {
   font-size: 18px;
 }
-.mategeni-close-btn {
+.martgeni-close-btn {
   background: transparent;
   border: none;
   color: #ffffff;
@@ -5507,11 +5541,11 @@ button {
   transition: opacity 0.2s;
   line-height: 1;
 }
-.mategeni-close-btn:hover {
+.martgeni-close-btn:hover {
   opacity: 1;
 }
 
-.mategeni-messages {
+.martgeni-messages {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
@@ -5519,40 +5553,40 @@ button {
   flex-direction: column;
   gap: 12px;
 }
-.mategeni-msg-row {
+.martgeni-msg-row {
   display: flex;
   width: 100%;
 }
-.mategeni-msg-row.user {
+.martgeni-msg-row.user {
   justify-content: flex-end;
 }
-.mategeni-msg-row.ai {
+.martgeni-msg-row.ai {
   justify-content: flex-start;
 }
-.mategeni-bubble {
+.martgeni-bubble {
   max-width: 80%;
   padding: 10px 14px;
   border-radius: 14px;
   font-size: 12.5px;
   line-height: 1.45;
 }
-.mategeni-bubble.user {
+.martgeni-bubble.user {
   background: var(--p);
   color: #ffffff;
   border-bottom-right-radius: 2px;
 }
-.mategeni-bubble.ai {
+.martgeni-bubble.ai {
   background: var(--bg-tertiary);
   color: var(--txt);
   border-bottom-left-radius: 2px;
   white-space: pre-wrap;
 }
-[data-theme="dark"] .mategeni-bubble.ai {
+[data-theme="dark"] .martgeni-bubble.ai {
   background: var(--bg-secondary) !important;
   color: var(--txt) !important;
 }
 
-.mategeni-chip-container {
+.martgeni-chip-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -5560,11 +5594,11 @@ button {
   border-top: 1px solid var(--bdr);
   background: var(--bg-secondary);
 }
-[data-theme="dark"] .mategeni-chip-container {
+[data-theme="dark"] .martgeni-chip-container {
   background: var(--bg-primary) !important;
   border-color: var(--bdr) !important;
 }
-.mategeni-chip {
+.martgeni-chip {
   padding: 6px 12px;
   border-radius: var(--r-full);
   background: var(--bg-primary);
@@ -5575,35 +5609,35 @@ button {
   cursor: pointer;
   transition: all 0.2s;
 }
-.mategeni-chip:hover {
+.martgeni-chip:hover {
   background: var(--p-light);
   color: var(--p);
   border-color: var(--p-mid);
   transform: translateY(-1px);
 }
-[data-theme="dark"] .mategeni-chip {
+[data-theme="dark"] .martgeni-chip {
   background: var(--surface) !important;
   border-color: var(--bdr) !important;
   color: var(--txt-2) !important;
 }
-[data-theme="dark"] .mategeni-chip:hover {
+[data-theme="dark"] .martgeni-chip:hover {
   background: rgba(37, 99, 235, 0.15) !important;
   color: #60a5fa !important;
   border-color: rgba(96, 165, 250, 0.4) !important;
 }
 
-.mategeni-input-area {
+.martgeni-input-area {
   display: flex;
   padding: 10px 16px;
   gap: 8px;
   border-top: 1px solid var(--bdr);
   background: var(--bg-primary);
 }
-[data-theme="dark"] .mategeni-input-area {
+[data-theme="dark"] .martgeni-input-area {
   background: var(--surface) !important;
   border-color: var(--bdr) !important;
 }
-.mategeni-input {
+.martgeni-input {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--bdr);
@@ -5614,15 +5648,15 @@ button {
   outline: none;
   transition: border-color 0.2s;
 }
-.mategeni-input:focus {
+.martgeni-input:focus {
   border-color: var(--p);
 }
-[data-theme="dark"] .mategeni-input {
+[data-theme="dark"] .martgeni-input {
   background: var(--bg-primary) !important;
   border-color: var(--bdr) !important;
   color: var(--txt) !important;
 }
-.mategeni-send-btn {
+.martgeni-send-btn {
   padding: 8px 16px;
   border-radius: var(--r-sm);
   background: var(--p);
@@ -5633,31 +5667,31 @@ button {
   cursor: pointer;
   transition: background 0.2s;
 }
-.mategeni-send-btn:hover:not(:disabled) {
+.martgeni-send-btn:hover:not(:disabled) {
   background: var(--p-dark);
 }
-.mategeni-send-btn:disabled {
+.martgeni-send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-@keyframes mategeni-pulse {
+@keyframes martgeni-pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.15); text-shadow: 0 0 8px rgba(255,255,255,0.6); }
   100% { transform: scale(1); }
 }
 
-@keyframes mategeni-slide-in {
+@keyframes martgeni-slide-in {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 480px) {
-  .mategeni-container {
+  .martgeni-container {
     bottom: 16px;
     right: 16px;
   }
-  .mategeni-window {
+  .martgeni-window {
     width: calc(100vw - 32px);
     height: 400px;
     bottom: 56px;
@@ -5666,20 +5700,20 @@ button {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   MATEGENI PRODUCTION UI — v2.0
+   MARTGENI PRODUCTION UI — v2.0
    Price Card · Risk Banners · Category Banner · Chips · Results
 ════════════════════════════════════════════════════════════════ */
 
 /* ── Price Suggestion Card ──────────────────────────────────── */
-.mategeni-price-card {
+.martgeni-price-card {
   margin-top: 12px;
   border: 1.5px solid var(--p-mid);
   border-radius: var(--r-md);
   background: var(--p-glow);
   overflow: hidden;
-  animation: mategeni-slide-in 0.25s var(--ease);
+  animation: martgeni-slide-in 0.25s var(--ease);
 }
-.mategeni-price-card-header {
+.martgeni-price-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -5690,19 +5724,19 @@ button {
   color: var(--p);
   border-bottom: 1px solid var(--p-mid);
 }
-.mategeni-price-conf { font-size: 10px; font-weight: 600; color: var(--p-dark); opacity: 0.75; }
-.mategeni-price-cols {
+.martgeni-price-conf { font-size: 10px; font-weight: 600; color: var(--p-dark); opacity: 0.75; }
+.martgeni-price-cols {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr;
 }
-.mategeni-price-col {
+.martgeni-price-col {
   padding: 12px 10px;
   text-align: center;
   border-right: 1px solid var(--p-mid);
 }
-.mategeni-price-col:last-child { border-right: none; }
-.mategeni-price-col.recommended { background: var(--p-light); }
-.mategeni-price-col-label {
+.martgeni-price-col:last-child { border-right: none; }
+.martgeni-price-col.recommended { background: var(--p-light); }
+.martgeni-price-col-label {
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -5710,10 +5744,10 @@ button {
   color: var(--muted);
   margin-bottom: 4px;
 }
-.mategeni-price-col.recommended .mategeni-price-col-label { color: var(--p); }
-.mategeni-price-col-val { font-size: 15px; font-weight: 800; color: var(--txt); }
-.mategeni-price-col.recommended .mategeni-price-col-val { font-size: 18px; color: var(--p); }
-.mategeni-price-reason {
+.martgeni-price-col.recommended .martgeni-price-col-label { color: var(--p); }
+.martgeni-price-col-val { font-size: 15px; font-weight: 800; color: var(--txt); }
+.martgeni-price-col.recommended .martgeni-price-col-val { font-size: 18px; color: var(--p); }
+.martgeni-price-reason {
   padding: 8px 14px;
   font-size: 11px;
   color: var(--muted);
@@ -5721,7 +5755,7 @@ button {
   border-top: 1px solid var(--p-mid);
   border-bottom: 1px solid var(--p-mid);
 }
-.mategeni-price-apply-btn {
+.martgeni-price-apply-btn {
   width: 100%;
   padding: 10px;
   background: linear-gradient(135deg, var(--p), var(--ind));
@@ -5732,7 +5766,7 @@ button {
   cursor: pointer;
   transition: opacity 0.15s;
 }
-.mategeni-price-apply-btn:hover { opacity: 0.9; }
+.martgeni-price-apply-btn:hover { opacity: 0.9; }
 
 /* ── Category Suggestion Banner ─────────────────────────────── */
 .post-ai-cat-banner {
@@ -5743,7 +5777,7 @@ button {
   background: var(--p-glow);
   border: 1.5px solid var(--p-mid);
   border-radius: var(--r-sm);
-  animation: mategeni-slide-in 0.2s var(--ease);
+  animation: martgeni-slide-in 0.2s var(--ease);
 }
 .post-ai-conf {
   display: inline-block;
@@ -5779,23 +5813,23 @@ button {
 .post-ai-dismiss-btn:hover { background: var(--bg-tertiary); }
 
 /* ── Fraud Risk Banners ─────────────────────────────────────── */
-.mategeni-risk-banner { padding: 10px 14px; font-size: 12px; transition: all 0.3s ease; }
-.mategeni-risk-banner.risk-low    { background:#fefce8; border-left:4px solid #ca8a04; color:#713f12; }
-.mategeni-risk-banner.risk-medium { background:#fff7ed; border-left:4px solid #ea580c; color:#7c2d12; }
-.mategeni-risk-banner.risk-high   { background:#fee2e2; border-left:4px solid #dc2626; color:#7f1d1d; }
-[data-theme="dark"] .mategeni-risk-banner.risk-low    { background:rgba(202,138,4,.12);  color:#fde68a; border-left-color:#ca8a04; }
-[data-theme="dark"] .mategeni-risk-banner.risk-medium { background:rgba(234,88,12,.12);  color:#fed7aa; border-left-color:#ea580c; }
-[data-theme="dark"] .mategeni-risk-banner.risk-high   { background:rgba(220,38,38,.12);  color:#fca5a5; border-left-color:#dc2626; }
+.martgeni-risk-banner { padding: 10px 14px; font-size: 12px; transition: all 0.3s ease; }
+.martgeni-risk-banner.risk-low    { background:#fefce8; border-left:4px solid #ca8a04; color:#713f12; }
+.martgeni-risk-banner.risk-medium { background:#fff7ed; border-left:4px solid #ea580c; color:#7c2d12; }
+.martgeni-risk-banner.risk-high   { background:#fee2e2; border-left:4px solid #dc2626; color:#7f1d1d; }
+[data-theme="dark"] .martgeni-risk-banner.risk-low    { background:rgba(202,138,4,.12);  color:#fde68a; border-left-color:#ca8a04; }
+[data-theme="dark"] .martgeni-risk-banner.risk-medium { background:rgba(234,88,12,.12);  color:#fed7aa; border-left-color:#ea580c; }
+[data-theme="dark"] .martgeni-risk-banner.risk-high   { background:rgba(220,38,38,.12);  color:#fca5a5; border-left-color:#dc2626; }
 
 /* ── Quick Action Chips ─────────────────────────────────────── */
-.mategeni-chip-row {
+.martgeni-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
   padding-left: 2px;
 }
-.mategeni-chip {
+.martgeni-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -5810,17 +5844,17 @@ button {
   transition: background 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
-.mategeni-chip:hover { background: var(--p-light); border-color: var(--p-mid); }
+.martgeni-chip:hover { background: var(--p-light); border-color: var(--p-mid); }
 
 /* ── Listing Result Cards inside Chat ───────────────────────── */
-.mategeni-listing-results {
+.martgeni-listing-results {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-top: 8px;
   width: 100%;
 }
-.mategeni-listing-result {
+.martgeni-listing-result {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -5831,16 +5865,16 @@ button {
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.mategeni-listing-result:hover { border-color: var(--p-mid); box-shadow: var(--s1); }
-.mategeni-listing-result-img {
+.martgeni-listing-result:hover { border-color: var(--p-mid); box-shadow: var(--s1); }
+.martgeni-listing-result-img {
   width: 44px;
   height: 44px;
   border-radius: var(--r-xs);
   object-fit: cover;
   flex-shrink: 0;
 }
-.mategeni-listing-result-info { flex: 1; min-width: 0; }
-.mategeni-listing-result-title {
+.martgeni-listing-result-info { flex: 1; min-width: 0; }
+.martgeni-listing-result-title {
   font-size: 12px;
   font-weight: 700;
   color: var(--txt);
@@ -5848,9 +5882,9 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mategeni-listing-result-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-.mategeni-listing-result-price { font-size: 12px; font-weight: 800; color: var(--p); }
-.mategeni-listing-result-badge {
+.martgeni-listing-result-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.martgeni-listing-result-price { font-size: 12px; font-weight: 800; color: var(--p); }
+.martgeni-listing-result-badge {
   font-size: 9px;
   font-weight: 700;
   color: var(--grn);
@@ -5858,10 +5892,10 @@ button {
   padding: 1px 5px;
   border-radius: var(--r-full);
 }
-.mategeni-listing-result-cat { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.martgeni-listing-result-cat { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
 /* ── Optimizer Modal Sections ───────────────────────────────── */
-.mategeni-modal-section-label {
+.martgeni-modal-section-label {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
@@ -5869,7 +5903,7 @@ button {
   letter-spacing: 0.5px;
   margin-bottom: 6px;
 }
-.mategeni-modal-value {
+.martgeni-modal-value {
   padding: 10px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--bdr);
@@ -5878,8 +5912,8 @@ button {
   color: var(--txt);
   line-height: 1.6;
 }
-.mategeni-ksp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.mategeni-ksp-item {
+.martgeni-ksp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.martgeni-ksp-item {
   font-size: 12px;
   font-weight: 600;
   color: #166534;
@@ -5887,8 +5921,8 @@ button {
   background: var(--grn-light);
   border-radius: var(--r-sm);
 }
-[data-theme="dark"] .mategeni-ksp-item { background: rgba(34,197,94,0.12); color: #4ade80; }
-.mategeni-tag-chip {
+[data-theme="dark"] .martgeni-ksp-item { background: rgba(34,197,94,0.12); color: #4ade80; }
+.martgeni-tag-chip {
   display: inline-flex;
   padding: 3px 10px;
   background: var(--p-light);
@@ -5897,12 +5931,12 @@ button {
   font-size: 11px;
   font-weight: 600;
 }
-[data-theme="dark"] .mategeni-tag-chip { background: rgba(37,99,235,0.15); }
+[data-theme="dark"] .martgeni-tag-chip { background: rgba(37,99,235,0.15); }
 
 /* ── Fix msg-row layout for chips + listing results ─────────── */
-.mategeni-msg-row { flex-direction: column; }
-.mategeni-msg-row.user { align-items: flex-end; }
-.mategeni-msg-row.ai  { align-items: flex-start; }
+.martgeni-msg-row { flex-direction: column; }
+.martgeni-msg-row.user { align-items: flex-end; }
+.martgeni-msg-row.ai  { align-items: flex-start; }
 
 /* ════════════════════════════════════════════════════
    GLASSMORPHISM SHARE SYSTEM STYLES
@@ -6080,8 +6114,8 @@ button {
   pointer-events: auto; /* re-enable pointer events for buttons */
 }
 
-/* Override MateGeni Assistant default container inside group */
-.floating-action-group .mategeni-container {
+/* Override MartGeni Assistant default container inside group */
+.floating-action-group .martgeni-container {
   position: relative !important;
   bottom: auto !important;
   right: auto !important;
@@ -7608,6 +7642,39 @@ button {
   text-decoration: underline;
 }
 
+.contact-form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.submit-ticket-btn {
+  height: 48px;
+  width: 100%;
+  max-width: 280px;
+  flex: none;
+}
+
+.reset-ticket-btn {
+  height: 48px;
+  width: max-content;
+  padding: 0 24px;
+  flex: none;
+}
+
+@media (max-width: 768px) {
+  .contact-form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .submit-ticket-btn, .reset-ticket-btn {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 .support-button-group {
   display: flex;
   gap: 12px;
@@ -8458,9 +8525,9 @@ a,
   background: var(--light);
 }
 .category-checkbox-card.active {
-  border-color: var(--p);
-  background: var(--p-light);
-  color: var(--p-dark);
+  border-color: var(--p) !important;
+  background: var(--p-light) !important;
+  color: var(--p-dark) !important;
 }
 
 /* Budget Radio Cards */
@@ -8482,15 +8549,16 @@ a,
   font-size: 13px;
   font-weight: 600;
   transition: all 0.15s ease;
+  color: var(--txt);
 }
 .budget-radio-card:hover {
   border-color: var(--muted);
   background: var(--light);
 }
 .budget-radio-card.active {
-  border-color: var(--p);
-  background: var(--p-light);
-  color: var(--p-dark);
+  border-color: var(--p) !important;
+  background: var(--p-light) !important;
+  color: var(--p-dark) !important;
 }
 
 @media (max-width: 768px) {

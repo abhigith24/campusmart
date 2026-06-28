@@ -6,8 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { categorizeProduct, optimizeListingDescription, suggestPriceRange } from "../services/ai/aiService";
 import { trackAIEvent, AI_EVENTS } from "../services/ai/aiAnalytics";
-import MateGeniButton from "../components/MateGeni/MateGeniButton";
-import MateGeniModal from "../components/MateGeni/MateGeniModal";
+import MartGeniButton from "../components/MartGeni/MartGeniButton";
+import MartGeniModal from "../components/MartGeni/MartGeniModal";
 import ConfirmModal from "../components/ConfirmModal";
 
 const PRIMARY_CATEGORIES = ["Books", "Notes", "Electronics", "Lab Equipment", "Stationery", "Fashion", "Hostel"];
@@ -73,7 +73,7 @@ export default function PostListingPage({ setPage, editListing }) {
   const [priceSuggestion, setPriceSuggestion] = useState(null);
   const [dragOver,      setDragOver]      = useState(false);
 
-  // ── MateGeni ──
+  // ── MartGeni ──
   const [suggestedCat,       setSuggestedCat]       = useState("");
   const [suggestedCatConf,   setSuggestedCatConf]   = useState(0);
   const [optimizerModalOpen, setOptimizerModalOpen] = useState(false);
@@ -652,7 +652,7 @@ export default function PostListingPage({ setPage, editListing }) {
                     <div className="post-ai-cat-banner" style={{ marginTop: 8 }}>
                       <span className="post-ai-icon">✨</span>
                       <div style={{ flex: 1 }}>
-                        <div className="post-ai-label">MateGeni suggests</div>
+                        <div className="post-ai-label">MartGeni suggests</div>
                         <div className="post-ai-value">
                           <strong>{CAT_ICONS[suggestedCat]} {suggestedCat}</strong>
                           <span className="post-ai-conf">{Math.round(suggestedCatConf * 100)}% confidence</span>
@@ -675,7 +675,7 @@ export default function PostListingPage({ setPage, editListing }) {
                 <div className="form-group">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <label className="form-label" htmlFor="post-desc" style={{ margin: 0 }}>Description <span className="req">*</span></label>
-                    <MateGeniButton
+                    <MartGeniButton
                       flag="enableListingOptimizer"
                       type="button"
                       onClick={handleOptimizeDescription}
@@ -683,7 +683,7 @@ export default function PostListingPage({ setPage, editListing }) {
                       style={{ padding: "4px 10px", fontSize: "12px", minHeight: "unset" }}
                     >
                       {optimizerLoading ? "Optimizing..." : "Optimize"}
-                    </MateGeniButton>
+                    </MartGeniButton>
                   </div>
                   <div style={{ position: "relative" }}>
                     <textarea
@@ -835,37 +835,37 @@ export default function PostListingPage({ setPage, editListing }) {
 
                     {/* AI Price Suggestion Card */}
                     {priceSuggestion && (
-                      <div className="mategeni-price-card">
-                        <div className="mategeni-price-card-header">
+                      <div className="martgeni-price-card">
+                        <div className="martgeni-price-card-header">
                           <span>✨ AI Price Suggestion</span>
-                          <span className="mategeni-price-conf">{Math.round((priceSuggestion.confidenceScore || 0) * 100)}% confidence</span>
+                          <span className="martgeni-price-conf">{Math.round((priceSuggestion.confidenceScore || 0) * 100)}% confidence</span>
                         </div>
-                        <div className="mategeni-price-cols">
-                          <div className="mategeni-price-col">
-                            <div className="mategeni-price-col-label">Min</div>
-                            <div className="mategeni-price-col-val">₹{(priceSuggestion.minPrice || 0).toLocaleString("en-IN")}</div>
+                        <div className="martgeni-price-cols">
+                          <div className="martgeni-price-col">
+                            <div className="martgeni-price-col-label">Min</div>
+                            <div className="martgeni-price-col-val">₹{(priceSuggestion.minPrice || 0).toLocaleString("en-IN")}</div>
                           </div>
-                          <div className="mategeni-price-col recommended">
-                            <div className="mategeni-price-col-label">Suggested ★</div>
-                            <div className="mategeni-price-col-val">₹{(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")}</div>
+                          <div className="martgeni-price-col recommended">
+                            <div className="martgeni-price-col-label">Suggested ★</div>
+                            <div className="martgeni-price-col-val">₹{(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")}</div>
                           </div>
-                          <div className="mategeni-price-col">
-                            <div className="mategeni-price-col-label">Max</div>
-                            <div className="mategeni-price-col-val">₹{(priceSuggestion.maxPrice || 0).toLocaleString("en-IN")}</div>
+                          <div className="martgeni-price-col">
+                            <div className="martgeni-price-col-label">Max</div>
+                            <div className="martgeni-price-col-val">₹{(priceSuggestion.maxPrice || 0).toLocaleString("en-IN")}</div>
                           </div>
                         </div>
                         {priceSuggestion.reason && (
-                          <div className="mategeni-price-reason">💡 {priceSuggestion.reason}</div>
+                          <div className="martgeni-price-reason">💡 {priceSuggestion.reason}</div>
                         )}
-                        <div className="mategeni-price-actions">
-                          <button type="button" className="mategeni-price-apply-btn" onClick={() => {
+                        <div className="martgeni-price-actions">
+                          <button type="button" className="martgeni-price-apply-btn" onClick={() => {
                             setPrice(String(priceSuggestion.recommendedPrice || ""));
                             setPriceSuggestion(null);
                             toast(`Price set to ₹${(priceSuggestion.recommendedPrice || 0).toLocaleString("en-IN")} ✓`, "success");
                           }}>
                             Apply Suggestion
                           </button>
-                          <button type="button" className="mategeni-price-dismiss-btn" onClick={() => setPriceSuggestion(null)}>
+                          <button type="button" className="martgeni-price-dismiss-btn" onClick={() => setPriceSuggestion(null)}>
                             Dismiss
                           </button>
                         </div>
@@ -1095,42 +1095,42 @@ export default function PostListingPage({ setPage, editListing }) {
       </div>
 
       {/* ═══ Modals ═══ */}
-      <MateGeniModal
+      <MartGeniModal
         flag="enableListingOptimizer"
         isOpen={optimizerModalOpen}
         onClose={() => setOptimizerModalOpen(false)}
-        title="MateGeni Listing Optimizer"
+        title="MartGeni Listing Optimizer"
       >
         {optimizedData && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
-              <div className="mategeni-modal-section-label">✨ Optimized Title</div>
-              <div className="mategeni-modal-value" style={{ fontWeight: 700 }}>
+              <div className="martgeni-modal-section-label">✨ Optimized Title</div>
+              <div className="martgeni-modal-value" style={{ fontWeight: 700 }}>
                 {optimizedData.optimizedTitle}
               </div>
             </div>
             {optimizedData.keySellingPoints && optimizedData.keySellingPoints.length > 0 && (
               <div>
-                <div className="mategeni-modal-section-label">🎯 Key Selling Points</div>
-                <ul className="mategeni-ksp-list">
+                <div className="martgeni-modal-section-label">🎯 Key Selling Points</div>
+                <ul className="martgeni-ksp-list">
                   {optimizedData.keySellingPoints.map((pt, i) => (
-                    <li key={i} className="mategeni-ksp-item">✓ {pt}</li>
+                    <li key={i} className="martgeni-ksp-item">✓ {pt}</li>
                   ))}
                 </ul>
               </div>
             )}
             <div>
-              <div className="mategeni-modal-section-label">📝 Optimized Description</div>
-              <div className="mategeni-modal-value" style={{ whiteSpace: "pre-line", lineHeight: "1.7" }}>
+              <div className="martgeni-modal-section-label">📝 Optimized Description</div>
+              <div className="martgeni-modal-value" style={{ whiteSpace: "pre-line", lineHeight: "1.7" }}>
                 {optimizedData.optimizedDescription}
               </div>
             </div>
             {optimizedData.suggestedTags && optimizedData.suggestedTags.length > 0 && (
               <div>
-                <div className="mategeni-modal-section-label">🏷️ Suggested Tags</div>
+                <div className="martgeni-modal-section-label">🏷️ Suggested Tags</div>
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
                   {optimizedData.suggestedTags.map(tag => (
-                    <span key={tag} className="mategeni-tag-chip">#{tag}</span>
+                    <span key={tag} className="martgeni-tag-chip">#{tag}</span>
                   ))}
                 </div>
               </div>
@@ -1144,14 +1144,14 @@ export default function PostListingPage({ setPage, editListing }) {
                   setTitle(optimizedData.optimizedTitle);
                   setDescription(optimizedData.optimizedDescription);
                   setOptimizerModalOpen(false);
-                  toast("Applied MateGeni suggestions! ✨", "success");
+                  toast("Applied MartGeni suggestions! ✨", "success");
                 }}>
                 ✨ Apply All
               </button>
             </div>
           </div>
         )}
-      </MateGeniModal>
+      </MartGeniModal>
 
       {/* Discard confirmation */}
       <ConfirmModal

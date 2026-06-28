@@ -517,7 +517,7 @@ export default function ChatPage({ initialChatWith, setPage }) {
               };
               const s = bannerStyles[riskLevel] || bannerStyles.medium;
               return (
-                <div className={`mategeni-risk-banner risk-${riskLevel}`} style={{ background: s.bg, borderLeft: `4px solid ${s.border}`, color: s.color }}>
+                <div className={`martgeni-risk-banner risk-${riskLevel}`} style={{ background: s.bg, borderLeft: `4px solid ${s.border}`, color: s.color }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                       <span style={{ fontSize: "16px", flexShrink: 0 }}>{s.icon}</span>

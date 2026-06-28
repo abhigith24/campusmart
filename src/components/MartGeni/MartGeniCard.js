@@ -1,19 +1,19 @@
 import React from "react";
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 
 /**
- * Reusable MateGeni Suggestion/Info Card
+ * Reusable MartGeni Suggestion/Info Card
  * 
  * Displays future recommendations or metadata analysis.
  * Conditionally checks configuration flags and renders null if deactivated.
  */
-export default function MateGeniCard({ flag, title, children, className, style, ...props }) {
-  const isEnabled = flag ? MATEGENI_CONFIG.featureFlags[flag] : false;
+export default function MartGeniCard({ flag, title, children, className, style, ...props }) {
+  const isEnabled = flag ? MARTGENI_CONFIG.featureFlags[flag] : false;
   if (!isEnabled) return null;
 
   return (
     <div
-      className={`mategeni-card ${className || ""}`}
+      className={`martgeni-card ${className || ""}`}
       style={{
         border: "1.5px solid var(--p-mid)",
         background: "var(--p-glow)",
@@ -36,10 +36,10 @@ export default function MateGeniCard({ flag, title, children, className, style, 
           fontWeight: 800
         }}
       >
-        <span>✨</span> {title || "MateGeni Suggestion"}
+        <span>✨</span> {title || "MartGeni Suggestion"}
       </h4>
       <div
-        className="mategeni-card-body"
+        className="martgeni-card-body"
         style={{
           fontSize: "13px",
           lineHeight: "1.5",

@@ -1,20 +1,20 @@
 import React from "react";
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 
 /**
- * MateGeni AI Configuration and Diagnostic Dashboard
+ * MartGeni AI Configuration and Diagnostic Dashboard
  * 
  * Admin controls to audit token usage, latency logs, model choices, and feature status.
  */
-export default function MateGeniDashboard() {
-  const flags = MATEGENI_CONFIG.featureFlags;
+export default function MartGeniDashboard() {
+  const flags = MARTGENI_CONFIG.featureFlags;
 
   return (
     <div className="container" style={{ padding: "40px 20px" }}>
       <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "20px" }}>
         <span style={{ fontSize: "28px" }}>✨</span>
         <div>
-          <h2 style={{ margin: 0, fontWeight: 900 }}>MateGeni AI Dashboard</h2>
+          <h2 style={{ margin: 0, fontWeight: 900 }}>MartGeni AI Dashboard</h2>
           <p style={{ margin: "2px 0 0 0", color: "var(--text-muted)", fontSize: "14px" }}>
             Campus co-pilot controls and telemetry reports
           </p>
@@ -29,15 +29,15 @@ export default function MateGeniDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
             <div>
               <div style={{ color: "var(--text-muted)", fontWeight: 500 }}>Text Generation</div>
-              <strong style={{ fontFamily: "monospace" }}>{MATEGENI_CONFIG.models.defaultTextModel}</strong>
+              <strong style={{ fontFamily: "monospace" }}>{MARTGENI_CONFIG.models.defaultTextModel}</strong>
             </div>
             <div>
               <div style={{ color: "var(--text-muted)", fontWeight: 500 }}>Premium Query Model</div>
-              <strong style={{ fontFamily: "monospace" }}>{MATEGENI_CONFIG.models.premiumTextModel}</strong>
+              <strong style={{ fontFamily: "monospace" }}>{MARTGENI_CONFIG.models.premiumTextModel}</strong>
             </div>
             <div>
               <div style={{ color: "var(--text-muted)", fontWeight: 500 }}>Image / Vision Scanner</div>
-              <strong style={{ fontFamily: "monospace" }}>{MATEGENI_CONFIG.models.defaultVisionModel}</strong>
+              <strong style={{ fontFamily: "monospace" }}>{MARTGENI_CONFIG.models.defaultVisionModel}</strong>
             </div>
           </div>
         </div>

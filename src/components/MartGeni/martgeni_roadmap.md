@@ -1,16 +1,16 @@
-# MateGeni AI Integration Roadmap & Developer Guidelines
+# MartGeni AI Integration Roadmap & Developer Guidelines
 
-This document details the planned integration phases, data structures, prompts, and database designs for **MateGeni** (Helping Students Buy & Sell Smarter).
+This document details the planned integration phases, data structures, prompts, and database designs for **MartGeni** (Helping Students Buy & Sell Smarter).
 
 ---
 
 ## 🛠️ Architecture Overview
 
-MateGeni features are designed to be served through a lightweight service layer ([aiService.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/services/ai/aiService.js)) controlled by centralized configuration flags ([mategeniConfig.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/config/mategeniConfig.js)). 
+MartGeni features are designed to be served through a lightweight service layer ([aiService.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/services/ai/aiService.js)) controlled by centralized configuration flags ([martgeniConfig.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/config/martgeniConfig.js)). 
 
 ```
                                   +-----------------------+
-                                  |   MATEGENI_CONFIG     |
+                                  |   MARTGENI_CONFIG     |
                                   |   (Feature Flags)     |
                                   +-----------+-----------+
                                               |

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 import { generateChatResponse } from "../../services/ai/aiService";
 
 import { useAuth } from "../../context/AuthContext";
@@ -15,13 +15,13 @@ const formatPrice = (p) =>
   p ? `₹${Number(p).toLocaleString("en-IN")}` : "Free";
 
 /**
- * MateGeni Floating Marketplace Assistant
+ * MartGeni Floating Marketplace Assistant
  * Marketplace-only AI chat — answers campus buying/selling questions
  * and searches real listings when users ask for products.
  */
-export default function MateGeniFloatingAssistant({ listings = [] }) {
+export default function MartGeniFloatingAssistant({ listings = [] }) {
   const { currentUser } = useAuth();
-  const isEnabled = MATEGENI_CONFIG.featureFlags.enableMateGeniAssistant;
+  const isEnabled = MARTGENI_CONFIG.featureFlags.enableMartGeniAssistant;
   if (!isEnabled || !currentUser) return null;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
     {
       id:     1,
       sender: "ai",
-      text:   `Hi! I'm **${MATEGENI_CONFIG.aiName}** — ${MATEGENI_CONFIG.tagline}.\n\nI can help you find listings, price items, and stay safe on campus. What do you need?`,
+      text:   `Hi! I'm **${MARTGENI_CONFIG.aiName}** — ${MARTGENI_CONFIG.tagline}.\n\nI can help you find listings, price items, and stay safe on campus. What do you need?`,
       chips:  QUICK_CHIPS.map(c => c.label),
     },
   ]);
@@ -74,7 +74,7 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
 
       setMessages(prev => [...prev, aiMsg]);
     } catch (err) {
-      console.error("MateGeni Chat error:", err);
+      console.error("MartGeni Chat error:", err);
       setMessages(prev => [...prev, {
         id:     Date.now() + 2,
         sender: "ai",
@@ -96,30 +96,30 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
     const formatted = msg.text.replace(/\*\*(.+?)\*\*/g, (_, t) => `<strong>${t}</strong>`);
 
     return (
-      <div key={msg.id} className={`mategeni-msg-row ${msg.sender}`}>
+      <div key={msg.id} className={`martgeni-msg-row ${msg.sender}`}>
         <div
-          className={`mategeni-bubble ${msg.sender}`}
+          className={`martgeni-bubble ${msg.sender}`}
           dangerouslySetInnerHTML={{ __html: formatted.replace(/\n/g, "<br/>") }}
         />
 
         {/* Matched listings cards */}
         {msg.matchedListings && msg.matchedListings.length > 0 && (
-          <div className="mategeni-listing-results">
+          <div className="martgeni-listing-results">
             {msg.matchedListings.map(l => (
-              <div key={l.id} className="mategeni-listing-result">
+              <div key={l.id} className="martgeni-listing-result">
                 {l.images?.[0] && (
-                  <img src={l.images[0]} alt={l.title} className="mategeni-listing-result-img" />
+                  <img src={l.images[0]} alt={l.title} className="martgeni-listing-result-img" />
                 )}
-                <div className="mategeni-listing-result-info">
-                  <div className="mategeni-listing-result-title">{l.title}</div>
-                  <div className="mategeni-listing-result-meta">
-                    <span className="mategeni-listing-result-price">
+                <div className="martgeni-listing-result-info">
+                  <div className="martgeni-listing-result-title">{l.title}</div>
+                  <div className="martgeni-listing-result-meta">
+                    <span className="martgeni-listing-result-price">
                       {l.isFree ? "Free 💚" : formatPrice(l.listingType === "rent" ? l.rentPerDay : l.price)}
                       {l.listingType === "rent" ? "/day" : ""}
                     </span>
-                    {l.isVerified && <span className="mategeni-listing-result-badge">✓ Verified</span>}
+                    {l.isVerified && <span className="martgeni-listing-result-badge">✓ Verified</span>}
                   </div>
-                  <div className="mategeni-listing-result-cat">{l.category} · {l.condition}</div>
+                  <div className="martgeni-listing-result-cat">{l.category} · {l.condition}</div>
                 </div>
               </div>
             ))}
@@ -128,12 +128,12 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
 
         {/* Suggestion chips */}
         {msg.chips && msg.chips.length > 0 && (
-          <div className="mategeni-chip-row">
+          <div className="martgeni-chip-row">
             {msg.chips.map(chip => (
               <button
                 key={chip}
                 type="button"
-                className="mategeni-chip"
+                className="martgeni-chip"
                 onClick={() => handleChipClick(chip)}
               >
                 {chip}
@@ -146,36 +146,36 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
   };
 
   return (
-    <div className="mategeni-container">
+    <div className="martgeni-container">
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`mategeni-fab ${isOpen ? "open" : ""}`}
-        title={`Toggle ${MATEGENI_CONFIG.aiName}`}
-        aria-label={`Toggle ${MATEGENI_CONFIG.aiName} Assistant`}
+        className={`martgeni-fab ${isOpen ? "open" : ""}`}
+        title={`Toggle ${MARTGENI_CONFIG.aiName}`}
+        aria-label={`Toggle ${MARTGENI_CONFIG.aiName} Assistant`}
         type="button"
       >
-        <span className="mategeni-fab-icon">✨</span>
-        <span className="mategeni-fab-text">MateGeni</span>
+        <span className="martgeni-fab-icon">✨</span>
+        <span className="martgeni-fab-text">MartGeni</span>
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="mategeni-window">
+        <div className="martgeni-window">
           {/* Header */}
-          <div className="mategeni-header">
-            <div className="mategeni-header-title">
-              <span className="mategeni-header-icon">✨</span>
+          <div className="martgeni-header">
+            <div className="martgeni-header-title">
+              <span className="martgeni-header-icon">✨</span>
               <div>
                 <div style={{ fontWeight: 800, fontSize: "14px", lineHeight: 1.2 }}>
-                  {MATEGENI_CONFIG.aiName}
+                  {MARTGENI_CONFIG.aiName}
                 </div>
-                <div style={{ fontSize: "10px", opacity: 0.75 }}>{MATEGENI_CONFIG.tagline}</div>
+                <div style={{ fontSize: "10px", opacity: 0.75 }}>{MARTGENI_CONFIG.tagline}</div>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="mategeni-close-btn"
+              className="martgeni-close-btn"
               title="Close"
               aria-label="Close Assistant"
               type="button"
@@ -185,11 +185,11 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
           </div>
 
           {/* Messages */}
-          <div className="mategeni-messages">
+          <div className="martgeni-messages">
             {messages.map(msg => renderMessage(msg))}
             {loading && (
-              <div className="mategeni-msg-row ai">
-                <div className="mategeni-bubble ai typing">
+              <div className="martgeni-msg-row ai">
+                <div className="martgeni-bubble ai typing">
                   <span>●</span><span>●</span><span>●</span>
                 </div>
               </div>
@@ -198,20 +198,20 @@ export default function MateGeniFloatingAssistant({ listings = [] }) {
           </div>
 
           {/* Input */}
-          <div className="mategeni-input-area">
+          <div className="martgeni-input-area">
             <input
               type="text"
               placeholder="Ask about listings, prices, safety…"
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => e.key === "Enter" && sendMessage(inputVal)}
-              className="mategeni-input"
+              className="martgeni-input"
               disabled={loading}
             />
             <button
               onClick={() => sendMessage(inputVal)}
               disabled={!inputVal.trim() || loading}
-              className="mategeni-send-btn"
+              className="martgeni-send-btn"
               type="button"
             >
               Send

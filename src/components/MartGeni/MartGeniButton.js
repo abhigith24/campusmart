@@ -1,15 +1,15 @@
 import React from "react";
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 
 /**
- * Reusable MateGeni Action Button
+ * Reusable MartGeni Action Button
  * 
  * Conditionally renders if the feature flag provided in the `flag` prop is enabled.
  * Otherwise, resolves to `null` to avoid any footprint in production.
  */
-export default function MateGeniButton({ flag, onClick, children, className, style, ...props }) {
+export default function MartGeniButton({ flag, onClick, children, className, style, ...props }) {
   // Check if the specific AI feature flag is active in config
-  const isEnabled = flag ? MATEGENI_CONFIG.featureFlags[flag] : false;
+  const isEnabled = flag ? MARTGENI_CONFIG.featureFlags[flag] : false;
   if (!isEnabled) return null;
 
   return (
@@ -30,7 +30,7 @@ export default function MateGeniButton({ flag, onClick, children, className, sty
       {...props}
     >
       <span style={{ fontSize: "14px" }}>✨</span>
-      {children || "Ask MateGeni"}
+      {children || "Ask MartGeni"}
     </button>
   );
 }

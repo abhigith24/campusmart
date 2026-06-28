@@ -1,5 +1,5 @@
 /**
- * MateGeni AI Service Layer — v2.0
+ * MartGeni AI Service Layer — v2.0
  *
  * Production-grade AI service with:
  *  - In-memory LRU cache with TTL (no repeated API calls)
@@ -17,7 +17,7 @@
  *  6. generateChatResponse       — Marketplace-focused assistant with listing search
  */
 
-import { MATEGENI_CONFIG } from "../../config/mategeniConfig";
+import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 import { trackAIEvent, AI_EVENTS } from "./aiAnalytics";
 
 // ── In-Memory LRU Cache ─────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ const _cache = new Map();
 function _cacheGet(key) {
   const entry = _cache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.ts > MATEGENI_CONFIG.cache.ttlMs) {
+  if (Date.now() - entry.ts > MARTGENI_CONFIG.cache.ttlMs) {
     _cache.delete(key);
     return null;
   }
@@ -35,7 +35,7 @@ function _cacheGet(key) {
 }
 
 function _cacheSet(key, value) {
-  if (_cache.size >= MATEGENI_CONFIG.cache.maxEntries) {
+  if (_cache.size >= MARTGENI_CONFIG.cache.maxEntries) {
     // Evict oldest entry
     const firstKey = _cache.keys().next().value;
     _cache.delete(firstKey);
@@ -56,7 +56,7 @@ async function _callGroq(messages, model, jsonMode = false, attempt = 0) {
   const controller = new AbortController();
   const timer = setTimeout(
     () => controller.abort(),
-    MATEGENI_CONFIG.apiConfig.timeoutMs
+    MARTGENI_CONFIG.apiConfig.timeoutMs
   );
 
   try {
@@ -68,7 +68,7 @@ async function _callGroq(messages, model, jsonMode = false, attempt = 0) {
     };
     if (jsonMode) payload.response_format = { type: "json_object" };
 
-    const res = await fetch(`${MATEGENI_CONFIG.apiConfig.baseUrl}/chat/completions`, {
+    const res = await fetch(`${MARTGENI_CONFIG.apiConfig.baseUrl}/chat/completions`, {
       method:  "POST",
       headers: {
         "Content-Type":  "application/json",
@@ -81,7 +81,7 @@ async function _callGroq(messages, model, jsonMode = false, attempt = 0) {
     clearTimeout(timer);
 
     // Retry on rate-limit or server error
-    if ((res.status === 429 || res.status >= 500) && attempt < MATEGENI_CONFIG.apiConfig.maxRetries) {
+    if ((res.status === 429 || res.status >= 500) && attempt < MARTGENI_CONFIG.apiConfig.maxRetries) {
       const wait = 800 * Math.pow(2, attempt);
       await new Promise(r => setTimeout(r, wait));
       return _callGroq(messages, model, jsonMode, attempt + 1);
@@ -118,7 +118,7 @@ function _parseJSON(text, fallback) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function optimizeListingDescription({ title, description, category, condition }, userId = null) {
-  if (!MATEGENI_CONFIG.featureFlags.enableListingOptimizer) {
+  if (!MARTGENI_CONFIG.featureFlags.enableListingOptimizer) {
     return { optimizedTitle: title, optimizedDescription: description, keySellingPoints: [], suggestedTags: [] };
   }
 
@@ -173,7 +173,7 @@ Return ONLY valid JSON:
 
     const raw = await _callGroq(
       [{ role: "user", content: prompt }],
-      MATEGENI_CONFIG.models.quality,
+      MARTGENI_CONFIG.models.quality,
       true
     );
 
@@ -190,7 +190,7 @@ Return ONLY valid JSON:
     }
     return localFallback();
   } catch (err) {
-    console.warn("[MateGeni] Optimizer fallback:", err.message);
+    console.warn("[MartGeni] Optimizer fallback:", err.message);
     return localFallback();
   }
 }
@@ -207,7 +207,7 @@ const PRICE_BASES = {
 const COND_MULTIPLIERS = { New: 1.0, Good: 0.65, Fair: 0.40, Old: 0.20 };
 
 export async function suggestPriceRange({ title, category, condition }, userId = null) {
-  if (!MATEGENI_CONFIG.featureFlags.enablePriceSuggestion) {
+  if (!MARTGENI_CONFIG.featureFlags.enablePriceSuggestion) {
     return { minPrice: 0, maxPrice: 0, recommendedPrice: 0, confidenceScore: 0, reason: "" };
   }
 
@@ -256,7 +256,7 @@ Return ONLY valid JSON:
 
     const raw = await _callGroq(
       [{ role: "user", content: prompt }],
-      MATEGENI_CONFIG.models.fast,
+      MARTGENI_CONFIG.models.fast,
       true
     );
 
@@ -274,7 +274,7 @@ Return ONLY valid JSON:
     }
     return localFallback();
   } catch (err) {
-    console.warn("[MateGeni] Price suggestion fallback:", err.message);
+    console.warn("[MartGeni] Price suggestion fallback:", err.message);
     return localFallback();
   }
 }
@@ -317,7 +317,7 @@ function _localCategorize(title, description = "") {
 }
 
 export async function categorizeProduct({ title, description }, userId = null) {
-  if (!MATEGENI_CONFIG.featureFlags.enableCategorySuggestion) {
+  if (!MARTGENI_CONFIG.featureFlags.enableCategorySuggestion) {
     return { suggestedCategory: "Other", confidence: 1.0 };
   }
 
@@ -344,7 +344,7 @@ Return ONLY valid JSON:
 
     const raw = await _callGroq(
       [{ role: "user", content: prompt }],
-      MATEGENI_CONFIG.models.fast,
+      MARTGENI_CONFIG.models.fast,
       true
     );
 
@@ -359,7 +359,7 @@ Return ONLY valid JSON:
     }
     return _localCategorize(title, description);
   } catch (err) {
-    console.warn("[MateGeni] Categorization fallback:", err.message);
+    console.warn("[MartGeni] Categorization fallback:", err.message);
     return _localCategorize(title, description);
   }
 }
@@ -417,7 +417,7 @@ function _localFraudCheck(content) {
 }
 
 export async function detectFraudRisk({ content, listingId }, userId = null) {
-  if (!MATEGENI_CONFIG.featureFlags.enableFraudDetection) {
+  if (!MARTGENI_CONFIG.featureFlags.enableFraudDetection) {
     return { isSafe: true, riskLevel: "low", riskScore: 0, flaggedPhrases: [], safetyTip: "" };
   }
 
@@ -457,7 +457,7 @@ Return ONLY valid JSON:
 
     const raw = await _callGroq(
       [{ role: "user", content: prompt }],
-      MATEGENI_CONFIG.models.quality,
+      MARTGENI_CONFIG.models.quality,
       true
     );
 
@@ -478,7 +478,7 @@ Return ONLY valid JSON:
     }
     return localResult;
   } catch (err) {
-    console.warn("[MateGeni] Fraud detection fallback:", err.message);
+    console.warn("[MartGeni] Fraud detection fallback:", err.message);
     return localResult;
   }
 }
@@ -488,7 +488,7 @@ Return ONLY valid JSON:
 // ══════════════════════════════════════════════════════════════════════════════
 
 export function getSmartRecommendations({ listings, userProfile, wishlistIds = [], viewedCategoryMap = {} }) {
-  if (!MATEGENI_CONFIG.featureFlags.enableSmartFeed || !listings?.length) return [];
+  if (!MARTGENI_CONFIG.featureFlags.enableSmartFeed || !listings?.length) return [];
 
   const userCollege = userProfile?.college || "";
   const now = Date.now();
@@ -537,7 +537,7 @@ export function getSmartRecommendations({ listings, userProfile, wishlistIds = [
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// FEATURE 6 — MARKETPLACE-FOCUSED MATEGENI ASSISTANT
+// FEATURE 6 — MARKETPLACE-FOCUSED MARTGENI ASSISTANT
 // ══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -569,9 +569,9 @@ export function searchListingsLocally({ query, listings = [] }) {
 }
 
 export async function generateChatResponse({ messages, userContext, listings = [] }) {
-  if (!MATEGENI_CONFIG.featureFlags.enableMateGeniAssistant) {
+  if (!MARTGENI_CONFIG.featureFlags.enableMartGeniAssistant) {
     return {
-      replyText:      "Hi! MateGeni is currently offline. Please try again later.",
+      replyText:      "Hi! MartGeni is currently offline. Please try again later.",
       matchedListings: [],
       suggestedChips:  [],
     };
@@ -617,7 +617,7 @@ export async function generateChatResponse({ messages, userContext, listings = [
   try {
     const systemPrompt = {
       role:    "system",
-      content: `You are MateGeni, the intelligent marketplace assistant for CampusMart — a campus-only student marketplace in India.
+      content: `You are MartGeni, the intelligent marketplace assistant for CampusMart — a campus-only student marketplace in India.
 You help students buy and sell items on their college campus.
 
 STRICT RULES:
@@ -637,7 +637,7 @@ STRICT RULES:
       })),
     ];
 
-    const raw = await _callGroq(groqMessages, MATEGENI_CONFIG.models.fast, false);
+    const raw = await _callGroq(groqMessages, MARTGENI_CONFIG.models.fast, false);
 
     return {
       replyText:       raw || "I'm here to help you buy and sell smarter on campus!",
@@ -645,7 +645,7 @@ STRICT RULES:
       suggestedChips:  ["🔍 Find listings", "💰 Price guide", "📝 Listing tips", "🛡️ Safety tips"],
     };
   } catch (err) {
-    console.warn("[MateGeni] Chat fallback:", err.message);
+    console.warn("[MartGeni] Chat fallback:", err.message);
     return localReply();
   }
 }

@@ -1,5 +1,5 @@
 /**
- * MateGeni AI Analytics
+ * MartGeni AI Analytics
  *
  * Centralized, non-blocking Firestore writer for all AI feature usage events.
  * Every function is fire-and-forget — it will never throw or block the caller.

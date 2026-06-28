@@ -72,6 +72,7 @@ function App() {
 
 function Main() {
   const { currentUser, userProfile, canAccessRoute } = useAuth();
+  const isStaff = userProfile && (userProfile.permissionLevel >= 1 || ["admin", "System Administrator", "support", "Support Moderator"].includes(userProfile.role));
   
   // Hash/path-based navigation helper
   const getInitialPage = () => {
@@ -475,6 +476,7 @@ function Main() {
       <FloatingActionGroup
         showScrollTop={showScrollTop}
         scrollToTop={scrollToTop}
+        isStaff={isStaff}
       />
 
       {showAuthModal && (

@@ -267,15 +267,9 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
           <div className="nav-spacer" />
 
-          <div className="nav-links" style={isStaff ? { gap: "16px", alignItems: "center" } : {}}>
-            {!isStaff && (
-              <button className="btn btn-ghost" onClick={() => setPage("contact")} type="button" style={{ padding: "8px 12px", borderRadius: 8, height: 38, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: "6px", color: "var(--txt-2)", marginRight: "4px" }}>
-                <LucideIcons.LifeBuoy size={16} /> Help
-              </button>
-            )}
-
+          <div className="nav-links">
             {!isStaff && hasFeature("showPostItemButton") && (
-              <button className="btn btn-primary" onClick={() => setPage("post")} type="button" style={{ padding: "8px 16px", borderRadius: 8, height: 38, fontSize: 13, fontWeight: 700 }}>
+              <button className="btn btn-primary" onClick={() => setPage("post")} type="button" style={{ padding: "0 20px", borderRadius: 8, height: 44, fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 + Post Item
               </button>
             )}
@@ -287,15 +281,14 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   onClick={() => setPage("notifications")} 
                   aria-label="Notifications" 
                   type="button"
-                  style={isStaff ? { width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", padding: 0, transition: "background 0.2s" } : {}}
                 >
-                  <LucideIcons.Bell size={18} strokeWidth={2} />
-                  {unreadCount > 0 && <span className="nav-badge" style={isStaff ? { top: "6px", right: "6px", border: "2px solid var(--surface)" } : {}}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
+                  <LucideIcons.Bell size={20} strokeWidth={2} />
+                  {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
 
                 {!isStaff && (
                   <button className="nav-icon-btn" onClick={() => setPage("wishlist")} aria-label="Wishlist" type="button">
-                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
                     {wishlistDocs?.length > 0 && <span className="nav-badge">{wishlistDocs.length > 9 ? "9+" : wishlistDocs.length}</span>}
@@ -304,25 +297,22 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
                 {!isStaff && hasFeature("showChat") && (
                   <button className="nav-icon-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
-                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                   </button>
                 )}
 
-                <div className="nav-avatar-wrap" ref={menuRef} style={isStaff ? { display: "flex", alignItems: "center", height: "44px" } : {}}>
+                <div className="nav-avatar-wrap" ref={menuRef}>
                   <button 
                     className="nav-avatar" 
                     onClick={() => setMenuOpen(o => !o)} 
                     title="Account" 
                     type="button"
-                    style={isStaff ? { width: "44px", height: "44px", padding: 0, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.08)", background: "var(--light)", transition: "opacity 0.2s, transform 0.2s", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" } : {}}
-                    onMouseEnter={(e) => isStaff && (e.currentTarget.style.opacity = "0.8")}
-                    onMouseLeave={(e) => isStaff && (e.currentTarget.style.opacity = "1")}
                   >
                     {(userProfile?.photoURL || currentUser?.photoURL)
-                      ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" style={isStaff ? { width: "100%", height: "100%", objectFit: "cover" } : {}} />
-                      : <span style={isStaff ? { fontSize: "14px", fontWeight: 600 } : {}}>{initials}</span>}
+                      ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" />
+                      : <span>{initials}</span>}
                     {!isStaff && (userProfile?.collegeVerified || userProfile?.isVerified) && <span className="nav-verified-dot" title="Verified Student" />}
                   </button>
 

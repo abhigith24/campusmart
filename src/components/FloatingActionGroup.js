@@ -1,7 +1,7 @@
 import React from "react";
-import MateGeniFloatingAssistant from "./MateGeni/MateGeniFloatingAssistant";
+import MartGeniFloatingAssistant from "./MartGeni/MartGeniFloatingAssistant";
 
-export default function FloatingActionGroup({ showScrollTop, scrollToTop }) {
+export default function FloatingActionGroup({ showScrollTop, scrollToTop, isStaff }) {
   return (
     <div className="floating-action-group">
       {showScrollTop && (
@@ -27,7 +27,7 @@ export default function FloatingActionGroup({ showScrollTop, scrollToTop }) {
           </svg>
         </button>
       )}
-      <MateGeniFloatingAssistant />
+      {!isStaff && <MartGeniFloatingAssistant />}
     </div>
   );
 }

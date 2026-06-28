@@ -1,14 +1,14 @@
 /**
- * MateGeni Centralized AI Configuration
+ * MartGeni Centralized AI Configuration
  *
  * Central hub for all AI models, API parameters, feature flags, and cache settings.
  * Feature flags default to `true` — all features are live.
  * Flip any flag to `false` to instantly gate that feature in production.
  */
 
-export const MATEGENI_CONFIG = {
+export const MARTGENI_CONFIG = {
   // Brand
-  aiName:  "MateGeni",
+  aiName:  "MartGeni",
   tagline: "Helping Students Buy & Sell Smarter",
   version: "2.0.0",
 
@@ -20,7 +20,7 @@ export const MATEGENI_CONFIG = {
     enableCategorySuggestion:  true,  // 🏷️ Auto-detect category from title (PostListingPage)
     enableFraudDetection:      true,  // 🛡️ Risk-level safety banners (ChatPage)
     enableSmartFeed:           true,  // ✨ Personalized feed on homepage (HomePage)
-    enableMateGeniAssistant:   true,  // 💬 Floating marketplace assistant (App-wide)
+    enableMartGeniAssistant:   true,  // 💬 Floating marketplace assistant (App-wide)
   },
 
   // ── Groq API ─────────────────────────────────────────────────────────────

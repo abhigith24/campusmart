@@ -1,21 +1,21 @@
-# MateGeni AI Features Overview
+# MartGeni AI Features Overview
 
-This document provides a summary of the active **MateGeni** AI features integrated into CampusMart, including their functionality, user benefits, and integration points in the codebase.
+This document provides a summary of the active **MartGeni** AI features integrated into CampusMart, including their functionality, user benefits, and integration points in the codebase.
 
 ---
 
 ## 🚀 Key Implemented AI Features
 
-### 1. MateGeni Conversational Floating Assistant
-* **Description**: A floating conversational chat drawer available in the bottom-right corner of the application. Students can chat with MateGeni to get listing advice, pricing tips, and transaction safety guidelines.
-* **Component Location**: [MateGeniFloatingAssistant.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/components/MateGeni/MateGeniFloatingAssistant.js)
+### 1. MartGeni Conversational Floating Assistant
+* **Description**: A floating conversational chat drawer available in the bottom-right corner of the application. Students can chat with MartGeni to get listing advice, pricing tips, and transaction safety guidelines.
+* **Component Location**: [MartGeniFloatingAssistant.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/components/MartGeni/MartGeniFloatingAssistant.js)
 * **Main App Mounting**: Mounted globally in [App.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/App.js).
 * **Key API Hook**: `generateChatResponse` in [aiService.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/services/ai/aiService.js).
 
 ### 2. Listing Title & Description Optimizer
 * **Description**: Helps students write high-quality, professional, and readable listing details. Based on simple user keywords, AI constructs a clean, catchy product title (under 80 characters) and a structured description with bullets highlighting key specs.
 * **Page Location**: [PostListingPage.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/pages/PostListingPage.js)
-* **User Trigger**: Clicking the `✨ Optimize Details with MateGeni` button next to the Title/Description fields. Opens a modal comparing the original details with the optimized recommendation.
+* **User Trigger**: Clicking the `✨ Optimize Details with MartGeni` button next to the Title/Description fields. Opens a modal comparing the original details with the optimized recommendation.
 * **Key API Hook**: `optimizeListingDescription` in [aiService.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/services/ai/aiService.js).
 
 ### 3. Smart Product Categorization
@@ -39,7 +39,7 @@ This document provides a summary of the active **MateGeni** AI features integrat
 ### 6. Smart Discovery Feed (Personalized Recommendations)
 * **Description**: Ranks active product listings based on a student affinity algorithm (matching the user's home college campus, verified seller badges, listing view counts, and randomized exploration flags).
 * **Page Location**: [HomePage.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/pages/HomePage.js)
-* **User Interface**: Displays a dedicated "Personalized for You by MateGeni ✨" feed on the marketplace home.
+* **User Interface**: Displays a dedicated "Personalized for You by MartGeni ✨" feed on the marketplace home.
 * **Key API Hook**: `getSmartRecommendations` in [aiService.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/services/ai/aiService.js).
 
 ---
@@ -47,5 +47,5 @@ This document provides a summary of the active **MateGeni** AI features integrat
 ## 🛡️ Reliability & Resiliency (API + Local Fallbacks)
 
 All AI functions are routed through a central gatekeeping file:
-* **Config Manager**: [mategeniConfig.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/config/mategeniConfig.js) contains feature flags (`enableFloatingAssistant`, `enableListingOptimizer`, etc.) allowing developers to easily toggle individual features.
+* **Config Manager**: [martgeniConfig.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/config/martgeniConfig.js) contains feature flags (`enableFloatingAssistant`, `enableListingOptimizer`, etc.) allowing developers to easily toggle individual features.
 * **Resilience**: The service is fully integrated with the **Groq API** (`Llama 3.1` model family). However, if no API key is supplied in the environment (`REACT_APP_GROQ_API_KEY`) or if API limits/errors occur, the service **silently and instantly falls back** to robust local keyword matching and deterministic rule-based algorithms. This guarantees zero client-side crashes.

@@ -6,7 +6,8 @@ import { useToast } from "../context/ToastContext";
 import { 
   Mail, Bug, Lightbulb, HelpCircle, ChevronDown, ChevronUp, 
   Loader2, Send, Search, CheckCircle, Clock, FileText, Trash2, Calendar,
-  ShieldCheck, AlertTriangle, Book, Zap, FileSpreadsheet, Lock, MessageSquare
+  ShieldCheck, AlertTriangle, Book, Zap, FileSpreadsheet, Lock, MessageSquare,
+  Copy, UploadCloud
 } from "lucide-react";
 
 const SUPPORT_EMAIL = "campusmart.support@gmail.com";
@@ -64,6 +65,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
   const [fileAttachment, setFileAttachment] = useState(null);
   const [fileProgress, setFileProgress] = useState(0);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   // Success Card States
   const [submittedTicket, setSubmittedTicket] = useState(null); // { id, responseTime }
@@ -132,8 +134,32 @@ export default function ContactPage({ setPage, mode = "contact" }) {
   }, [currentUser]);
 
   // Handle file uploads with progress simulation
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const processFile = (file) => {
     if (!file) return;
 
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
@@ -332,10 +358,10 @@ export default function ContactPage({ setPage, mode = "contact" }) {
 
   if (mode === "contact") {
     return (
-      <div className="support-container">
+      <div className="support-container" style={{ paddingBottom: "96px" }}>
         
         {/* Header */}
-        <div className="support-header" style={{ padding: "40px 20px" }}>
+        <div className="support-header" style={{ padding: "40px 20px 20px" }}>
           <button 
             className="btn btn-ghost" 
             onClick={() => setPage("home")}
@@ -368,17 +394,37 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                   <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Official Moderation</div>
                 </div>
               </div>
-              <a 
-                href={`mailto:${SUPPORT_EMAIL}`} 
-                style={{ fontSize: "14px", color: "var(--p)", fontWeight: "700", wordBreak: "break-all", display: "flex", alignItems: "center", gap: "8px" }}
-                aria-label={`Send email to ${SUPPORT_EMAIL}`}
-              >
-                <Mail size={16} /> {SUPPORT_EMAIL}
-              </a>
-              <div style={{ fontSize: "13px", color: "var(--txt-2)", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px", fontWeight: "500" }}>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><Clock size={14} color="var(--muted)"/> Support Hours: 9:00 AM – 6:00 PM</div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><Zap size={14} color="var(--muted)"/> Avg Response Time: &lt; 24 hours</div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><CheckCircle size={14} color="var(--muted)"/> Resolution Time: 1–2 business days</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "var(--bg)", padding: "12px", borderRadius: "12px", border: "1px solid var(--bdr)", width: "100%" }}>
+                <a 
+                  href={`mailto:${SUPPORT_EMAIL}`} 
+                  style={{ fontSize: "14px", color: "var(--p)", fontWeight: "700", wordBreak: "break-all", display: "flex", alignItems: "center", gap: "8px", flex: 1 }}
+                  aria-label={`Send email to ${SUPPORT_EMAIL}`}
+                >
+                  <Mail size={16} /> {SUPPORT_EMAIL}
+                </a>
+                <button 
+                  className="btn btn-ghost" 
+                  style={{ padding: "8px", height: "auto", minHeight: "0", color: "var(--muted)" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(SUPPORT_EMAIL);
+                    toast("Copied email to clipboard! 📋", "success");
+                  }}
+                  title="Copy email address"
+                  aria-label="Copy support email"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px", width: "100%" }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", background: "var(--light)", border: "1px solid var(--bdr)", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "650", color: "var(--txt-2)", width: "fit-content" }}>
+                  <Clock size={14} color="var(--muted)"/> Support Hours: 9:00 AM – 6:00 PM
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", background: "var(--light)", border: "1px solid var(--bdr)", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "650", color: "var(--txt-2)", width: "fit-content" }}>
+                  <Zap size={14} color="var(--muted)"/> Avg Response Time: &lt; 24 hours
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", background: "var(--light)", border: "1px solid var(--bdr)", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "650", color: "var(--txt-2)", width: "fit-content" }}>
+                  <CheckCircle size={14} color="var(--muted)"/> Resolution Time: 1–2 business days
+                </div>
               </div>
             </div>
 
@@ -395,7 +441,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                 className="btn btn-outline btn-sm"
                 style={{ width: "100%", justifyContent: "center" }}
               >
-                Search FAQ Base
+                Search FAQs →
               </button>
             </div>
 
@@ -404,9 +450,9 @@ export default function ContactPage({ setPage, mode = "contact" }) {
               <Book size={24} style={{ color: "#a855f7", marginBottom: "12px" }} />
               <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "750" }}>Community Guidelines</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Marketplace Rules</button>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Buying & Selling Guidelines</button>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Safety Tips</button>
+                <button className="action-row-btn">Marketplace Rules</button>
+                <button className="action-row-btn">Buying & Selling Guidelines</button>
+                <button className="action-row-btn">Safety Tips</button>
               </div>
             </div>
 
@@ -415,9 +461,9 @@ export default function ContactPage({ setPage, mode = "contact" }) {
               <MessageSquare size={24} style={{ color: "#ef4444", marginBottom: "12px" }} />
               <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "750" }}>Popular Questions</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to verify my account?</button>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to report a seller?</button>
-                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to edit a listing?</button>
+                <button className="action-row-btn">How to verify my account?</button>
+                <button className="action-row-btn">How to report a seller?</button>
+                <button className="action-row-btn">How to edit a listing?</button>
               </div>
             </div>
 
@@ -520,7 +566,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
 
                   <div className="form-group">
                     <label className="form-label">Priority</label>
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", background: "var(--light)", padding: "4px", borderRadius: "10px", border: "1px solid var(--bdr)" }}>
                       {["Low", "Medium", "High"].map(p => (
                         <button 
                           key={p} 
@@ -528,13 +574,14 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                           onClick={() => setContactPriority(p)}
                           style={{ 
                             flex: 1, 
-                            padding: "10px", 
+                            padding: "8px 12px", 
                             borderRadius: "8px", 
                             fontSize: "14px", 
                             fontWeight: "600",
-                            border: contactPriority === p ? "2px solid var(--p)" : "1px solid var(--bdr)",
-                            background: contactPriority === p ? "rgba(var(--p-rgb, 102, 102, 102), 0.05)" : "var(--bg)",
+                            border: "none",
+                            background: contactPriority === p ? "var(--bg)" : "transparent",
                             color: contactPriority === p ? "var(--p)" : "var(--txt-2)",
+                            boxShadow: contactPriority === p ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                             cursor: "pointer",
                             transition: "all 0.2s ease"
                           }}
@@ -554,7 +601,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                       id="contact-message" 
                       className="form-input" 
                       rows={7} 
-                      placeholder="Describe your issue in detail. Include steps to reproduce the problem if applicable." 
+                      placeholder="Describe your issue in detail." 
                       value={contactMessage} 
                       onChange={(e) => setContactMessage(e.target.value)} 
                       maxLength={2000}
@@ -564,15 +611,37 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                   </div>
 
                   {/* Attachment Section */}
-                  <div className="form-group" style={{ border: "1px dashed var(--bdr)", padding: "16px", borderRadius: "8px", background: "var(--light)" }}>
+                  <div className="form-group">
                     <label className="form-label" style={{ fontWeight: "700" }}>Attach Screenshot/PDF (Max 10MB)</label>
-                    <input 
-                      type="file" 
-                      accept=".png,.jpg,.jpeg,.pdf"
-                      onChange={handleFileChange}
-                      style={{ fontSize: "13px" }}
-                      disabled={uploadingFile}
-                    />
+                    <div 
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                      style={{ 
+                        border: dragActive ? "2px dashed var(--p)" : "2px dashed var(--bdr)", 
+                        padding: "24px", 
+                        borderRadius: "12px", 
+                        background: dragActive ? "var(--p-light)" : "var(--light)",
+                        textAlign: "center",
+                        transition: "all 0.2s ease",
+                        position: "relative",
+                        cursor: "pointer"
+                      }}
+                    >
+                      <input 
+                        type="file" 
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        onChange={handleFileChange}
+                        disabled={uploadingFile}
+                        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
+                      />
+                      <UploadCloud size={32} style={{ color: dragActive ? "var(--p)" : "var(--muted)", margin: "0 auto 12px" }} />
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--txt)", marginBottom: "4px" }}>
+                        {dragActive ? "Drop file here" : "Drag & drop a file here, or click to browse"}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "var(--muted)" }}>PNG, JPG, or PDF up to 10MB</div>
+                    </div>
                     
                     {uploadingFile && (
                       <div style={{ marginTop: "12px" }}>
@@ -598,11 +667,10 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                     )}
                   </div>
 
-                  <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+                  <div className="contact-form-actions">
                     <button 
                       type="submit" 
-                      className="support-btn-primary" 
-                      style={{ flex: 2, height: "48px" }}
+                      className="support-btn-primary submit-ticket-btn" 
                       disabled={contactLoading || uploadingFile}
                     >
                       {contactLoading ? (
@@ -619,12 +687,11 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                     </button>
                     <button 
                       type="button" 
-                      className="btn btn-outline" 
-                      style={{ flex: 1, height: "48px" }}
+                      className="btn btn-outline reset-ticket-btn" 
                       onClick={handleClearForm}
                       disabled={contactLoading}
                     >
-                      Clear Form
+                      Reset Form
                     </button>
                   </div>
                 </form>
@@ -645,8 +712,21 @@ export default function ContactPage({ setPage, mode = "contact" }) {
             {loadingHistory ? (
               <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}><div className="spinner" /></div>
             ) : supportHistory.length === 0 ? (
-              <div style={{ padding: "40px 24px", background: "var(--light)", borderRadius: "16px", border: "1px dashed var(--bdr)", textAlign: "center", fontSize: "15px", color: "var(--muted)", fontWeight: "600" }}>
-                You have no active support tickets.
+              <div style={{ padding: "48px 24px", background: "var(--light)", borderRadius: "16px", border: "1px dashed var(--bdr)", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                <div style={{ background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", padding: "16px", borderRadius: "50%" }}>
+                  <MessageSquare size={32} />
+                </div>
+                <div>
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "800", color: "var(--txt)" }}>No active support tickets</h3>
+                  <p style={{ margin: 0, fontSize: "14px", color: "var(--txt-2)" }}>You haven't submitted any help requests yet.</p>
+                </div>
+                <button 
+                  className="btn btn-outline" 
+                  style={{ marginTop: "12px" }}
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                >
+                  Create Ticket
+                </button>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
@@ -655,11 +735,13 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                   let statusTxt = "var(--muted)";
                   let statusLabel = ticket.status || "open";
                   if (statusLabel === "open") {
-                    statusBg = "rgba(245, 158, 11, 0.1)"; statusTxt = "#f59e0b"; statusLabel = "Pending";
+                    statusBg = "var(--bg)"; statusTxt = "var(--txt-2)"; statusLabel = "Submitted";
                   } else if (statusLabel === "in-progress" || statusLabel === "under review" || statusLabel === "Under Review") {
-                    statusBg = "rgba(59, 130, 246, 0.1)"; statusTxt = "#3b82f6"; statusLabel = "Under Review";
-                  } else if (statusLabel === "resolved" || statusLabel === "closed" || statusLabel === "Resolved") {
+                    statusBg = "rgba(245, 158, 11, 0.1)"; statusTxt = "#f59e0b"; statusLabel = "In Review";
+                  } else if (statusLabel === "resolved" || statusLabel === "Resolved") {
                     statusBg = "rgba(34, 197, 94, 0.1)"; statusTxt = "#22c55e"; statusLabel = "Resolved";
+                  } else if (statusLabel === "closed" || statusLabel === "Closed") {
+                    statusBg = "rgba(239, 68, 68, 0.1)"; statusTxt = "#ef4444"; statusLabel = "Closed";
                   }
 
                   return (
@@ -691,7 +773,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
           <h2 style={{ fontSize: "20px", fontWeight: "850", marginBottom: "6px" }}>❓ FAQ Search Base</h2>
           <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "20px" }}>Instant answers to guide your campus marketplace trades.</p>
           
-          <div className="seller-search-filter-bar">
+          <div className="seller-search-filter-bar" style={{ position: "sticky", top: "70px", zIndex: 10, background: "var(--surface)", padding: "16px 0", borderBottom: "1px solid var(--bdr)", margin: "0 -20px", paddingLeft: "20px", paddingRight: "20px" }}>
             <div className="seller-search-row">
               <div style={{ position: "relative", flex: 1 }}>
                 <Search size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
@@ -730,18 +812,18 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                     {sec.items.map((item) => {
                       const isOpen = !!expandedFaqs[item.id];
                       return (
-                        <div key={item.id} className={`faq-accordion-item ${isOpen ? "open" : ""}`} style={{ border: "1px solid var(--bdr)", borderRadius: "8px", overflow: "hidden", background: "var(--bg)" }}>
+                        <div key={item.id} className={`faq-accordion-item ${isOpen ? "open" : ""}`}>
                           <button 
                             className="faq-question-btn" 
                             onClick={() => toggleFaq(item.id)}
                             aria-expanded={isOpen}
-                            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "12px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: "var(--txt)", fontWeight: 600, fontSize: "13px" }}
+                            style={{ padding: "12px 16px" }}
                           >
                             <span>{item.q}</span>
-                            {isOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                            {isOpen ? <ChevronUp size={15} style={{ color: "var(--p)" }} /> : <ChevronDown size={15} />}
                           </button>
                           {isOpen && (
-                            <div className="faq-answer-content" style={{ padding: "12px", background: "var(--card-bg)", borderTop: "1px solid var(--bdr)", fontSize: "13px", color: "var(--txt-2)", lineHeight: "1.4" }}>
+                            <div className="faq-answer-content" style={{ padding: "0 16px 16px 16px" }}>
                               {item.a}
                             </div>
                           )}
