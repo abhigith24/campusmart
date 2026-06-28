@@ -78,7 +78,7 @@ function DropdownBtn({ label, options, selected, onSelect, ariaLabel, icon }) {
   }
 
   return (
-    <div className="dd-wrap" ref={ref} onKeyDown={handleKeyDown}>
+    <div className="dd-wrap" ref={ref} onKeyDown={handleKeyDown} style={{ zIndex: open ? 1001 : undefined }}>
       <button
         className={`dd-btn ${open ? "dd-open" : ""} ${isActive ? "dd-active" : ""}`}
         onClick={() => setOpen(o => !o)}
@@ -179,7 +179,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
   const hasMore = !showAll && !isSearching && filtered.length > 6;
 
   return (
-    <div className="dd-wrap" ref={ref}>
+    <div className="dd-wrap" ref={ref} style={{ zIndex: open ? 1001 : undefined }}>
       <button
         className={`dd-btn ${open ? "dd-open" : ""} ${selected !== "All" ? "dd-active" : ""}`}
         onClick={() => setOpen(o => !o)}
@@ -274,10 +274,7 @@ function CollegeDropdown({ label, options, selected, onSelect }) {
 
 function CategoryDropdown({ label, options, selected, onSelect, icon }) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const ref = useRef(null);
-  const inputRef = useRef(null);
   const [alignRight, setAlignRight] = useState(false);
   const isActive = selected !== "All";
 
@@ -291,8 +288,6 @@ function CategoryDropdown({ label, options, selected, onSelect, icon }) {
     const deltaY = currentY - touchStartY.current;
     if (deltaY > 80) {
       setOpen(false);
-      setSearch("");
-      setShowAll(false);
     }
   };
 
@@ -300,22 +295,11 @@ function CategoryDropdown({ label, options, selected, onSelect, icon }) {
     function h(e) {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
-        setSearch("");
-        setShowAll(false);
       }
     }
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
-
-  useEffect(() => {
-    if (open && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setSearch("");
-      setShowAll(false);
-    }
-  }, [open]);
 
   useEffect(() => {
     if (open && ref.current) {
@@ -324,20 +308,12 @@ function CategoryDropdown({ label, options, selected, onSelect, icon }) {
     }
   }, [open]);
 
-  const filtered = options.filter(opt =>
-    opt.label.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const isSearching = search.trim().length > 0;
-  const itemsToDisplay = (showAll || isSearching) ? filtered : filtered.slice(0, 6);
-  const hasMore = !showAll && !isSearching && filtered.length > 6;
-
   function handleKeyDown(e) {
     if (e.key === "Escape") setOpen(false);
   }
 
   return (
-    <div className="dd-wrap" ref={ref} onKeyDown={handleKeyDown}>
+    <div className="dd-wrap" ref={ref} onKeyDown={handleKeyDown} style={{ zIndex: open ? 1001 : undefined }}>
       <button
         className={`dd-btn ${open ? "dd-open" : ""} ${isActive ? "dd-active" : ""}`}
         onClick={() => setOpen(o => !o)}
@@ -359,78 +335,21 @@ function CategoryDropdown({ label, options, selected, onSelect, icon }) {
           role="listbox"
           aria-label="Select a category"
         >
-          <div style={{ padding: "6px 6px 4px" }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: "var(--light)", border: "1.5px solid var(--bdr)",
-              borderRadius: "var(--r-full)", padding: "4px 10px",
-              transition: "all .15s"
-            }}
-              onFocus={e => e.currentTarget.style.borderColor = "var(--p)"}
-              onBlur={e => e.currentTarget.style.borderColor = "var(--bdr)"}
-            >
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2"
-                viewBox="0 0 24 24" style={{ flexShrink: 0, color: "var(--muted-2)" }}>
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Search category..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{
-                  border: "none", background: "transparent", outline: "none",
-                  fontSize: 12.5, width: "100%", color: "var(--txt)", fontWeight: 500,
-                  fontFamily: "inherit", margin: 0, padding: 0
-                }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  style={{
-                    border: "none", background: "none", cursor: "pointer",
-                    color: "var(--muted-2)", fontSize: 14, lineHeight: 1,
-                    padding: 0, flexShrink: 0
-                  }}
-                >×</button>
-              )}
-            </div>
-          </div>
-          <div className="dd-divider-line" />
-
           <div className="dd-mobile-scroll-content">
-            {itemsToDisplay.length === 0 ? (
-              <div style={{ padding: "12px 14px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
-                No categories found
-              </div>
-            ) : (
-              itemsToDisplay.map((opt) => (
-                <button
-                  key={opt.val}
-                  type="button"
-                  role="option"
-                  aria-selected={selected === opt.val}
-                  className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
-                  onClick={() => { onSelect(opt.val); setOpen(false); setSearch(""); setShowAll(false); }}
-                >
-                  <span className="dd-item-icon" aria-hidden="true">{CATEGORY_ICONS[opt.val] || "📦"}</span>
-                  <span>{opt.label}</span>
-                  {selected === opt.val && <span className="dd-check" aria-hidden="true">✓</span>}
-                </button>
-              ))
-            )}
-            {hasMore && (
+            {options.map((opt) => (
               <button
+                key={opt.val}
                 type="button"
-                className="dd-item"
-                style={{ color: "var(--p)", justifyContent: "center", marginTop: "4px" }}
-                onClick={(e) => { e.stopPropagation(); setShowAll(true); }}
+                role="option"
+                aria-selected={selected === opt.val}
+                className={`dd-item ${selected === opt.val ? "dd-selected" : ""}`}
+                onClick={() => { onSelect(opt.val); setOpen(false); }}
               >
-                + More Categories
+                <span className="dd-item-icon" aria-hidden="true">{CATEGORY_ICONS[opt.val] || "📦"}</span>
+                <span>{opt.label}</span>
+                {selected === opt.val && <span className="dd-check" aria-hidden="true">✓</span>}
               </button>
-            )}
+            ))}
           </div>
         </div>
       )}
@@ -463,7 +382,7 @@ function SkeletonCard({ layout = "grid" }) {
   );
 }
 
-export default function HomePage({ setPage, setSelectedListing, searchQuery, requireAuth }) {
+export default function HomePage({ setPage, setSelectedListing, searchQuery, setSearchQuery, requireAuth }) {
   const { userProfile } = useAuth();
   const toast = useToast();
   
@@ -578,6 +497,21 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [priceAlignRight, setPriceAlignRight] = useState(false);
   const priceRef                              = useRef(null);
+
+  // Local selection buffering for Mobile Filter Panel
+  const [isMobileFiltersExpanded, setIsMobileFiltersExpanded] = useState(false);
+  const [localCategory, setLocalCategory] = useState("All");
+  const [localSortBy, setLocalSortBy] = useState("newest");
+  const [localCondition, setLocalCondition] = useState("All");
+  const [localCollege, setLocalCollege] = useState("All");
+  const [localPriceMin, setLocalPriceMin] = useState("");
+  const [localPriceMax, setLocalPriceMax] = useState("");
+  const [localFreeOnly, setLocalFreeOnly] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+
+  const [showPriceMobileFilter, setShowPriceMobileFilter] = useState(false);
+  const [priceMobileAlignRight, setPriceMobileAlignRight] = useState(false);
+  const priceMobileRef = useRef(null);
 
   // Swipe-to-close touch handlers for Price Bottom Sheet
   const priceTouchStartY = useRef(0);
@@ -856,8 +790,22 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   }, [products, userProfile, viewedCategoryMap]);
 
   useEffect(() => {
+    if (isMobileFiltersExpanded) {
+      setLocalCategory(category);
+      setLocalSortBy(sortBy);
+      setLocalCondition(condition);
+      setLocalCollege(college);
+      setLocalPriceMin(priceMin);
+      setLocalPriceMax(priceMax);
+      setLocalFreeOnly(freeOnly);
+      setLocalSearchQuery(searchQuery || "");
+    }
+  }, [isMobileFiltersExpanded, category, sortBy, condition, college, priceMin, priceMax, freeOnly, searchQuery]);
+
+  useEffect(() => {
     function h(e) {
       if (priceRef.current && !priceRef.current.contains(e.target)) setShowPriceFilter(false);
+      if (priceMobileRef.current && !priceMobileRef.current.contains(e.target)) setShowPriceMobileFilter(false);
     }
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
@@ -873,6 +821,17 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
       }
     }
   }, [showPriceFilter]);
+
+  useEffect(() => {
+    if (showPriceMobileFilter && priceMobileRef.current) {
+      const rect = priceMobileRef.current.getBoundingClientRect();
+      if (rect.left + rect.width / 2 > window.innerWidth / 2) {
+        setPriceMobileAlignRight(true);
+      } else {
+        setPriceMobileAlignRight(false);
+      }
+    }
+  }, [showPriceMobileFilter]);
 
   const getPrice = (l) => l.listingType === "rent" ? (l.rentPerDay || 0) : (l.price || 0);
 
@@ -1289,113 +1248,222 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
             </button>
           </div>
         </div>
-        {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
-        <div ref={sentinelRef} className="sticky-sentinel" />
-        <div
-          className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
-        >
-          <div className="filter-bar">
-            {/* Mobile filters trigger */}
-            <div className="mobile-filters-trigger desktop-hidden">
-              <button 
-                type="button" 
-                className="mobile-filters-btn"
-                onClick={() => setIsMobileDrawerOpen(true)}
+        {/* Mobile Filters Trigger Row */}
+        <div className="mobile-only" style={{ marginBottom: "12px" }}>
+          <button
+            type="button"
+            className="mobile-filters-btn"
+            onClick={() => setIsMobileFiltersExpanded(o => !o)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              height: "40px",
+              borderRadius: "20px",
+              border: "1.5px solid var(--bdr)",
+              background: "var(--surface)",
+              fontWeight: 600,
+              fontSize: "13.5px",
+              padding: "0 18px",
+              color: "var(--txt)",
+              cursor: "pointer",
+              width: "100%"
+            }}
+          >
+            <span>🔍 Refine & Filter Listings</span>
+            {activeFilters > 0 && (
+              <span style={{
+                background: "var(--p)",
+                color: "white",
+                borderRadius: "50%",
+                minWidth: "20px",
+                height: "20px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "0 6px"
+              }}>
+                {activeFilters}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Expandable Filter Panel */}
+        <div className="mobile-only" style={{
+          overflow: isMobileFiltersExpanded ? "visible" : "hidden",
+          transition: "max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.25s ease",
+          maxHeight: isMobileFiltersExpanded ? "1000px" : "0px",
+          marginBottom: isMobileFiltersExpanded ? "20px" : "0px",
+          position: "relative",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "var(--surface)",
+            border: "1.5px solid var(--bdr)",
+            borderRadius: "16px",
+            padding: "20px 16px 16px 16px",
+            boxShadow: "var(--s1)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            position: "relative"
+          }}>
+            {/* Panel Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingRight: "24px" }}>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "var(--txt)" }}>Filters</h3>
+                <span style={{ fontSize: "12px", color: "var(--muted)", lineHeight: "1.4" }}>
+                  Refine your search using categories, condition, college and price.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileFiltersExpanded(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "20px",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  padding: "4px",
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                aria-label="Close filters"
               >
-                Filters
-                {activeFilters > 0 && <span className="mobile-filter-badge">{activeFilters}</span>}
+                ✕
               </button>
             </div>
             
-            <div className={`mobile-drawer-backdrop desktop-hidden ${isMobileDrawerOpen ? "show" : ""}`} onClick={() => setIsMobileDrawerOpen(false)} />
-            
-            <div className={`filter-controls-scroll ${isMobileDrawerOpen ? "mobile-drawer-open" : ""}`}>
-              <div className="mobile-drawer-header desktop-hidden">
-                <h3>Filters</h3>
-                <button type="button" className="btn btn-ghost" onClick={() => setIsMobileDrawerOpen(false)} aria-label="Close filters" style={{fontSize: "24px", padding: 0, height: "32px", width: "32px", display: "flex", alignItems: "center", justifyContent: "center"}}>×</button>
-              </div>
+            <div style={{ height: "1px", background: "var(--bdr)", width: "100%" }} />
 
-              <div className="filter-dropdowns-group">
+            {/* Search Input inside the filter panel */}
+            <div style={{ position: "relative", width: "100%" }}>
+              <input
+                type="text"
+                placeholder="Search by title, seller or category..."
+                value={localSearchQuery}
+                onChange={e => setLocalSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  padding: "10px 16px 10px 38px",
+                  fontSize: "14px",
+                  border: "1.5px solid var(--bdr)",
+                  borderRadius: "12px",
+                  background: "var(--light)",
+                  color: "var(--txt)",
+                  fontWeight: 500
+                }}
+              />
+              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted-2)", display: "flex", alignItems: "center" }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
+              {localSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setLocalSearchQuery("")}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "none",
+                    color: "var(--muted-2)",
+                    fontSize: "16px",
+                    cursor: "pointer",
+                    padding: 0
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Responsive 2-column Grid of Dropdowns */}
+            <div className="mobile-filter-grid">
               <CategoryDropdown
                 label="Category"
                 options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
-                selected={category}
-                onSelect={setCategory}
+                selected={localCategory}
+                onSelect={setLocalCategory}
                 icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>}
               />
 
               <DropdownBtn
                 label="Sort"
                 options={SORT_OPTS}
-                selected={sortBy}
-                onSelect={setSortBy}
+                selected={localSortBy}
+                onSelect={setLocalSortBy}
                 ariaLabel="Sort listings"
                 icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 11V3M7 3L4 6M7 3L10 6M17 13V21M17 21L14 18M17 21L20 18"/></svg>}
               />
 
               <DropdownBtn
-                label={condLabel}
+                label={localCondition === "All" ? "Condition" : localCondition}
                 options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
-                selected={condition}
-                onSelect={setCondition}
+                selected={localCondition}
+                onSelect={setLocalCondition}
                 ariaLabel="Filter by condition"
                 icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg>}
               />
 
               <CollegeDropdown 
-                label={collegeLabel} 
+                label={localCollege === "All" ? "College" : (localCollege.length > 18 ? localCollege.slice(0, 16) + "\u2026" : localCollege)} 
                 options={collegeOptions} 
-                selected={college} 
-                onSelect={handleSelectCollege} 
+                selected={localCollege} 
+                onSelect={setLocalCollege} 
                 icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}
               />
 
-              <div className="dd-wrap" ref={priceRef} style={{ position: "relative" }}>
+              {/* Price Dropdown */}
+              <div className="dd-wrap" ref={priceMobileRef} style={{ position: "relative", zIndex: showPriceMobileFilter ? 1001 : undefined }}>
                 <button
                   type="button"
-                  className={`dd-btn ${showPriceFilter ? "dd-open" : ""} ${priceFilterActive ? "dd-active" : ""}`}
-                  onClick={() => setShowPriceFilter(o => !o)}
-                  aria-expanded={showPriceFilter}
+                  className={`dd-btn ${showPriceMobileFilter ? "dd-open" : ""} ${localPriceMin !== "" || localPriceMax !== "" ? "dd-active" : ""}`}
+                  onClick={() => setShowPriceMobileFilter(o => !o)}
+                  aria-expanded={showPriceMobileFilter}
                   aria-label="Filter by price range"
+                  style={{ width: "100%", height: "44px" }}
                 >
-                  {priceFilterActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-                  {!priceFilterActive && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
-                  {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}
-                  <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>⌄</span>
+                  {(localPriceMin !== "" || localPriceMax !== "") && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
+                  {!(localPriceMin !== "" || localPriceMax !== "") && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
+                  {(localPriceMin !== "" || localPriceMax !== "") ? `Rs ${localPriceMin||"0"}–${localPriceMax||"any"}` : "Price"}
+                  <span className={`dd-chevron ${showPriceMobileFilter ? "flipped" : ""}`}>⌄</span>
                 </button>
-                {showPriceFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceFilter(false)} />}
-                {showPriceFilter && (
-                  <div className={`dd-menu price-dd-menu ${priceAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px" }}>
-                    <div 
-                      className="dd-mobile-drag-handle" 
-                      onTouchStart={handlePriceTouchStart} 
-                      onTouchMove={handlePriceTouchMove}
-                    />
-                    <div className="dd-mobile-header">
-                      <h3>Price Range</h3>
-                      <button type="button" className="dd-mobile-close" onClick={() => setShowPriceFilter(false)} aria-label="Close menu">×</button>
-                    </div>
+                {showPriceMobileFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceMobileFilter(false)} style={{ zIndex: 999 }} />}
+                {showPriceMobileFilter && (
+                  <div className={`dd-menu price-dd-menu ${priceMobileAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px", zIndex: 1000 }}>
                     <div className="dd-mobile-scroll-content">
                       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <input type="number" min="0" placeholder="Min" value={priceMin} onChange={e => setPriceMin(e.target.value)}
+                        <input type="number" min="0" placeholder="Min" value={localPriceMin} onChange={e => setLocalPriceMin(e.target.value)}
                           className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
                         <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
-                        <input type="number" min="0" placeholder="Max" value={priceMax} onChange={e => setPriceMax(e.target.value)}
+                        <input type="number" min="0" placeholder="Max" value={localPriceMax} onChange={e => setLocalPriceMax(e.target.value)}
                           className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
                       </div>
                       <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                         {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
                           <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
-                            onClick={() => { setPriceMin(min); setPriceMax(max); }}
+                            onClick={() => { setLocalPriceMin(min); setLocalPriceMax(max); }}
                           >
                             {lbl}
                           </button>
                         ))}
                       </div>
-                      {priceFilterActive && (
+                      {(localPriceMin !== "" || localPriceMax !== "") && (
                         <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
-                          onClick={() => { setPriceMin(""); setPriceMax(""); }}
+                          onClick={() => { setLocalPriceMin(""); setLocalPriceMax(""); }}
                         >
                           Clear price filter
                         </button>
@@ -1405,33 +1473,220 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                 )}
               </div>
 
-              <div className="filter-toggle-container" title={freeOnly ? "Showing free items only" : "Showing free and paid items"}>
-                <span className="filter-toggle-label">Free Only</span>
+              {/* Free Only Toggle */}
+              <div className="filter-toggle-container" title={localFreeOnly ? "Showing free items only" : "Showing free and paid items"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "0 12px", background: "var(--surface)", height: "44px", margin: 0 }}>
+                <span className="filter-toggle-label" style={{ fontSize: "13px", fontWeight: 600, color: "var(--txt-2)", userSelect: "none" }}>Free Only</span>
                 <button
                   type="button"
-                  className={`filter-toggle-switch ${freeOnly ? "on" : "off"}`}
-                  onClick={() => setFreeOnly(f => !f)}
+                  className={`filter-toggle-switch ${localFreeOnly ? "on" : "off"}`}
+                  onClick={() => setLocalFreeOnly(f => !f)}
                   role="switch"
-                  aria-checked={freeOnly}
+                  aria-checked={localFreeOnly}
                   aria-label="Filter free items only"
                 >
                   <span className="filter-toggle-knob" />
                 </button>
               </div>
-              </div>
-
-              <div className="mobile-drawer-footer desktop-hidden">
-                <button type="button" className="btn btn-outline" style={{ flex: 1, marginRight: 8 }} onClick={clearAllFilters}>Reset All</button>
-                <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)}>Apply</button>
-              </div>
             </div>
 
-            {/* Results count is anchored to the far right inside the 52px sticky bar */}
-            {(activeFilters > 0 || !!searchQuery) && (
-              <span className="filter-count" aria-live="polite">
-                {filtered.length} item{filtered.length !== 1 ? "s" : ""}
-              </span>
-            )}
+            {/* Sticky Action Footer */}
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              marginTop: "8px",
+              paddingTop: "12px",
+              borderTop: "1px solid var(--bdr)",
+              position: "sticky",
+              bottom: 0,
+              background: "var(--surface)",
+              zIndex: 10,
+              boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.03)"
+            }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => {
+                  setLocalCategory("All");
+                  setLocalSortBy("newest");
+                  setLocalCondition("All");
+                  setLocalCollege("All");
+                  setLocalPriceMin("");
+                  setLocalPriceMax("");
+                  setLocalFreeOnly(false);
+                  setLocalSearchQuery("");
+                }}
+                style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
+              >
+                Reset All
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setCategory(localCategory);
+                  setSortBy(localSortBy);
+                  setCondition(localCondition);
+                  handleSelectCollege(localCollege);
+                  setPriceMin(localPriceMin);
+                  setPriceMax(localPriceMax);
+                  setFreeOnly(localFreeOnly);
+                  setSearchQuery(localSearchQuery);
+                  setIsMobileFiltersExpanded(false);
+                  toast("Filters applied successfully!", "success");
+                }}
+                style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
+        <div className="desktop-only">
+          <div ref={sentinelRef} className="sticky-sentinel" />
+          <div
+            className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
+          >
+            <div className="filter-bar">
+              {/* Mobile filters trigger */}
+              <div className="mobile-filters-trigger desktop-hidden">
+                <button 
+                  type="button" 
+                  className="mobile-filters-btn"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                >
+                  Filters
+                  {activeFilters > 0 && <span className="mobile-filter-badge">{activeFilters}</span>}
+                </button>
+              </div>
+              
+              <div className={`mobile-drawer-backdrop desktop-hidden ${isMobileDrawerOpen ? "show" : ""}`} onClick={() => setIsMobileDrawerOpen(false)} />
+              
+              <div className={`filter-controls-scroll ${isMobileDrawerOpen ? "mobile-drawer-open" : ""}`}>
+                <div className="mobile-drawer-header desktop-hidden">
+                  <h3>Filters</h3>
+                  <button type="button" className="btn btn-ghost" onClick={() => setIsMobileDrawerOpen(false)} aria-label="Close filters" style={{fontSize: "24px", padding: 0, height: "32px", width: "32px", display: "flex", alignItems: "center", justifyContent: "center"}}>×</button>
+                </div>
+
+                <div className="filter-dropdowns-group">
+                <CategoryDropdown
+                  label="Category"
+                  options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
+                  selected={category}
+                  onSelect={setCategory}
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>}
+                />
+
+                <DropdownBtn
+                  label="Sort"
+                  options={SORT_OPTS}
+                  selected={sortBy}
+                  onSelect={setSortBy}
+                  ariaLabel="Sort listings"
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 11V3M7 3L4 6M7 3L10 6M17 13V21M17 21L14 18M17 21L20 18"/></svg>}
+                />
+
+                <DropdownBtn
+                  label={condLabel}
+                  options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
+                  selected={condition}
+                  onSelect={setCondition}
+                  ariaLabel="Filter by condition"
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg>}
+                />
+
+                <CollegeDropdown 
+                  label={collegeLabel} 
+                  options={collegeOptions} 
+                  selected={college} 
+                  onSelect={handleSelectCollege} 
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}
+                />
+
+                <div className="dd-wrap" ref={priceRef} style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    className={`dd-btn ${showPriceFilter ? "dd-open" : ""} ${priceFilterActive ? "dd-active" : ""}`}
+                    onClick={() => setShowPriceFilter(o => !o)}
+                    aria-expanded={showPriceFilter}
+                    aria-label="Filter by price range"
+                  >
+                    {priceFilterActive && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
+                    {!priceFilterActive && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
+                    {priceFilterActive ? `Rs ${priceMin||"0"} – Rs ${priceMax||"any"}` : "Price"}
+                    <span className={`dd-chevron ${showPriceFilter ? "flipped" : ""}`}>⌄</span>
+                  </button>
+                  {showPriceFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceFilter(false)} />}
+                  {showPriceFilter && (
+                    <div className={`dd-menu price-dd-menu ${priceAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px" }}>
+                      <div 
+                        className="dd-mobile-drag-handle" 
+                        onTouchStart={handlePriceTouchStart} 
+                        onTouchMove={handlePriceTouchMove}
+                      />
+                      <div className="dd-mobile-header">
+                        <h3>Price Range</h3>
+                        <button type="button" className="dd-mobile-close" onClick={() => setShowPriceFilter(false)} aria-label="Close menu">×</button>
+                      </div>
+                      <div className="dd-mobile-scroll-content">
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <input type="number" min="0" placeholder="Min" value={priceMin} onChange={e => setPriceMin(e.target.value)}
+                            className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                          <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
+                          <input type="number" min="0" placeholder="Max" value={priceMax} onChange={e => setPriceMax(e.target.value)}
+                            className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                          {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
+                            <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
+                              onClick={() => { setPriceMin(min); setPriceMax(max); }}
+                            >
+                              {lbl}
+                            </button>
+                          ))}
+                        </div>
+                        {priceFilterActive && (
+                          <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
+                            onClick={() => { setPriceMin(""); setPriceMax(""); }}
+                          >
+                            Clear price filter
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="filter-toggle-container" title={freeOnly ? "Showing free items only" : "Showing free and paid items"}>
+                  <span className="filter-toggle-label">Free Only</span>
+                  <button
+                    type="button"
+                    className={`filter-toggle-switch ${freeOnly ? "on" : "off"}`}
+                    onClick={() => setFreeOnly(f => !f)}
+                    role="switch"
+                    aria-checked={freeOnly}
+                    aria-label="Filter free items only"
+                  >
+                    <span className="filter-toggle-knob" />
+                  </button>
+                </div>
+                </div>
+
+                <div className="mobile-drawer-footer desktop-hidden">
+                  <button type="button" className="btn btn-outline" style={{ flex: 1, marginRight: 8 }} onClick={clearAllFilters}>Reset All</button>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)}>Apply</button>
+                </div>
+              </div>
+
+              {/* Results count is anchored to the far right inside the 52px sticky bar */}
+              {(activeFilters > 0 || !!searchQuery) && (
+                <span className="filter-count" aria-live="polite">
+                  {filtered.length} item{filtered.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

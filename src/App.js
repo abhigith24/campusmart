@@ -409,7 +409,7 @@ function Main() {
         }>
           {page === "auth" && <AuthPage setPage={navigateTo} />}
           {page === "home" && (
-            <HomePage setPage={navigateTo} setSelectedListing={setSelectedListing} searchQuery={searchQuery} requireAuth={requireAuth} />
+            <HomePage setPage={navigateTo} setSelectedListing={setSelectedListing} searchQuery={searchQuery} setSearchQuery={setSearchQuery} requireAuth={requireAuth} />
           )}
           {page === "post" && <PostListingPage setPage={navigateTo} />}
           {page === "edit" && selectedListing && (
