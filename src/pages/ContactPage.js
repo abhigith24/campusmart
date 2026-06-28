@@ -5,7 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { 
   Mail, Bug, Lightbulb, HelpCircle, ChevronDown, ChevronUp, 
-  Loader2, Send, Search, CheckCircle, Clock, FileText, Trash2, Calendar
+  Loader2, Send, Search, CheckCircle, Clock, FileText, Trash2, Calendar,
+  ShieldCheck, AlertTriangle, Book, Zap, FileSpreadsheet, Lock, MessageSquare
 } from "lucide-react";
 
 const SUPPORT_EMAIL = "campusmart.support@gmail.com";
@@ -54,7 +55,8 @@ export default function ContactPage({ setPage, mode = "contact" }) {
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactCollege, setContactCollege] = useState("");
-  const [contactSubject, setContactSubject] = useState("General Question");
+  const [contactSubject, setContactSubject] = useState("General Support");
+  const [contactPriority, setContactPriority] = useState("Medium");
   const [contactMessage, setContactMessage] = useState("");
   const [contactLoading, setContactLoading] = useState(false);
 
@@ -170,6 +172,13 @@ export default function ContactPage({ setPage, mode = "contact" }) {
   };
 
   // Handlers
+  const handleClearForm = () => {
+    setContactSubject("General Support");
+    setContactPriority("Medium");
+    setContactMessage("");
+    handleRemoveFile();
+  };
+
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     if (!contactName.trim() || !contactEmail.trim() || !contactMessage.trim()) {
@@ -185,13 +194,14 @@ export default function ContactPage({ setPage, mode = "contact" }) {
     const generatedId = "CM-" + Math.random().toString(36).substring(2, 9).toUpperCase();
 
     try {
+      const finalMessage = `[Priority: ${contactPriority}]\n\n${contactMessage}`;
       await addDoc(collection(db, "support_requests"), {
         ticketId: generatedId,
         name: contactName,
         email: contactEmail,
         college: contactCollege,
         subject: contactSubject,
-        message: contactMessage,
+        message: finalMessage,
         attachmentName: fileAttachment ? fileAttachment.name : null,
         createdAt: serverTimestamp(),
         status: "open",
@@ -203,8 +213,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
         responseTime: "24 hours"
       });
       toast("🎉 Support request submitted successfully!", "success");
-      setContactMessage("");
-      handleRemoveFile();
+      handleClearForm();
     } catch (err) {
       console.error(err);
       toast("❌ Failed to send message. Please try again.", "error");
@@ -326,20 +335,20 @@ export default function ContactPage({ setPage, mode = "contact" }) {
       <div className="support-container">
         
         {/* Header */}
-        <div className="support-header">
+        <div className="support-header" style={{ padding: "40px 20px" }}>
           <button 
             className="btn btn-ghost" 
             onClick={() => setPage("home")}
             aria-label="Back to home page"
-            style={{ marginBottom: "16px", minHeight: "44px" }}
+            style={{ marginBottom: "8px", minHeight: "40px", padding: "0 12px" }}
           >
             ← Back to Home
           </button>
           <div>
-            <span className="support-badge">Help Center</span>
+            <span className="support-badge" style={{ marginBottom: "8px" }}>Help Center</span>
           </div>
-          <h1>Help Center & Support</h1>
-          <p>Get immediate responses, report bugs, or submit support tickets directly from campus.</p>
+          <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>Help Center & Support</h1>
+          <p style={{ margin: 0, fontSize: "15px" }}>Get immediate responses, report bugs, or submit support tickets directly from campus.</p>
         </div>
 
         {/* Dashboard two column grid */}
@@ -347,24 +356,35 @@ export default function ContactPage({ setPage, mode = "contact" }) {
           
           {/* Left Column (Support Information) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            
+            {/* Direct Channels */}
             <div className="support-card" style={{ padding: "24px", alignItems: "flex-start", textAlign: "left" }}>
-              <Mail size={32} style={{ color: "var(--p)", marginBottom: "12px" }} />
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "750" }}>Direct Channels</h3>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "16px" }}>
+                <div style={{ background: "rgba(34, 197, 94, 0.1)", padding: "10px", borderRadius: "12px", color: "#22c55e" }}>
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <h3 style={{ margin: "0", fontSize: "16px", fontWeight: "800" }}>Campus Support Team</h3>
+                  <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Official Moderation</div>
+                </div>
+              </div>
               <a 
                 href={`mailto:${SUPPORT_EMAIL}`} 
-                style={{ fontSize: "14px", color: "var(--p)", fontWeight: "650", wordBreak: "break-all" }}
+                style={{ fontSize: "14px", color: "var(--p)", fontWeight: "700", wordBreak: "break-all", display: "flex", alignItems: "center", gap: "8px" }}
                 aria-label={`Send email to ${SUPPORT_EMAIL}`}
               >
-                {SUPPORT_EMAIL}
+                <Mail size={16} /> {SUPPORT_EMAIL}
               </a>
-              <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "12px", display: "flex", flexDir: "column", gap: "4px" }}>
-                <span>🕒 Hours: 9:00 AM – 6:00 PM</span>
-                <span>⚡ Avg Response: &lt; 24 hours</span>
+              <div style={{ fontSize: "13px", color: "var(--txt-2)", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px", fontWeight: "500" }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><Clock size={14} color="var(--muted)"/> Support Hours: 9:00 AM – 6:00 PM</div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><Zap size={14} color="var(--muted)"/> Avg Response Time: &lt; 24 hours</div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><CheckCircle size={14} color="var(--muted)"/> Resolution Time: 1–2 business days</div>
               </div>
             </div>
 
+            {/* F.A.Q Shortcut */}
             <div className="support-card" style={{ padding: "24px", alignItems: "flex-start", textAlign: "left" }}>
-              <HelpCircle size={32} style={{ color: "#3b82f6", marginBottom: "12px" }} />
+              <HelpCircle size={24} style={{ color: "#3b82f6", marginBottom: "12px" }} />
               <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "750" }}>F.A.Q Shortcut</h3>
               <p style={{ fontSize: "13px", color: "var(--txt-2)", margin: "0 0 16px 0" }}>Search the FAQ base first to get instant answers regarding campus exchanges.</p>
               <button 
@@ -373,17 +393,39 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                   if (faqEl) faqEl.scrollIntoView({ behavior: "smooth" });
                 }} 
                 className="btn btn-outline btn-sm"
-                style={{ width: "100%" }}
+                style={{ width: "100%", justifyContent: "center" }}
               >
                 Search FAQ Base
               </button>
+            </div>
+
+            {/* Community Guidelines */}
+            <div className="support-card" style={{ padding: "24px", alignItems: "flex-start", textAlign: "left" }}>
+              <Book size={24} style={{ color: "#a855f7", marginBottom: "12px" }} />
+              <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "750" }}>Community Guidelines</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Marketplace Rules</button>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Buying & Selling Guidelines</button>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto" }}>Safety Tips</button>
+              </div>
+            </div>
+
+            {/* Popular Questions */}
+            <div className="support-card" style={{ padding: "24px", alignItems: "flex-start", textAlign: "left" }}>
+              <MessageSquare size={24} style={{ color: "#ef4444", marginBottom: "12px" }} />
+              <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "750" }}>Popular Questions</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to verify my account?</button>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to report a seller?</button>
+                <button className="btn btn-ghost" style={{ justifyContent: "flex-start", padding: "8px", fontSize: "13px", height: "auto", textAlign: "left" }}>How to edit a listing?</button>
+              </div>
             </div>
 
             {currentUser && supportHistory.length > 0 && (
               <button 
                 onClick={scrollToHistory}
                 className="btn btn-primary"
-                style={{ width: "100%", justifyContent: "center" }}
+                style={{ width: "100%", justifyContent: "center", padding: "14px" }}
               >
                 View Support History ({supportHistory.length})
               </button>
@@ -456,7 +498,7 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                   </div>
                   
                   <div className="form-group">
-                    <label className="form-label" htmlFor="contact-subject">Topic / Subject *</label>
+                    <label className="form-label" htmlFor="contact-subject">Support Category *</label>
                     <select 
                       id="contact-subject" 
                       className="form-input" 
@@ -464,16 +506,43 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                       onChange={(e) => setContactSubject(e.target.value)}
                       required
                     >
-                      <option value="Account Issues">Account Issues</option>
-                      <option value="Student Verification">Student Verification</option>
-                      <option value="Listing Problem">Listing Problem</option>
-                      <option value="Purchase Request">Purchase Request</option>
-                      <option value="Seller Report">Seller Report</option>
-                      <option value="Technical Bug">Technical Bug</option>
+                      <option value="General Support">General Support</option>
+                      <option value="Account Issue">Account Issue</option>
+                      <option value="Verification Issue">Verification Issue</option>
+                      <option value="Marketplace Issue">Marketplace Issue</option>
+                      <option value="Report Seller">Report Seller</option>
+                      <option value="Bug Report">Bug Report</option>
                       <option value="Feature Request">Feature Request</option>
-                      <option value="General Question">General Question</option>
+                      <option value="Payment Issue">Payment Issue</option>
                       <option value="Other">Other</option>
                     </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Priority</label>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {["Low", "Medium", "High"].map(p => (
+                        <button 
+                          key={p} 
+                          type="button" 
+                          onClick={() => setContactPriority(p)}
+                          style={{ 
+                            flex: 1, 
+                            padding: "10px", 
+                            borderRadius: "8px", 
+                            fontSize: "14px", 
+                            fontWeight: "600",
+                            border: contactPriority === p ? "2px solid var(--p)" : "1px solid var(--bdr)",
+                            background: contactPriority === p ? "rgba(var(--p-rgb, 102, 102, 102), 0.05)" : "var(--bg)",
+                            color: contactPriority === p ? "var(--p)" : "var(--txt-2)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -484,8 +553,8 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                     <textarea 
                       id="contact-message" 
                       className="form-input" 
-                      rows={5} 
-                      placeholder="Please explain your question or problem in details..." 
+                      rows={7} 
+                      placeholder="Describe your issue in detail. Include steps to reproduce the problem if applicable." 
                       value={contactMessage} 
                       onChange={(e) => setContactMessage(e.target.value)} 
                       maxLength={2000}
@@ -529,24 +598,35 @@ export default function ContactPage({ setPage, mode = "contact" }) {
                     )}
                   </div>
 
-                  <button 
-                    type="submit" 
-                    className="support-btn-primary" 
-                    style={{ width: "100%", marginTop: "12px" }}
-                    disabled={contactLoading || uploadingFile}
-                  >
-                    {contactLoading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Submitting Ticket...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={16} />
-                        Submit Request
-                      </>
-                    )}
-                  </button>
+                  <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+                    <button 
+                      type="submit" 
+                      className="support-btn-primary" 
+                      style={{ flex: 2, height: "48px" }}
+                      disabled={contactLoading || uploadingFile}
+                    >
+                      {contactLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={16} />
+                          Submit Support Ticket
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-outline" 
+                      style={{ flex: 1, height: "48px" }}
+                      onClick={handleClearForm}
+                      disabled={contactLoading}
+                    >
+                      Clear Form
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
@@ -556,36 +636,51 @@ export default function ContactPage({ setPage, mode = "contact" }) {
 
         {/* ================= MY SUPPORT REQUESTS TICKET HISTORY ================= */}
         {currentUser && (
-          <div id="support-history-section" style={{ marginTop: "40px", paddingTop: "32px", borderTop: "1.5px solid var(--bdr)" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: "850", marginBottom: "16px", color: "var(--txt)" }}>📂 My Support Tickets</h2>
+          <div id="support-history-section" style={{ marginTop: "60px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "22px", fontWeight: "800", margin: 0, color: "var(--txt)" }}>My Recent Support Tickets</h2>
+              <span style={{ background: "rgba(34, 197, 94, 0.1)", color: "#22c55e", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "700" }}>{supportHistory.length} Tickets</span>
+            </div>
+            
             {loadingHistory ? (
-              <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}><div className="spinner" /></div>
+              <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}><div className="spinner" /></div>
             ) : supportHistory.length === 0 ? (
-              <div style={{ padding: "24px", background: "var(--light)", borderRadius: "8px", border: "1px solid var(--bdr)", textAlign: "center", fontSize: "14px", color: "var(--txt-2)" }}>
-                No support tickets filed yet.
+              <div style={{ padding: "40px 24px", background: "var(--light)", borderRadius: "16px", border: "1px dashed var(--bdr)", textAlign: "center", fontSize: "15px", color: "var(--muted)", fontWeight: "600" }}>
+                You have no active support tickets.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {supportHistory.map(ticket => (
-                  <div key={ticket.id} style={{ background: "var(--card-bg)", border: "1px solid var(--bdr)", borderRadius: "var(--r-xl)", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                        <span style={{ fontWeight: "800", color: "var(--p)", fontSize: "14px" }}>{ticket.ticketId || "CM-UNKNOWN"}</span>
-                        <span className={`ticket-status-badge ${ticket.status || "open"}`}>{ticket.status || "open"}</span>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+                {supportHistory.map(ticket => {
+                  let statusBg = "var(--light)";
+                  let statusTxt = "var(--muted)";
+                  let statusLabel = ticket.status || "open";
+                  if (statusLabel === "open") {
+                    statusBg = "rgba(245, 158, 11, 0.1)"; statusTxt = "#f59e0b"; statusLabel = "Pending";
+                  } else if (statusLabel === "in-progress" || statusLabel === "under review" || statusLabel === "Under Review") {
+                    statusBg = "rgba(59, 130, 246, 0.1)"; statusTxt = "#3b82f6"; statusLabel = "Under Review";
+                  } else if (statusLabel === "resolved" || statusLabel === "closed" || statusLabel === "Resolved") {
+                    statusBg = "rgba(34, 197, 94, 0.1)"; statusTxt = "#22c55e"; statusLabel = "Resolved";
+                  }
+
+                  return (
+                    <div key={ticket.id} className="card" style={{ padding: "20px", borderRadius: "16px", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", gap: "12px", cursor: "pointer", transition: "transform 0.2s ease, box-shadow 0.2s ease" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 16px rgba(0,0,0,0.06)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: "800", color: "var(--p)", fontSize: "13px" }}>{ticket.ticketId || "CM-UNKNOWN"}</span>
+                        <span style={{ background: statusBg, color: statusTxt, padding: "4px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase" }}>{statusLabel}</span>
                       </div>
-                      <div style={{ fontSize: "15px", fontWeight: "700", color: "var(--txt)" }}>{ticket.subject}</div>
+                      <div style={{ fontSize: "16px", fontWeight: "750", color: "var(--txt)" }}>{ticket.subject}</div>
                       {ticket.message && (
-                        <p style={{ fontSize: "13px", color: "var(--txt-2)", margin: "6px 0 0", lineClamp: 1, WebkitLineClamp: 1, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        <p style={{ fontSize: "13px", color: "var(--txt-2)", margin: 0, lineClamp: 2, WebkitLineClamp: 2, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.5" }}>
                           {ticket.message}
                         </p>
                       )}
+                      <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid var(--light)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>
+                        <span>Submitted on {new Date(ticket.createdAt?.toDate ? ticket.createdAt.toDate() : Date.now()).toLocaleDateString()}</span>
+                        {ticket.attachmentName && <FileText size={14} color="var(--p)" />}
+                      </div>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", fontSize: "11px", color: "var(--muted)" }}>
-                      <span>Submitted: {formatSavedAt ? formatSavedAt(ticket.createdAt) : timeAgo(ticket.createdAt)}</span>
-                      {ticket.attachmentName && <span style={{ color: "var(--p)" }}>📎 {ticket.attachmentName}</span>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

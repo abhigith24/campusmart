@@ -3,6 +3,8 @@
  * and UI mode without duplicating state or embedding authorization logic.
  */
 
+import { PERMISSION_LEVELS, hasMinimumLevel } from "../config/rbac";
+
 export const WORKSPACES = {
   USER: "user",
   SUPPORT_REVIEW: "support-review",
@@ -21,10 +23,10 @@ export const getWorkspace = (userProfile, currentPage) => {
   const isMarketplaceRoute = ["home", "listing", "profile"].includes(currentPage);
   
   if (isMarketplaceRoute) {
-    if (userProfile?.role === "admin") {
+    if (hasMinimumLevel(userProfile?.permissionLevel, PERMISSION_LEVELS.SYSTEM_ADMIN)) {
       return WORKSPACES.ADMIN_REVIEW;
     }
-    if (userProfile?.role === "support") {
+    if (hasMinimumLevel(userProfile?.permissionLevel, PERMISSION_LEVELS.SUPPORT_MODERATOR)) {
       return WORKSPACES.SUPPORT_REVIEW;
     }
   }

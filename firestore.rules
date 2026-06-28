@@ -134,7 +134,8 @@ service cloud.firestore {
     }
     match /sellerReports/{reportId} {
       allow create: if request.auth != null;
-      allow read, update, delete: if isAdmin();
+      allow read, update: if isSupportOrAdmin();
+      allow delete: if isAdmin();
     }
 
     // ── Activity Logs ──────────────────────────────────────────────────────

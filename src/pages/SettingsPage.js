@@ -6,8 +6,7 @@ import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { 
-  User, Palette, Bell, Shield, ShoppingCart, Headset, Info, 
+import { User, Palette, Bell, Shield, ShoppingCart, Headset, Info, 
   AlertTriangle, Check, RefreshCw, Key, ShieldAlert, Download, 
   LogOut, HelpCircle, ChevronDown, ChevronUp, Loader2
 } from "lucide-react";
@@ -16,6 +15,7 @@ export default function SettingsPage({ setPage }) {
   const { currentUser, userProfile, fetchProfile, resetPassword } = useAuth();
   const toast = useToast();
   const { themeMode, setThemeMode } = useTheme();
+    const isSupport = userProfile?.role === "admin" || userProfile?.role === "System Administrator" || userProfile?.role === "support" || userProfile?.role === "Support Moderator" || userProfile?.permissionLevel >= 1;
 
   // Account states
   const [editing, setEditing] = useState(false);
@@ -116,7 +116,8 @@ export default function SettingsPage({ setPage }) {
     marketplace: useRef(null),
     support: useRef(null),
     about: useRef(null),
-    advanced: useRef(null)
+    advanced: useRef(null),
+    security: useRef(null)
   };
 
   const navItems = [
@@ -124,10 +125,11 @@ export default function SettingsPage({ setPage }) {
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "privacy", label: "Privacy", icon: Shield },
-    { id: "marketplace", label: "Marketplace", icon: ShoppingCart },
-    { id: "support", label: "Support", icon: Headset },
+    { id: "marketplace", label: isSupport ? "Moderation Preferences" : "Marketplace", icon: ShoppingCart },
+    { id: "support", label: isSupport ? "Support Tools" : "Support", icon: Headset },
     { id: "about", label: "About", icon: Info },
-    { id: "advanced", label: "Advanced", icon: ShieldAlert }
+    { id: "advanced", label: "Advanced", icon: ShieldAlert },
+    ...(isSupport ? [{ id: "security", label: "Security", icon: Key }] : [])
   ];
 
   // Scrollspy logic
@@ -483,7 +485,44 @@ export default function SettingsPage({ setPage }) {
           <section id="panel-general" ref={sectionRefs.general} className="form-card" style={{ padding: "24px" }} role="tabpanel" aria-labelledby="nav-btn-general">
             <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>👤 General Information</h2>
             
-            {editing ? (
+            {isSupport ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+                  <div style={{ width: "64px", height: "64px", borderRadius: "50%", overflow: "hidden", background: "var(--light)", border: "1px solid var(--bdr)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ShieldAlert size={32} color="var(--p)" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: "200px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>CampusMart Support</h3>
+                      <span style={{ fontSize: "10px", fontWeight: 700, background: "var(--p)", color: "white", padding: "2px 6px", borderRadius: "12px", letterSpacing: "0.5px" }}>OFFICIAL</span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "var(--txt-2)", marginBottom: "2px" }}>{currentUser?.email || "support@campusmart.com"}</div>
+                    <div style={{ fontSize: "12px", color: "var(--p)" }}>Role: Support Moderator</div>
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px", padding: "16px", background: "var(--surface)", borderRadius: "8px", border: "1px solid var(--bdr)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", rowGap: "4px" }}>
+                    <span style={{ color: "var(--txt-2)", fontSize: "13px", width: "150px", flexShrink: 0 }}>Account Status</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--green, #10b981)", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--green, #10b981)", display: "inline-block" }}></span> Active
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", rowGap: "4px" }}>
+                    <span style={{ color: "var(--txt-2)", fontSize: "13px", width: "150px", flexShrink: 0 }}>Permission Level</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center" }}>Level 2 (Moderator)</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", rowGap: "4px" }}>
+                    <span style={{ color: "var(--txt-2)", fontSize: "13px", width: "150px", flexShrink: 0 }}>Joined Date</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center" }}>{userProfile?.joinedAt?.toDate ? userProfile.joinedAt.toDate().toLocaleDateString() : "N/A"}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", rowGap: "4px" }}>
+                    <span style={{ color: "var(--txt-2)", fontSize: "13px", width: "150px", flexShrink: 0 }}>Last Login</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center" }}>{currentUser?.metadata?.lastSignInTime ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() : "Just now"}</span>
+                  </div>
+                </div>
+              </div>
+            ) : editing ? (
               <form onSubmit={handleSaveAccount}>
                 <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
                   <div style={{ position: "relative", width: "70px", height: "70px", borderRadius: "50%", overflow: "hidden", background: "var(--light)", border: "1px solid var(--bdr)" }}>
@@ -522,7 +561,7 @@ export default function SettingsPage({ setPage }) {
                       required 
                     />
                   </div>
-                  {(!userProfile?.role || userProfile?.role === "user") && (
+                  {(!userProfile?.permissionLevel || userProfile?.permissionLevel === 0) && (
                     <div className="form-group">
                       <label className="form-label" style={{ fontWeight: 700 }}>College / Campus</label>
                       <input 
@@ -585,7 +624,7 @@ export default function SettingsPage({ setPage }) {
                       )}
                     </div>
                     <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>{currentUser?.email}</div>
-                    {(!userProfile?.role || userProfile?.role === "user") && (
+                    {(!userProfile?.permissionLevel || userProfile?.permissionLevel === 0) && (
                       <div style={{ fontSize: "13px", color: "var(--txt-2)" }}>🏫 {userProfile?.college || "No College Linked"}</div>
                     )}
                     {userProfile?.phoneNumber && (
@@ -634,11 +673,21 @@ export default function SettingsPage({ setPage }) {
             <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🔔 Notifications Settings</h2>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {[
+              {(isSupport ? [
+                { id: "sup_ticket", label: "New Support Ticket", desc: "Get notified when a new student ticket is created.", value: notifVerify, setter: setNotifVerify, key: "sup_ticket" },
+                { id: "sup_report", label: "New Seller Report", desc: "Get notified for new moderation reports on sellers.", value: notifWishlist, setter: setNotifWishlist, key: "sup_report" },
+                { id: "sup_bug", label: "New Bug Report", desc: "Get notified when a bug report is filed.", value: notifMessages, setter: setNotifMessages, key: "sup_bug" },
+                { id: "sup_feat", label: "New Feature Request", desc: "Get notified for feature requests.", value: notifVerify, setter: setNotifVerify, key: "sup_feat" },
+                { id: "sup_high", label: "High Priority Ticket", desc: "Immediate alert for critical user issues.", value: notifWishlist, setter: setNotifWishlist, key: "sup_high" },
+                { id: "sup_esc", label: "Escalated Ticket", desc: "Alert for tickets escalated by other moderators.", value: notifMessages, setter: setNotifMessages, key: "sup_esc" },
+                { id: "sup_mod", label: "Marketplace Moderation Alert", desc: "System alerts regarding suspicious listings.", value: notifVerify, setter: setNotifVerify, key: "sup_mod" },
+                { id: "sup_sec", label: "Security Alert", desc: "Critical system security and login alerts.", value: notifWishlist, setter: setNotifWishlist, key: "sup_sec" },
+                { id: "sup_maint", label: "System Maintenance Notification", desc: "Scheduled downtime and deployment alerts.", value: notifMessages, setter: setNotifMessages, key: "sup_maint" }
+              ] : [
                 { id: "wishlist", label: "Wishlist Updates", desc: "Receive immediate updates when saved listings drop in price.", value: notifWishlist, setter: setNotifWishlist, key: "wishlistUpdates" },
                 { id: "messages", label: "Messages & Chats", desc: "Get notified when sellers or buyers text you regarding active listings.", value: notifMessages, setter: setNotifMessages, key: "messages" },
                 { id: "verify", label: "Student Verification Updates", desc: "Stay informed about your college ID verification approval updates.", value: notifVerify, setter: setNotifVerify, key: "verificationUpdates" }
-              ].map(item => (
+              ]).map(item => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", paddingBottom: "14px", borderBottom: "1px solid var(--bdr)" }}>
                   <div>
                     <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>{item.label}</div>
@@ -669,14 +718,20 @@ export default function SettingsPage({ setPage }) {
             <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🔒 Privacy Settings</h2>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {[
+              {(isSupport ? [
+                { id: "priv_onl", label: "Show Online Status", desc: "Display your online presence to other moderators.", value: privShowOnline, setter: setPrivShowOnline, key: "showOnline" },
+                { id: "priv_bdg", label: "Display Moderator Badge", desc: "Show your official moderator badge in internal interactions.", value: privShowVerify, setter: setPrivShowVerify, key: "showVerification" },
+                { id: "priv_cnt", label: "Allow Internal Contact Visibility", desc: "Let other admins see your registered email address.", value: privShowEmail, setter: setPrivShowEmail, key: "showEmail" },
+                { id: "priv_ses", label: "Session Privacy", desc: "Hide your active session locations from non-admins.", value: privShowCollege, setter: setPrivShowCollege, key: "showCollege" },
+                { id: "priv_act", label: "Login Activity Visibility", desc: "Allow team leads to view your login history.", value: privAllowDirectContact, setter: setPrivAllowDirectContact, key: "allowDirectContact" }
+              ] : [
                 { id: "showCollege", label: "Display College Publicly", desc: "Allow listings and chat profiles to show your verified campus affiliation.", value: privShowCollege, setter: setPrivShowCollege, key: "showCollege" },
                 { id: "showVerify", label: "Display Verification Status Badge", desc: "Show your student validation badge checkmark alongside search cards.", value: privShowVerify, setter: setPrivShowVerify, key: "showVerification" },
                 { id: "showPhone", label: "Expose Mobile Number", desc: "Expose your contact number in active chats or purchase approvals.", value: privShowPhone, setter: setPrivShowPhone, key: "showPhone" },
                 { id: "showEmail", label: "Expose Email Address", desc: "Make your email address available to buyers once an offer is accepted.", value: privShowEmail, setter: setPrivShowEmail, key: "showEmail" },
                 { id: "showOnline", label: "Show Online Presence Indicators", desc: "Show a green online status dot when active on the platform.", value: privShowOnline, setter: setPrivShowOnline, key: "showOnline" },
                 { id: "allowDirectContact", label: "Accept Direct Info Requests", desc: "Allow buyers to send immediate contact details via purchase approvals.", value: privAllowDirectContact, setter: setPrivAllowDirectContact, key: "allowDirectContact" }
-              ].map(item => (
+              ]).map(item => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", paddingBottom: "14px", borderBottom: "1px solid var(--bdr)" }}>
                   <div>
                     <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>{item.label}</div>
@@ -704,16 +759,53 @@ export default function SettingsPage({ setPage }) {
 
           {/* ================= MARKETPLACE PREFERENCES ================= */}
           <section id="panel-marketplace" ref={sectionRefs.marketplace} className="form-card" style={{ padding: "24px" }} role="tabpanel" aria-labelledby="nav-btn-marketplace">
-            <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🛒 Marketplace Feed Preferences</h2>
+            <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>
+              {isSupport ? "🛡️ Moderation Preferences" : "🛒 Marketplace Feed Preferences"}
+            </h2>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>Default Feed Affiliation</label>
-                <select 
-                  className="form-input" 
-                  value={prefFeed} 
-                  onChange={e => {
-                    const val = e.target.value;
+            {isSupport ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 700 }}>Review Queue Sorting</label>
+                  <select className="form-input">
+                    <option>Show unresolved reports first</option>
+                    <option>Show oldest tickets first</option>
+                  </select>
+                </div>
+                
+                {[
+                  { label: "Auto-refresh moderation queue", desc: "Automatically fetch new reports in real-time." },
+                  { label: "Highlight urgent reports", desc: "Apply visual indicators for high priority items." },
+                  { label: "Confirmation before closing tickets", desc: "Require an extra click before a ticket is closed." },
+                  { label: "Confirmation before rejecting reports", desc: "Require an extra click before discarding a report." },
+                  { label: "Show flagged listings first", desc: "Prioritize reported items in feed." },
+                  { label: "Highlight repeat offenders", desc: "Add visual markers for users with multiple reports." },
+                  { label: "Collapse resolved reports", desc: "Hide resolved items to save space." }
+                ].map((opt, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", paddingTop: "14px", borderTop: "1px solid var(--bdr)" }}>
+                    <div>
+                      <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>{opt.label}</div>
+                      <div style={{ fontSize: "12px", color: "var(--txt-2)" }}>{opt.desc}</div>
+                    </div>
+                    <label className="switch" style={{ position: "relative", display: "inline-block", width: "42px", height: "24px" }}>
+                      <input type="checkbox" defaultChecked={true} style={{ opacity: 0, width: 0, height: 0 }} />
+                      <span className="slider active" style={{ position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0, background: "var(--p)", transition: ".2s", borderRadius: "24px" }}>
+                        <span style={{ position: "absolute", content: "", height: "16px", width: "16px", left: "20px", bottom: "4px", background: "white", transition: ".2s", borderRadius: "50%" }}></span>
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontWeight: 700 }}>Default Feed Affiliation</label>
+                    <select 
+                      className="form-input" 
+                      value={prefFeed} 
+                      onChange={e => {
+                        const val = e.target.value;
                     setPrefFeed(val);
                     updatePreferenceSetting("defaultFeed", val);
                   }}
@@ -871,80 +963,39 @@ export default function SettingsPage({ setPage }) {
                 AI prioritizes rank positioning of listings matching your interests without hiding any regular results. Same department ranking will automatically apply.
               </small>
             </div>
+              </>
+            )}
           </section>
 
           {/* ================= SUPPORT SECTION ================= */}
           <section id="panel-support" ref={sectionRefs.support} className="form-card" style={{ padding: "24px" }} role="tabpanel" aria-labelledby="nav-btn-support">
-            <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🛠️ Support & Assistance</h2>
+            <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🛠️ {isSupport ? "Support Tools" : "Support & Assistance"}</h2>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ borderBottom: "1px dashed var(--bdr)", paddingBottom: "16px" }}>
-                <h3 style={{ fontSize: "14px", fontWeight: 750, marginBottom: "10px" }}>📖 F.A.Q</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {FAQS.map((faq, i) => (
-                    <div key={i} style={{ border: "1px solid var(--bdr)", borderRadius: "6px", background: "var(--light)", overflow: "hidden" }}>
-                      <button 
-                        type="button"
-                        onClick={() => toggleFaq(i)}
-                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "12px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: "var(--txt)", fontWeight: 600, fontSize: "13px" }}
-                      >
-                        <span>{faq.q}</span>
-                        <span>{openFaq === i ? "▼" : "▶"}</span>
-                      </button>
-                      {openFaq === i && (
-                        <div style={{ padding: "12px", background: "var(--surface)", borderTop: "1px solid var(--bdr)", fontSize: "13px", color: "var(--txt-2)", lineHeight: "1.4" }}>
-                          {faq.a}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {isSupport ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[
+                  "Internal Knowledge Base", "Moderator Guidelines", "Escalation Handbook", 
+                  "Contact System Administrator", "Platform Status", "Incident Dashboard", 
+                  "API Health Monitor", "Internal Documentation"
+                ].map(tool => (
+                  <button key={tool} className="btn btn-outline" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "not-allowed", opacity: 0.8 }} disabled type="button">
+                    <span>{tool}</span>
+                    <span style={{ fontSize: "11px", color: "var(--txt-2)", background: "var(--light)", padding: "2px 6px", borderRadius: "4px" }}>Coming Soon</span>
+                  </button>
+                ))}
               </div>
-
-              <form onSubmit={handleReportBug} style={{ borderBottom: "1px dashed var(--bdr)", paddingBottom: "16px" }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>🐞 Report Bug</label>
-                  <textarea 
-                    className="form-input" 
-                    rows="3" 
-                    placeholder="Describe what occurred, steps to reproduce, etc."
-                    value={bugDesc}
-                    onChange={e => setBugDesc(e.target.value.slice(0, 1000))}
-                    required
-                    style={{ resize: "vertical" }}
-                  />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--txt-2)", marginTop: "4px" }}>
-                    <span>Max 1000 characters</span>
-                    <span style={{ color: bugDesc.length > 950 ? "var(--red)" : "inherit" }}>{bugDesc.length}/1000</span>
-                  </div>
-                </div>
-                <button className="btn btn-outline btn-sm" type="submit" disabled={submittingBug || !bugDesc.trim() || bugDesc.length > 1000}>
-                  {submittingBug ? "Submitting..." : "Report Bug"}
+            ) : (
+              <div style={{ padding: "30px 20px", background: "var(--surface)", borderRadius: "16px", border: "1px solid var(--bdr)", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                <Headset size={40} color="var(--p)" style={{ background: "rgba(var(--p-rgb, 102, 102, 102), 0.1)", padding: "8px", borderRadius: "50%" }} />
+                <h3 style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>CampusMart Help Center</h3>
+                <p style={{ fontSize: "14px", color: "var(--txt-2)", maxWidth: "400px", margin: "0 0 8px 0" }}>
+                  Visit our dedicated support portal to search FAQs, submit support tickets, report bugs, or suggest features.
+                </p>
+                <button className="btn btn-primary" onClick={() => setPage("contact")} type="button" style={{ padding: "10px 24px", borderRadius: "8px" }}>
+                  Go to Help Center
                 </button>
-              </form>
-
-              <form onSubmit={handleSendFeedback}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>💬 General Feedback</label>
-                  <textarea 
-                    className="form-input" 
-                    rows="3" 
-                    placeholder="We'd love to hear how we can improve CampusMart..."
-                    value={feedbackDesc}
-                    onChange={e => setFeedbackDesc(e.target.value.slice(0, 1000))}
-                    required
-                    style={{ resize: "vertical" }}
-                  />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--txt-2)", marginTop: "4px" }}>
-                    <span>Max 1000 characters</span>
-                    <span style={{ color: feedbackDesc.length > 950 ? "var(--red)" : "inherit" }}>{feedbackDesc.length}/1000</span>
-                  </div>
-                </div>
-                <button className="btn btn-outline btn-sm" type="submit" disabled={submittingFeedback || !feedbackDesc.trim() || feedbackDesc.length > 1000}>
-                  {submittingFeedback ? "Sending..." : "Submit Feedback"}
-                </button>
-              </form>
-            </div>
+              </div>
+            )}
           </section>
 
           {/* ================= ABOUT SECTION ================= */}
@@ -960,6 +1011,22 @@ export default function SettingsPage({ setPage }) {
                 <span style={{ color: "var(--txt-2)" }}>Build Date</span>
                 <span style={{ fontWeight: 600 }}>June 27, 2026</span>
               </div>
+              {isSupport && (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px" }}>
+                    <span style={{ color: "var(--txt-2)" }}>Frontend Version</span>
+                    <span style={{ fontWeight: 600 }}>React 18.2</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px" }}>
+                    <span style={{ color: "var(--txt-2)" }}>Firebase Version</span>
+                    <span style={{ fontWeight: 600 }}>10.12</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px" }}>
+                    <span style={{ color: "var(--txt-2)" }}>Environment</span>
+                    <span style={{ fontWeight: 600 }}>Production</span>
+                  </div>
+                </>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px" }}>
                 <span style={{ color: "var(--txt-2)" }}>Privacy Policy</span>
                 <button className="btn btn-ghost btn-xs" onClick={() => setPage("privacy")} style={{ color: "var(--p)", padding: 0 }} type="button">View Document</button>
@@ -1001,7 +1068,7 @@ export default function SettingsPage({ setPage }) {
                 </button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", paddingBottom: "12px", borderBottom: "1px solid var(--bdr)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", paddingBottom: !isSupport ? "12px" : "0", borderBottom: !isSupport ? "1px solid var(--bdr)" : "none" }}>
                 <div>
                   <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>Deactivate Profile</div>
                   <div style={{ fontSize: "12px", color: "var(--txt-2)" }}>Temporarily hide all listed marketplace ads until your next log in.</div>
@@ -1011,17 +1078,46 @@ export default function SettingsPage({ setPage }) {
                 </button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
-                <div>
-                  <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>Permanently Erase Profile</div>
-                  <div style={{ fontSize: "12px", color: "var(--red)" }}>Irreversibly delete all your student data and listings from CampusMart.</div>
+              {!isSupport && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                  <div>
+                    <div style={{ fontWeight: 650, fontSize: "14px", color: "var(--txt)" }}>Permanently Erase Profile</div>
+                    <div style={{ fontSize: "12px", color: "var(--red)" }}>Irreversibly delete all your student data and listings from CampusMart.</div>
+                  </div>
+                  <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteStep(1)}>
+                    <AlertTriangle size={14} style={{ marginRight: "6px" }} /> Delete Profile
+                  </button>
                 </div>
-                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteStep(1)}>
-                  <AlertTriangle size={14} style={{ marginRight: "6px" }} /> Delete Profile
-                </button>
-              </div>
+              )}
             </div>
           </section>
+
+          {/* ================= SECURITY SECTION ================= */}
+          {isSupport && (
+            <section id="panel-security" ref={sectionRefs.security} className="form-card" style={{ padding: "24px" }} role="tabpanel" aria-labelledby="nav-btn-security">
+              <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--txt)" }}>🔒 Security Center</h2>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {[
+                  { label: "Active Sessions", value: "1 (This device)" },
+                  { label: "Last Login", value: currentUser?.metadata?.lastSignInTime ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() : "Just now" },
+                  { label: "Last Password Change", value: "30 days ago" },
+                  { label: "Two-Factor Authentication", value: "Disabled", isBtn: true, btnText: "Enable 2FA" },
+                  { label: "Trusted Devices", value: "View List", isBtn: true, btnText: "Manage Devices" },
+                  { label: "Login History", value: "View Log", isBtn: true, btnText: "View Activity" }
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: i < 5 ? "1px solid var(--bdr)" : "none", paddingBottom: i < 5 ? "12px" : "0" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--txt)" }}>{item.label}</span>
+                    {item.isBtn ? (
+                      <button className="btn btn-outline btn-sm" disabled type="button" style={{ opacity: 0.7, cursor: "not-allowed" }}>{item.btnText}</button>
+                    ) : (
+                      <span style={{ fontSize: "14px", color: "var(--txt-2)" }}>{item.value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
         </div>
       </div>

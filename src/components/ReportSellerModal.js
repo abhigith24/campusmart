@@ -4,16 +4,18 @@ import { useToast } from "../context/ToastContext";
 import { transactionService } from "../services/transactionService";
 
 const REPORT_REASONS = [
-  "Scam or Fraud",
+  "Scam / Fraud",
   "Fake Listing",
+  "Misleading Information",
   "Inappropriate Content",
-  "Spam",
   "Harassment",
+  "Spam",
   "Counterfeit Item",
+  "Duplicate Listing",
   "Other"
 ];
 
-export default function ReportSellerModal({ sellerId, sellerName, listingId, onClose }) {
+export default function ReportSellerModal({ sellerId, sellerName, listingId, listingTitle, onClose }) {
   const { currentUser } = useAuth();
   const toast = useToast();
 
@@ -29,7 +31,7 @@ export default function ReportSellerModal({ sellerId, sellerName, listingId, onC
     
     setLoading(true);
     try {
-      await transactionService.reportSeller(currentUser.uid, sellerId, listingId, reason, description.trim());
+      await transactionService.reportSeller(currentUser.uid, currentUser.displayName || "User", sellerId, sellerName, listingId, listingTitle || "Unknown Product", reason, description.trim());
       toast("Report submitted successfully.", "success");
       onClose();
     } catch (err) {

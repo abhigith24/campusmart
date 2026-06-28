@@ -97,8 +97,34 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       if (user) {
-        profileUnsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-          if (docSnap.exists()) setUserProfile(docSnap.data());
+        profileUnsub = onSnapshot(doc(db, "users", user.uid), async (docSnap) => {
+          if (docSnap.exists()) {
+            let data = docSnap.data();
+            
+            // RBAC Auto-Migration Layer
+            if ((data.role === "admin" || data.role === "support") && data.permissionLevel === undefined) {
+              const { mapLegacyRoleToRBAC } = await import("../config/rbac.js");
+              const { updateDoc } = await import("firebase/firestore");
+              const newRoleData = mapLegacyRoleToRBAC(data.role);
+              
+              const updates = {
+                permissionLevel: newRoleData.level,
+                department: newRoleData.department,
+                accountType: newRoleData.accountType
+                // Do NOT modify role, as firestore.rules will reject it and cause an infinite loop
+              };
+              
+              // Apply locally first to prevent UI flicker
+              data = { ...data, ...updates };
+              
+              // Push to Firestore in background
+              updateDoc(doc(db, "users", user.uid), updates)
+                .then(() => console.log(`Assigned Level ${newRoleData.level} to ${data.email || user.email}`))
+                .catch(err => console.error("RBAC Migration Error:", err));
+            }
+            
+            setUserProfile(data);
+          }
           setLoading(false);
         }, (err) => {
           console.error("Error loading user profile:", err);
@@ -116,19 +142,17 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const role = userProfile?.role || "user";
-
   const boundHasPermission = useCallback((permission) => {
-    return hasPermission(role, permission);
-  }, [role]);
+    return hasPermission(userProfile, permission);
+  }, [userProfile]);
 
   const boundHasFeature = useCallback((feature) => {
-    return hasFeature(role, feature);
-  }, [role]);
+    return hasFeature(userProfile, feature);
+  }, [userProfile]);
 
   const boundCanAccessRoute = useCallback((route) => {
-    return canAccessRoute(role, route);
-  }, [role]);
+    return canAccessRoute(userProfile, route);
+  }, [userProfile]);
 
   const value = useMemo(() => ({
     currentUser,

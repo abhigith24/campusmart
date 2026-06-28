@@ -27,6 +27,10 @@ const VerificationRequestsPage = React.lazy(() => import("./pages/VerificationRe
 const UserManagementPage = React.lazy(() => import("./pages/UserManagementPage"));
 const AnalyticsReportsPage = React.lazy(() => import("./pages/AnalyticsReportsPage"));
 const SupportDashboardPage = React.lazy(() => import("./pages/SupportDashboardPage"));
+const SupportRequestsPage = React.lazy(() => import("./pages/SupportRequestsPage"));
+const BugReportsPage = React.lazy(() => import("./pages/BugReportsPage"));
+const FeatureRequestsPage = React.lazy(() => import("./pages/FeatureRequestsPage"));
+const SellerReportsPage = React.lazy(() => import("./pages/SellerReportsPage"));
 const NotificationsPage = React.lazy(() => import("./pages/NotificationsPage"));
 const PurchaseRequestsPage = React.lazy(() => import("./pages/PurchaseRequestsPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
@@ -48,7 +52,7 @@ const NO_FOOTER = ["chat", "auth"];
 const FULL_HEIGHT = ["chat", "auth"];
 
 // Pages that require authentication
-const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics", "support"];
+const PROTECTED_PAGES = ["post", "edit", "chat", "profile", "my-listings", "wishlist", "notifications", "purchase-requests", "admin", "settings", "college-verification", "my-sales", "saved-items", "my-college-listings", "admin-verifications", "admin-users", "admin-analytics", "support", "support-requests", "bug-reports", "feature-requests", "seller-reports"];
 
 function App() {
   return (
@@ -94,6 +98,10 @@ function Main() {
     if (path === "/admin/users") return "admin-users";
     if (path === "/admin/analytics") return "admin-analytics";
     if (path === "/support") return "support";
+    if (path === "/admin/support-requests") return "support-requests";
+    if (path === "/admin/bug-reports") return "bug-reports";
+    if (path === "/admin/feature-requests") return "feature-requests";
+    if (path === "/admin/seller-reports") return "seller-reports";
     if (path.startsWith("/settings")) return "settings";
     if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) return "listing";
     return "home";
@@ -175,6 +183,10 @@ function Main() {
     else if (nextPage === "admin-users") path = "/admin/users";
     else if (nextPage === "admin-analytics") path = "/admin/analytics";
     else if (nextPage === "support") path = "/support";
+    else if (nextPage === "support-requests") path = "/admin/support-requests";
+    else if (nextPage === "bug-reports") path = "/admin/bug-reports";
+    else if (nextPage === "feature-requests") path = "/admin/feature-requests";
+    else if (nextPage === "seller-reports") path = "/admin/seller-reports";
     else if (nextPage === "settings") path = "/settings";
     else if (nextPage === "contact") path = "/contact";
     else if (nextPage === "report-bug") path = "/report-bug";
@@ -237,6 +249,10 @@ function Main() {
       else if (path === "/admin/users") setPage("admin-users");
       else if (path === "/admin/analytics") setPage("admin-analytics");
       else if (path === "/support") setPage("support");
+      else if (path === "/admin/support-requests") setPage("support-requests");
+      else if (path === "/admin/bug-reports") setPage("bug-reports");
+      else if (path === "/admin/feature-requests") setPage("feature-requests");
+      else if (path === "/admin/seller-reports") setPage("seller-reports");
       else if (path === "/settings") setPage("settings");
       else if (path.startsWith("/listing/") || path.startsWith("/item/") || path.startsWith("/i/")) {
         const parsedId = parseListingIdFromPath(path);
@@ -262,7 +278,7 @@ function Main() {
   useEffect(() => {
     if (userProfile && page) {
       if (!canAccessRoute(page)) {
-        navigateTo(getLandingPage(userProfile.role));
+        navigateTo(getLandingPage(userProfile));
       }
     }
   }, [userProfile, page]);
@@ -319,6 +335,10 @@ function Main() {
     "admin-users":       "User Management",
     "admin-analytics":   "Analytics & Reports",
     support:           "Support Dashboard",
+    "support-requests": "Support Requests",
+    "bug-reports":     "Bug Reports",
+    "feature-requests":"Feature Requests",
+    "seller-reports":  "Seller Reports",
     settings:          "Account Settings",
     privacy:           "Privacy Policy",
     terms:             "Terms of Service",
@@ -347,7 +367,7 @@ function Main() {
     const path = window.location.pathname;
     if (currentUser && (path === "/" || path === "/auth")) {
       if (page === "home" && window.history.state?.page === "home") return;
-      navigateTo(getLandingPage(userProfile?.role));
+      navigateTo(getLandingPage(userProfile));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, userProfile]);
@@ -358,7 +378,7 @@ function Main() {
       navigateTo(authRedirectPage);
       setAuthRedirectPage(null);
     } else {
-      navigateTo(getLandingPage(userProfile?.role));
+      navigateTo(getLandingPage(userProfile));
     }
     if (authSuccessCallback) {
       authSuccessCallback();
@@ -436,6 +456,10 @@ function Main() {
           {page === "admin-users" && <ProtectedRoute route="admin-users"><UserManagementPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "admin-analytics" && <ProtectedRoute route="admin-analytics"><AnalyticsReportsPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "support" && <ProtectedRoute route="support"><SupportDashboardPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "support-requests" && <ProtectedRoute route="support-requests"><SupportRequestsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "bug-reports" && <ProtectedRoute route="bug-reports"><BugReportsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "feature-requests" && <ProtectedRoute route="feature-requests"><FeatureRequestsPage setPage={navigateTo} /></ProtectedRoute>}
+          {page === "seller-reports" && <ProtectedRoute route="seller-reports"><SellerReportsPage setPage={navigateTo} /></ProtectedRoute>}
           {page === "settings" && <SettingsPage setPage={navigateTo} />}
           {page === "privacy" && <PrivacyPolicyPage setPage={navigateTo} />}
           {page === "terms"   && <TermsPage setPage={navigateTo} />}

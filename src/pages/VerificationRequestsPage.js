@@ -4,6 +4,28 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import AdminLayout from "../components/AdminLayout";
+import * as Icons from "lucide-react";
+
+function AdminSkeletonLoader() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingTop: "8px" }}>
+      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--bdr)", background: "var(--bg-secondary)" }}>
+          <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
+        </div>
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
+            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "25%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
+            <div className="skeleton" style={{ flex: 1, height: "36px", borderRadius: "8px" }}></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function VerificationRequestsPage({ setPage }) {
   const { userProfile } = useAuth();
@@ -12,6 +34,15 @@ export default function VerificationRequestsPage({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [activeIdCardUrl, setActiveIdCardUrl] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [collegeFilter, setCollegeFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
+  
+  // Revoke Modal State
+  const [userToRevoke, setUserToRevoke] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -91,139 +122,305 @@ export default function VerificationRequestsPage({ setPage }) {
     }
   }
 
+  async function executeRevokeVerification() {
+    if (!userToRevoke) return;
+    setActionLoading(true);
+    try {
+      await updateDoc(doc(db, "users", userToRevoke), {
+        collegeVerified: false,
+        verificationStatus: "rejected"
+      });
 
+      const q = query(
+        collection(db, "listings"),
+        where("sellerId", "==", userToRevoke),
+        where("status", "==", "active")
+      );
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map(d => updateDoc(doc(db, "listings", d.id), {
+        collegeVerified: false,
+        isVerified: false
+      })));
+
+      toast("College verification revoked. ❌", "success");
+      setUserToRevoke(null);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast("Failed to revoke verification. ❌", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   const pendingUsers = users.filter(u => u.verificationStatus && u.verificationStatus !== "none");
+  const uniqueColleges = Array.from(new Set(pendingUsers.map(u => u.college).filter(Boolean))).sort();
+
+  const filteredUsers = pendingUsers
+    .filter(u => {
+      if (statusFilter !== "all" && u.verificationStatus !== statusFilter) return false;
+      if (collegeFilter !== "all" && u.college !== collegeFilter) return false;
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        return (u.name?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search));
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = a.verificationSubmittedAt?.toMillis ? a.verificationSubmittedAt.toMillis() : 0;
+      const dateB = b.verificationSubmittedAt?.toMillis ? b.verificationSubmittedAt.toMillis() : 0;
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+  const stats = {
+    pending: pendingUsers.filter(u => u.verificationStatus === "pending").length,
+    approved: pendingUsers.filter(u => u.verificationStatus === "approved").length,
+    rejected: pendingUsers.filter(u => u.verificationStatus === "rejected").length,
+    today: pendingUsers.filter(u => {
+      if (!u.verificationSubmittedAt?.toDate) return false;
+      const date = u.verificationSubmittedAt.toDate();
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    }).length
+  };
 
   return (
     <AdminLayout activePage="admin-verifications" setPage={setPage}>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
+      <div className="page-header" style={{ marginBottom: "24px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>🎓 Verification Requests</h2>
         <p style={{ color: "var(--muted)" }}>Review and manage student ID verification requests</p>
       </div>
 
-      {loading ? (
-        <div className="loading-center" style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
-          <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }} />
-        </div>
-      ) : (
-        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
-          <table className="report-table">
-            <thead>
-              <tr>
-                <th>User Name</th>
-                <th>Email</th>
-                <th>College</th>
-                <th>Status</th>
-                <th>Submitted Date</th>
-                <th>View ID Card</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingUsers.map(u => {
-                const submittedAt = u.verificationSubmittedAt?.toDate
-                  ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-IN")
-                  : "—";
-                
-                let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "Unverified" };
-                if (u.collegeVerified && u.verificationStatus === "approved") {
-                  statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "🟢 Approved" };
-                } else if (u.verificationStatus === "pending") {
-                  statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "🟡 Pending" };
-                } else if (u.verificationStatus === "rejected") {
-                  statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "🔴 Rejected" };
-                }
+      {!loading && (
+        <>
+          {/* Stats Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                <Icons.Clock size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#d97706" }}>{stats.pending}</div>
+                <div style={{ fontSize: "13px", color: "var(--muted)", fontWeight: "600" }}>Pending Verification</div>
+              </div>
+            </div>
+            
+            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                <Icons.CheckCircle size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#059669" }}>{stats.approved}</div>
+                <div style={{ fontSize: "13px", color: "var(--muted)", fontWeight: "600" }}>Approved</div>
+              </div>
+            </div>
 
-                return (
-                  <tr key={u.id}>
-                    <td data-label="User Name" style={{ fontWeight: 700 }}>{u.name}</td>
-                    <td data-label="Email" style={{ fontSize: 13 }}>{u.email}</td>
-                    <td data-label="College">{u.college || "—"}</td>
-                    <td data-label="Status">
-                      <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
-                        {statusBadgeColor.label}
-                      </span>
-                    </td>
-                    <td data-label="Submitted Date" style={{ fontSize: 12, color: "var(--muted)" }}>{submittedAt}</td>
-                    <td data-label="View ID Card">
-                      {u.collegeIdCardUrl ? (
-                        <button 
-                          type="button"
-                          className="btn btn-outline btn-xs"
-                          onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
-                        >
-                          View ID Card 👁️
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
-                      )}
-                    </td>
-                    <td data-label="Action">
-                      {u.verificationStatus === "pending" && (
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button 
-                            type="button"
-                            className="btn btn-green btn-xs" 
-                            onClick={() => handleApproveVerification(u.id)}
-                            disabled={actionLoading}
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            type="button"
-                            className="btn btn-danger btn-xs" 
-                            onClick={() => handleRejectVerification(u.id)}
-                            disabled={actionLoading}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      {u.verificationStatus === "approved" && (
-                        <button 
-                          type="button"
-                          className="btn btn-danger btn-xs" 
-                          onClick={() => handleRejectVerification(u.id)}
-                          disabled={actionLoading}
-                        >
-                          Revoke Verification
-                        </button>
-                      )}
-                      {u.verificationStatus === "rejected" && (
-                        <button 
-                          type="button"
-                          className="btn btn-green btn-xs" 
-                          onClick={() => handleApproveVerification(u.id)}
-                          disabled={actionLoading}
-                        >
-                          Approve Anyway
-                        </button>
-                      )}
-                    </td>
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                <Icons.XCircle size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#dc2626" }}>{stats.rejected}</div>
+                <div style={{ fontSize: "13px", color: "var(--muted)", fontWeight: "600" }}>Rejected</div>
+              </div>
+            </div>
+
+            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                <Icons.Calendar size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: "24px", fontWeight: "800", color: "#2563eb" }}>{stats.today}</div>
+                <div style={{ fontSize: "13px", color: "var(--muted)", fontWeight: "600" }}>Today's Requests</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: "200px", maxWidth: "320px" }}>
+              <Icons.Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
+              <input
+                className="form-input"
+                style={{ width: "100%", padding: "0 16px 0 40px", height: "44px", borderRadius: "12px", fontSize: "14px" }}
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <select className="form-input" style={{ width: "140px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select className="form-input" style={{ minWidth: "160px", maxWidth: "200px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)}>
+              <option value="all">All Colleges</option>
+              {uniqueColleges.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className="form-input" style={{ width: "130px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+        </>
+      )}
+
+      {loading ? (
+        <AdminSkeletonLoader />
+      ) : (
+        <>
+          {filteredUsers.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
+              <Icons.FileX size={48} style={{ color: "var(--muted)", marginBottom: "16px" }} />
+              <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>No Verification Requests</h3>
+              <p style={{ color: "var(--muted)", marginBottom: "20px" }}>There are currently no student verification requests matching your filters.</p>
+              <button className="btn btn-outline" onClick={loadData} style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <Icons.RefreshCcw size={16} /> Refresh Data
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+              <table className="report-table">
+                <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                  <tr>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>User Name</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Email</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>College</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Status</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Date</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>ID Card</th>
+                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Action</th>
                   </tr>
-                );
-              })}
-              {pendingUsers.length === 0 && (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: "center", padding: "20px", color: "var(--muted)" }}>
-                    No college ID verification requests found in the database.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(u => {
+                    const submittedAt = u.verificationSubmittedAt?.toDate
+                      ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                      : "—";
+                    
+                    let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                    if (u.collegeVerified && u.verificationStatus === "approved") {
+                      statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
+                    } else if (u.verificationStatus === "pending") {
+                      statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
+                    } else if (u.verificationStatus === "rejected") {
+                      statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
+                    }
+
+                    return (
+                      <tr key={u.id}>
+                        <td data-label="User Name" style={{ fontWeight: 700, padding: "14px 16px" }}>{u.name}</td>
+                        <td data-label="Email" style={{ fontSize: 13, padding: "14px 16px", wordBreak: "break-all" }}>{u.email}</td>
+                        <td data-label="College" style={{ padding: "14px 16px" }}>{u.college || "—"}</td>
+                        <td data-label="Status" style={{ padding: "14px 16px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
+                            {statusBadgeColor.label}
+                          </span>
+                        </td>
+                        <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)", padding: "14px 16px", whiteSpace: "nowrap" }}>{submittedAt}</td>
+                        <td data-label="ID Card" style={{ padding: "14px 16px" }}>
+                          {u.collegeIdCardUrl ? (
+                            <button 
+                              type="button"
+                              className="btn btn-outline"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "32px", padding: "0 12px", borderRadius: "8px", fontSize: "13px" }}
+                              onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
+                            >
+                              <Icons.Eye size={16} /> View ID
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
+                          )}
+                        </td>
+                        <td data-label="Action" style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                          {u.verificationStatus === "pending" && (
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button 
+                                type="button"
+                                className="btn btn-green" 
+                                style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+                                onClick={() => handleApproveVerification(u.id)}
+                                disabled={actionLoading}
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                type="button"
+                                className="btn btn-danger" 
+                                style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+                                onClick={() => handleRejectVerification(u.id)}
+                                disabled={actionLoading}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          {u.verificationStatus === "approved" && (
+                            <button 
+                              type="button"
+                              className="btn btn-outline" 
+                              style={{ width: "140px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px", borderColor: "var(--status-rejected-txt)", color: "var(--status-rejected-txt)" }}
+                              onClick={() => setUserToRevoke(u.id)}
+                              disabled={actionLoading}
+                            >
+                              Revoke
+                            </button>
+                          )}
+                          {u.verificationStatus === "rejected" && (
+                            <button 
+                              type="button"
+                              className="btn btn-green" 
+                              style={{ width: "140px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+                              onClick={() => handleApproveVerification(u.id)}
+                              disabled={actionLoading}
+                            >
+                              Approve Anyway
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Revoke Confirmation Modal */}
+      {userToRevoke && (
+        <div className="modal-overlay" onClick={() => setUserToRevoke(null)} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", color: "var(--status-rejected-txt)" }}>
+              <Icons.AlertTriangle size={28} />
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>Revoke Verification?</h3>
+            </div>
+            <p style={{ color: "var(--muted)", marginBottom: "24px", lineHeight: 1.5 }}>
+              This student will lose their verified badge and will need to submit a new verification request. Are you sure you want to proceed?
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setUserToRevoke(null)}>Cancel</button>
+              <button type="button" className="btn btn-danger" style={{ borderRadius: "8px" }} onClick={executeRevokeVerification} disabled={actionLoading}>
+                {actionLoading ? "Processing..." : "Revoke Verification"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ID Card Viewer Modal */}
       {activeIdCardUrl && (
-        <div className="modal-overlay" onClick={() => setActiveIdCardUrl(null)} style={{ zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)" }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
-            <h3>College ID Card View</h3>
-            <div style={{ background: "var(--light)", borderRadius: "var(--r-md)", padding: "16px", margin: "16px 0", textAlign: "center" }}>
-              <img src={activeIdCardUrl} alt="College ID Card" style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: "var(--r-sm)" }} />
+        <div className="modal-overlay" onClick={() => setActiveIdCardUrl(null)} style={{ zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)" }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 650, width: "95%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px" }}>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "18px" }}>College ID Card View</h3>
+            <div style={{ background: "var(--bg-secondary)", borderRadius: "var(--r-md)", padding: "16px", marginBottom: "20px", textAlign: "center", minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src={activeIdCardUrl} alt="College ID Card" style={{ maxWidth: "100%", maxHeight: "60vh", objectFit: "contain", borderRadius: "var(--r-sm)" }} />
             </div>
-            <button type="button" className="btn btn-outline" style={{ width: "100%", justifyContent: "center" }} onClick={() => setActiveIdCardUrl(null)}>Close</button>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-outline" style={{ width: "120px", justifyContent: "center", borderRadius: "8px" }} onClick={() => setActiveIdCardUrl(null)}>Close</button>
+            </div>
           </div>
         </div>
       )}

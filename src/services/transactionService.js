@@ -194,18 +194,26 @@ export const transactionService = {
     await trustService.recalculateTrustScore(sellerId);
   },
 
-  reportSeller: async (buyerId, sellerId, listingId, reason, description = "") => {
+  reportSeller: async (buyerId, buyerName, sellerId, sellerName, listingId, listingTitle, reason, description = "") => {
     const batch = writeBatch(db);
     const reportRef = doc(collection(db, "sellerReports"));
     
     batch.set(reportRef, {
+      reportId: reportRef.id,
       reporterId: buyerId,
+      reporterName: buyerName,
       sellerId,
+      sellerName,
       listingId,
+      productId: listingId,
+      productTitle: listingTitle,
       reason,
       description,
-      status: "OPEN",
-      createdAt: serverTimestamp()
+      status: "Pending",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      reviewedBy: null,
+      moderatorNotes: []
     });
 
     await batch.commit();

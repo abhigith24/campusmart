@@ -3,6 +3,7 @@ import { collection, getDocs, doc, updateDoc, query, orderBy } from "firebase/fi
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import * as Icons from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 
 const STATUS_COLORS = {
@@ -18,10 +19,38 @@ const STATUS_COLORS = {
 
 function StatusBadge({ status }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS.deleted;
+  const capitalized = status.charAt(0).toUpperCase() + status.slice(1);
   return (
-    <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color }}>
-      {status}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: s.bg, color: s.color }}>
+      <span style={{ fontSize: "10px" }}>●</span> {capitalized}
     </span>
+  );
+}
+
+const renderPrice = (isFree, price) => {
+  if (isFree) return <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span>;
+  if (price !== undefined && price !== null && price !== "" && !isNaN(price)) return `₹${price}`;
+  return "—";
+};
+
+function AdminSkeletonLoader() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingTop: "8px" }}>
+      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
+        <div style={{ padding: "16px", borderBottom: "1px solid var(--bdr)", background: "var(--bg-secondary)" }}>
+          <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
+        </div>
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
+            <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
+            <div className="skeleton" style={{ flex: 1, height: "36px", borderRadius: "8px" }}></div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -100,8 +129,6 @@ export default function AdminDashboardPage({ setPage }) {
     }
   }
 
-
-
   const TABS = [
     { id: "listings", label: `📦 Listings Moderation` },
     { id: "requests", label: `🛒 Purchase Requests` }
@@ -109,126 +136,182 @@ export default function AdminDashboardPage({ setPage }) {
 
   return (
     <AdminLayout activePage="admin" setPage={setPage}>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
+      <div className="page-header" style={{ marginBottom: "12px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>🛡️ Admin Dashboard</h2>
-        <p style={{ color: "var(--muted)" }}>Moderate Listings & View Marketplace Requests</p>
+        <p style={{ color: "var(--muted)" }}>Manage marketplace listings, purchase requests, and platform moderation.</p>
       </div>
 
-      <div className="profile-tabs" style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: "16px", display: "flex", width: "100%", maxWidth: "420px", background: "var(--bg-secondary)", padding: "4px", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
         {TABS.map(t => (
-          <button key={t.id} className={`profile-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+          <button 
+            key={t.id} 
+            onClick={() => setTab(t.id)}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              borderRadius: "8px",
+              border: "none",
+              background: tab === t.id ? "var(--surface)" : "transparent",
+              color: tab === t.id ? "var(--txt)" : "var(--muted)",
+              fontWeight: tab === t.id ? "700" : "600",
+              boxShadow: tab === t.id ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+              cursor: "pointer",
+              transition: "all 0.2s var(--ease)",
+              fontSize: "14px",
+              textAlign: "center"
+            }}
+          >
             {t.label}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="loading-center" style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
-          <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }} />
-        </div>
+        <AdminSkeletonLoader />
       ) : (
         <>
           {/* Listings Moderation */}
           {tab === "listings" && (
             <>
-              <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 10, marginBottom: "12px", flexWrap: "wrap", alignItems: "center" }}>
                 <input
                   className="form-input"
-                  style={{ maxWidth: 280, padding: "8px 14px" }}
-                  placeholder="🔍 Search listings..."
+                  style={{ maxWidth: 320, width: "100%", padding: "0 16px", height: "48px", borderRadius: "12px", fontSize: "14px" }}
+                  placeholder="🔍 Search by title, seller or category..."
                   value={listingSearch}
                   onChange={e => setListingSearch(e.target.value)}
                 />
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: "12px" }}>
                   {["all", "active", "flagged", "removed"].map(s => (
                     <button
                       key={s}
                       type="button"
-                      className={`btn btn-sm ${listingFilter === s ? "btn-primary" : "btn-outline"}`}
+                      className={`btn ${listingFilter === s ? "btn-primary" : "btn-outline"}`}
+                      style={{ padding: "0 16px", height: "40px", borderRadius: "20px", fontSize: "14px", fontWeight: "600" }}
                       onClick={() => setListingFilter(s)}
                     >
-                      {s === "all" ? "All" : s === "active" ? "✅ Active" : s === "flagged" ? "🚩 Flagged" : "🚫 Removed"}
+                      {s === "all" ? "All" : s === "active" ? "Active" : s === "flagged" ? "Flagged" : "Removed"}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
-                <table className="report-table">
-                  <thead>
-                    <tr><th>Item</th><th>Seller</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    {listings
-                      .filter(l => {
-                        if (listingFilter === "flagged")  return l.flagged;
-                        if (listingFilter === "removed")  return l.status === "removed";
-                        if (listingFilter === "active")   return l.status === "active" && !l.flagged;
-                        return true;
-                      })
-                      .filter(l => !listingSearch || l.title?.toLowerCase().includes(listingSearch.toLowerCase()) || l.sellerName?.toLowerCase().includes(listingSearch.toLowerCase()))
-                      .map(l => (
-                        <tr key={l.id} style={{ background: l.flagged ? "var(--status-pending-bg)" : "transparent" }}>
-                          <td data-label="Item" style={{ fontWeight: 700, maxWidth: 180 }}>
-                            {l.flagged && <span style={{ color: "#0369a1", marginRight: 4 }}>🚩</span>}
-                            {l.title}
-                          </td>
-                          <td data-label="Seller">{l.sellerName}</td>
-                          <td data-label="Category">{l.category}</td>
-                          <td data-label="Price">{l.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${l.price}`}</td>
-                          <td data-label="Status"><StatusBadge status={l.flagged && l.status === "active" ? "flagged" : l.status} /></td>
-                          <td data-label="Actions">
-                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              {l.status === "active" && !l.flagged && (
-                                <>
-                                  <button type="button" className="btn btn-sm" style={{ background: "var(--status-pending-bg)", color: "var(--status-pending-txt)", border: "1px solid var(--status-pending-txt)", borderRadius: 6 }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
-                                  <button type="button" className="btn btn-danger btn-sm" onClick={() => removeListing(l.id)}>🚫 Remove</button>
-                                </>
-                              )}
-                              {l.status === "active" && l.flagged && (
-                                <>
-                                  <button type="button" className="btn btn-sm btn-outline" onClick={() => unflagListing(l.id)}>✅ Unflag</button>
-                                  <button type="button" className="btn btn-danger btn-sm" onClick={() => removeListing(l.id)}>🚫 Remove</button>
-                                </>
-                              )}
-                              {l.status === "removed" && (
-                                <button type="button" className="btn btn-green btn-sm" onClick={() => restoreListing(l.id)}>♻️ Restore</button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+              {listings
+                .filter(l => {
+                  if (listingFilter === "flagged")  return l.flagged;
+                  if (listingFilter === "removed")  return l.status === "removed";
+                  if (listingFilter === "active")   return l.status === "active" && !l.flagged;
+                  return true;
+                })
+                .filter(l => !listingSearch || l.title?.toLowerCase().includes(listingSearch.toLowerCase()) || l.sellerName?.toLowerCase().includes(listingSearch.toLowerCase()))
+                .length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
+                  <Icons.SearchX size={48} style={{ color: "var(--muted)", marginBottom: "16px" }} />
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>No listings found</h3>
+                  <p style={{ color: "var(--muted)" }}>There are currently no listings matching your filters.</p>
+                </div>
+              ) : (
+                <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+                  <table className="report-table">
+                    <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)" }}>
+                      <tr>
+                        <th style={{ padding: "14px 16px" }}>Item</th>
+                        <th style={{ padding: "14px 16px" }}>Seller</th>
+                        <th style={{ padding: "14px 16px" }}>Category</th>
+                        <th style={{ padding: "14px 16px" }}>Price</th>
+                        <th style={{ padding: "14px 16px", paddingRight: "40px" }}>Status</th>
+                        <th style={{ padding: "14px 16px" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listings
+                        .filter(l => {
+                          if (listingFilter === "flagged")  return l.flagged;
+                          if (listingFilter === "removed")  return l.status === "removed";
+                          if (listingFilter === "active")   return l.status === "active" && !l.flagged;
+                          return true;
+                        })
+                        .filter(l => !listingSearch || l.title?.toLowerCase().includes(listingSearch.toLowerCase()) || l.sellerName?.toLowerCase().includes(listingSearch.toLowerCase()))
+                        .map(l => (
+                          <tr key={l.id} style={{ background: l.flagged ? "rgba(59, 130, 246, 0.05)" : "transparent" }}>
+                            <td data-label="Item" style={{ fontWeight: 700, maxWidth: 180, padding: "14px 16px" }}>
+                              {l.flagged && <span style={{ color: "#0369a1", marginRight: 4 }}>🚩</span>}
+                              {l.title}
+                            </td>
+                            <td data-label="Seller" style={{ padding: "14px 16px" }}>{l.sellerName}</td>
+                            <td data-label="Category" style={{ padding: "14px 16px" }}>{l.category}</td>
+                            <td data-label="Price" style={{ padding: "14px 16px" }}>{renderPrice(l.isFree, l.price)}</td>
+                            <td data-label="Status" style={{ padding: "14px 16px", paddingRight: "40px" }}><StatusBadge status={l.flagged && l.status === "active" ? "flagged" : l.status} /></td>
+                            <td data-label="Actions" style={{ padding: "14px 16px" }}>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {l.status === "active" && !l.flagged && (
+                                  <>
+                                    <button type="button" className="btn btn-sm" style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", background: "var(--status-pending-bg)", color: "var(--status-pending-txt)", border: "1px solid var(--status-pending-txt)", borderRadius: "8px" }} onClick={() => flagListing(l.id)}>🚩 Flag</button>
+                                    <button type="button" className="btn btn-danger btn-sm" style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }} onClick={() => removeListing(l.id)}>🚫 Remove</button>
+                                  </>
+                                )}
+                                {l.status === "active" && l.flagged && (
+                                  <>
+                                    <button type="button" className="btn btn-sm btn-outline" style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }} onClick={() => unflagListing(l.id)}>✅ Unflag</button>
+                                    <button type="button" className="btn btn-danger btn-sm" style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }} onClick={() => removeListing(l.id)}>🚫 Remove</button>
+                                  </>
+                                )}
+                                {l.status === "removed" && (
+                                  <button type="button" className="btn btn-green btn-sm" style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }} onClick={() => restoreListing(l.id)}>♻️ Restore</button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
 
           {/* Purchase Requests */}
           {tab === "requests" && (
-            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "auto" }}>
-              <table className="report-table">
-                <thead>
-                  <tr><th>Item</th><th>Buyer</th><th>Seller</th><th>Price</th><th>Status</th><th>Date</th></tr>
-                </thead>
-                <tbody>
-                  {requests.map(r => (
-                    <tr key={r.id}>
-                      <td data-label="Item" style={{ fontWeight: 700 }}>{r.listingTitle}</td>
-                      <td data-label="Buyer">{r.buyerName}</td>
-                      <td data-label="Seller">{r.sellerName}</td>
-                      <td data-label="Price">{r.isFree ? <span style={{ color: "var(--green)", fontWeight: 700 }}>Free</span> : `₹${r.price}`}</td>
-                      <td data-label="Status"><StatusBadge status={r.status} /></td>
-                      <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)" }}>
-                        {r.createdAt?.toDate
-                          ? new Date(r.createdAt.toDate()).toLocaleDateString("en-IN")
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {requests.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
+                  <Icons.Inbox size={48} style={{ color: "var(--muted)", marginBottom: "16px" }} />
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>No purchase requests</h3>
+                  <p style={{ color: "var(--muted)" }}>There are currently no purchase requests to display.</p>
+                </div>
+              ) : (
+                <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+                  <table className="report-table">
+                    <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)" }}>
+                      <tr>
+                        <th style={{ padding: "14px 16px" }}>Item</th>
+                        <th style={{ padding: "14px 16px" }}>Buyer</th>
+                        <th style={{ padding: "14px 16px" }}>Seller</th>
+                        <th style={{ padding: "14px 16px" }}>Price</th>
+                        <th style={{ padding: "14px 16px", paddingRight: "40px" }}>Status</th>
+                        <th style={{ padding: "14px 16px" }}>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {requests.map(r => (
+                        <tr key={r.id}>
+                          <td data-label="Item" style={{ fontWeight: 700, padding: "14px 16px" }}>{r.listingTitle}</td>
+                          <td data-label="Buyer" style={{ padding: "14px 16px" }}>{r.buyerName}</td>
+                          <td data-label="Seller" style={{ padding: "14px 16px" }}>{r.sellerName}</td>
+                          <td data-label="Price" style={{ padding: "14px 16px" }}>{renderPrice(r.isFree, r.price)}</td>
+                          <td data-label="Status" style={{ padding: "14px 16px", paddingRight: "40px" }}><StatusBadge status={r.status} /></td>
+                          <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)", padding: "14px 16px" }}>
+                            {r.createdAt?.toDate
+                              ? new Date(r.createdAt.toDate()).toLocaleDateString("en-IN")
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

@@ -1,11 +1,10 @@
+import { PERMISSION_LEVELS, ROLES, getRequiredLevelForRoute, canAccess } from "./rbac";
+
+// Legacy configuration mapping preserved for specific feature/permission checks during transition
 export const ACCESS_CONFIG = {
-  admin: {
+  [PERMISSION_LEVELS.SYSTEM_ADMIN]: {
     landingPage: "admin",
     dashboardRoute: "admin",
-    allowedRoutes: [
-      "admin", "admin-verifications", "admin-users", "admin-analytics",
-      "support", "profile", "settings", "notifications", "home", "listing", "item", "contact", "report-bug", "feature-request", "faqs", "terms", "privacy", "auth"
-    ],
     permissions: [
       "canManageUsers", "canManageVerifications", "canViewAnalytics",
       "canManageSupport", "canViewMarketplace", "canModerateMarketplace", "canInvestigateMarketplace"
@@ -18,18 +17,19 @@ export const ACCESS_CONFIG = {
       { id: "admin-verifications", label: "Verification Requests", icon: "UserCheck", section: "admin" },
       { id: "admin-users", label: "User Management", icon: "Users", section: "admin" },
       { id: "admin-analytics", label: "Analytics", icon: "BarChart", section: "admin" },
-      { id: "support", label: "Support Dashboard", icon: "Headset", section: "admin" },
+      { id: "support", label: "Support Dashboard", icon: "LayoutDashboard", section: "support" },
+      { id: "support-requests", label: "Support Requests", icon: "Inbox", section: "support" },
+      { id: "bug-reports", label: "Bug Reports", icon: "Bug", section: "support" },
+      { id: "feature-requests", label: "Feature Requests", icon: "Lightbulb", section: "support" },
+      { id: "seller-reports", label: "Seller Reports", icon: "Flag", section: "support" },
       { id: "marketplace-review", label: "Marketplace Review", icon: "Eye", section: "review", route: "home" },
-      { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" },
       { id: "settings", label: "Settings", icon: "Settings", section: "account" }
     ]
   },
-  support: {
+
+  [PERMISSION_LEVELS.SUPPORT_MODERATOR]: {
     landingPage: "support",
     dashboardRoute: "support",
-    allowedRoutes: [
-      "support", "profile", "settings", "notifications", "home", "listing", "item", "contact", "report-bug", "feature-request", "faqs", "terms", "privacy", "auth"
-    ],
     permissions: [
       "canManageSupport", "canViewMarketplace", "canInvestigateMarketplace"
     ],
@@ -37,21 +37,19 @@ export const ACCESS_CONFIG = {
       "showSupportDashboard", "showMarketplace", "showSearch"
     ],
     navigation: [
-      { id: "support", label: "Support Dashboard", icon: "Headset", section: "admin" },
+      { id: "support", label: "Support Dashboard", icon: "LayoutDashboard", section: "support" },
+      { id: "support-requests", label: "Support Requests", icon: "Inbox", section: "support" },
+      { id: "bug-reports", label: "Bug Reports", icon: "Bug", section: "support" },
+      { id: "feature-requests", label: "Feature Requests", icon: "Lightbulb", section: "support" },
+      { id: "seller-reports", label: "Seller Reports", icon: "Flag", section: "support" },
       { id: "marketplace-review", label: "Marketplace Review", icon: "Eye", section: "review", route: "home" },
       { id: "profile", label: "Profile", icon: "User", section: "account" },
-      { id: "settings", label: "Settings", icon: "Settings", section: "account" },
-      { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" }
+      { id: "settings", label: "Settings", icon: "Settings", section: "account" }
     ]
   },
-  user: {
+  [PERMISSION_LEVELS.USER]: {
     landingPage: "home",
     dashboardRoute: "home",
-    allowedRoutes: [
-      "home", "post", "edit", "chat", "profile", "my-listings", "wishlist", "college-verification",
-      "my-sales", "saved-items", "my-college-listings", "notifications", "purchase-requests", "settings",
-      "listing", "item", "contact", "report-bug", "feature-request", "faqs", "terms", "privacy", "auth"
-    ],
     permissions: [
       "canBuy", "canSell", "canWishlist", "canCreateListings", "canPurchase", "canChat", "canVerifyCollege", "canViewMarketplace"
     ],
@@ -61,44 +59,64 @@ export const ACCESS_CONFIG = {
     navigation: [
       { id: "profile", label: "Profile", icon: "User", section: "account" },
       { id: "settings", label: "Settings", icon: "Settings", section: "account" },
-      
       { id: "my-listings", label: "Seller Workspace", icon: "Package", section: "marketplace" },
       { id: "wishlist", label: "Wishlist", icon: "Heart", section: "marketplace" },
       { id: "purchase-requests", label: "My Purchases", icon: "ShoppingBag", section: "marketplace" },
       { id: "my-sales", label: "My Sales", icon: "DollarSign", section: "marketplace" },
-      
       { id: "my-college-listings", label: "My College Listings", icon: "MapPin", section: "campus" },
-
       { id: "contact", label: "Help & Support", icon: "LifeBuoy", section: "support" }
     ]
   }
 };
 
-export const getRoleConfig = (role) => {
-  return ACCESS_CONFIG[role] || ACCESS_CONFIG.user;
+export const getRoleConfig = (arg) => {
+  let level;
+  if (typeof arg === "number") {
+    level = arg;
+  } else if (arg && typeof arg === "object") {
+    level = arg.permissionLevel;
+    if (level === undefined) {
+      if (arg.role === "admin" || arg.role === "System Administrator") level = PERMISSION_LEVELS.SYSTEM_ADMIN;
+      else if (arg.role === "support" || arg.role === "Support Moderator") level = PERMISSION_LEVELS.SUPPORT_MODERATOR;
+      else level = PERMISSION_LEVELS.USER;
+    }
+  }
+  return ACCESS_CONFIG[level] || ACCESS_CONFIG[PERMISSION_LEVELS.USER];
 };
 
-export const hasPermission = (role, permission) => {
-  const config = getRoleConfig(role);
+export const hasPermission = (userProfile, permission) => {
+  const config = getRoleConfig(userProfile);
+  if (!config) return false;
   return config.permissions.includes(permission);
 };
 
-export const hasFeature = (role, feature) => {
-  const config = getRoleConfig(role);
+export const hasFeature = (userProfile, feature) => {
+  const config = getRoleConfig(userProfile);
+  if (!config) return false;
   return config.features.includes(feature);
 };
 
-export const canAccessRoute = (role, route) => {
-  // Allow null/undefined routes to pass if needed, but normally check explicit list
+export const canAccessRoute = (userProfile, route) => {
   if (!route) return true;
-  const config = getRoleConfig(role);
-  return config.allowedRoutes.includes(route);
+  
+  const requiredLevel = getRequiredLevelForRoute(route);
+  
+  if (requiredLevel === PERMISSION_LEVELS.USER) {
+    const allowed = [
+      "home", "post", "edit", "chat", "profile", "my-listings", "wishlist", "college-verification",
+      "my-sales", "saved-items", "my-college-listings", "notifications", "purchase-requests", "settings",
+      "listing", "item", "contact", "report-bug", "feature-request", "faqs", "terms", "privacy", "auth"
+    ];
+    return allowed.includes(route);
+  }
+  
+  return canAccess(userProfile, requiredLevel);
 };
 
-export const getLandingPage = (role) => {
-  return getRoleConfig(role).landingPage;
+export const getLandingPage = (userProfile) => {
+  return getRoleConfig(userProfile).landingPage;
 };
 
-export const getDashboardRoute = (role) => {
-  return getRoleConfig(role).dashboardRoute;
+export const getDashboardRoute = (userProfile) => {
+  return getRoleConfig(userProfile).dashboardRoute;
 };

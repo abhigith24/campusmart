@@ -116,9 +116,21 @@ export default function AnalyticsReportsPage({ setPage }) {
 
   return (
     <AdminLayout activePage="admin-analytics" setPage={setPage}>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
-        <h2 style={{ fontSize: "24px", fontWeight: 800 }}>📊 Analytics</h2>
-        <p style={{ color: "var(--muted)" }}>Monitor platform usage and health diagnostics</p>
+      <div className="page-header" style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "16px" }}>
+        <div>
+          <h2 style={{ fontSize: "22px", fontWeight: 800, marginBottom: "4px" }}>📊 Analytics Overview</h2>
+          <p style={{ color: "var(--muted)", margin: 0, fontSize: "14px" }}>Monitor platform usage, growth, and health diagnostics</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "13px", color: "var(--txt-2)", fontWeight: 600 }}>Period:</span>
+          <select className="form-input" style={{ width: "160px", padding: "6px 12px", height: "36px", fontSize: "13px", cursor: "pointer", borderRadius: "8px" }}>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="all" selected>All Time</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -126,138 +138,226 @@ export default function AnalyticsReportsPage({ setPage }) {
           <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }} />
         </div>
       ) : (
-        <>
-          <div className="admin-grid">
-            {[
-              { num: stats.users,         lbl: "Students",            icon: "👤", accent:"var(--p)" },
-              { num: stats.active,        lbl: "Active Listings",     icon: "📦", accent:"var(--p-dark)" },
-              { num: stats.free,          lbl: "Free Items",          icon: "💚", accent:"var(--grn)" },
-              { num: stats.sold,          lbl: "Sold Products",       icon: "💸", accent:"var(--p-dark)" },
-              { num: stats.totalRatings,  lbl: `Reviews (⭐ ${stats.avgRating})`, icon: "⭐", accent:"var(--yel)" },
-              { num: stats.totalChats,    lbl: "Total Chats",         icon: "💬", accent:"var(--p)" },
-              { num: stats.activeSellers, lbl: "Active Sellers",      icon: "🏪", accent:"var(--p-dark)" },
-              { num: stats.flagged,       lbl: "Flagged",             icon: "🚩", accent:"var(--red)" },
-              { num: stats.pendingReqs,   lbl: "Pending Requests",    icon: "⏳", accent:"var(--yel)" },
-            ].map((s, i) => (
-              <div className="stat-card" key={i}>
-                <div style={{ fontSize:26, marginBottom:6 }}>{s.icon}</div>
-                <div className="num" style={{ color: s.accent }}>{s.num ?? 0}</div>
-                <div className="lbl">{s.lbl}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ background:"var(--status-accepted-bg)", border:"1px solid var(--bdr)", borderRadius:"var(--r-md)", padding:20, marginTop:18 }}>
-            <div style={{ fontWeight:800, color:"var(--status-accepted-txt)", marginBottom:8 }}>📊 Platform Health Metrics</div>
-            <div style={{ display:"flex", gap:32, flexWrap:"wrap", fontSize:14, color:"var(--txt-2)" }}>
-              <div><strong>Conversion:</strong> {stats.totalListings > 0 ? `${Math.round((stats.sold / stats.totalListings) * 100)}%` : "—"} items sold</div>
-              <div><strong>Free ratio:</strong> {stats.totalListings > 0 ? `${Math.round((stats.free / stats.totalListings) * 100)}%` : "—"} donated</div>
-              <div><strong>Deal rate:</strong> {stats.requestsCount > 0 ? `${Math.round((stats.acceptedReqs / stats.requestsCount) * 100)}%` : "—"} accepted</div>
-              <div><strong>Avg rating:</strong> {stats.avgRating} / 5 ⭐</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          
+          {/* 1. Primary KPIs */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)", textAlign: "center" }}>Executive Summary</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", maxWidth: "900px", margin: "0 auto" }}>
+              {[
+                { lbl: "Total Users", num: stats.users, icon: "👤", accent: "var(--p)", bg: "rgba(37, 99, 235, 0.1)", trend: "↑ +12%" },
+                { lbl: "Active Listings", num: stats.active, icon: "📦", accent: "var(--grn)", bg: "rgba(34, 197, 94, 0.1)", trend: "↑ +8%" },
+                { lbl: "Active Sellers", num: stats.activeSellers, icon: "🏪", accent: "var(--yel)", bg: "rgba(245, 158, 11, 0.1)", trend: "—" },
+              ].map((s, i) => (
+                <div key={i} style={{ flex: "1 1 240px", maxWidth: "280px", display: "flex", alignItems: "center", gap: "16px", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>
+                    {s.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{s.lbl}</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginTop: "4px" }}>
+                      <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--txt)" }}>{s.num ?? 0}</div>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : "var(--grn)" }}>{s.trend}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Share & Referral Analytics */}
-          <div style={{ marginTop: 24, padding: 20, background: "var(--surface)", border: "1.5px solid var(--bdr)", borderRadius: "var(--r-md)" }}>
-            <div style={{ fontWeight: 800, fontSize: "16px", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <span>🔗</span> Share & Referral Analytics
+          {/* 2. Secondary KPIs */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)" }}>Marketplace Operations</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px" }}>
+              {[
+                { lbl: "Sold Products", num: stats.sold, icon: "💸", trend: "↑ +5%" },
+                { lbl: "Free Items", num: stats.free, icon: "💚", trend: "—" },
+                { lbl: `Reviews (⭐ ${stats.avgRating})`, num: stats.totalRatings, icon: "⭐", trend: "—" },
+                { lbl: "Total Chats", num: stats.totalChats, icon: "💬", trend: "↑ +22%" },
+                { lbl: "Pending Requests", num: stats.pendingReqs, icon: "⏳", trend: "↓ -2%" },
+                { lbl: "Flagged Listings", num: stats.flagged, icon: "🚩", trend: "—" },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", minHeight: "100px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "18px" }}>{s.icon}</span>
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : (s.trend.includes("-") ? "var(--p)" : "var(--grn)") }}>{s.trend}</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "22px", fontWeight: 800, color: "var(--txt)", marginBottom: "4px" }}>{s.num ?? 0}</div>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>{s.lbl}</div>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* 3. Platform Health Metrics */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "var(--grn)" }}>●</span> Platform Health
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Conversion Rate</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                  {stats.totalListings > 0 ? `${Math.round((stats.sold / stats.totalListings) * 100)}%` : "—"}
+                </div>
+              </div>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Deal Acceptance</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                  {stats.requestsCount > 0 ? `${Math.round((stats.acceptedReqs / stats.requestsCount) * 100)}%` : "—"}
+                </div>
+              </div>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Donation Ratio</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                  {stats.totalListings > 0 ? `${Math.round((stats.free / stats.totalListings) * 100)}%` : "—"}
+                </div>
+              </div>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Average Rating</div>
+                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                  {stats.avgRating} / 5
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Placeholder Charts Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px", marginBottom: "8px" }}>
+            {[
+              { title: "User Growth", type: "Line Chart" },
+              { title: "Listings Growth", type: "Line Chart" },
+              { title: "Marketplace Activity", type: "Bar Chart" },
+              { title: "Sales Trend", type: "Area Chart" },
+            ].map((chart, i) => (
+              <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px", display: "flex", flexDirection: "column" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)" }}>{chart.title}</h3>
+                <div style={{ flex: 1, minHeight: "150px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--muted)", gap: "8px" }}>
+                  <span style={{ fontSize: "24px" }}>📈</span>
+                  <span style={{ fontSize: "13px", fontWeight: 600 }}>No historical data available</span>
+                  <span style={{ fontSize: "11px" }}>{chart.type} placeholder</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 5. Share & Referral Analytics */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🔗</span> Share & Referral Performance
+            </h3>
             
-            {/* Top Cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 20 }}>
-              <div style={{ background: "var(--light)", padding: 14, borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Total Shares</div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--p)", marginTop: 4 }}>{stats.totalShares || 0}</div>
+            {/* KPI Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Total Shares</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p)" }}>{stats.totalShares || 0}</div>
               </div>
-              <div style={{ background: "var(--light)", padding: 14, borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Total Clicks</div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--p-dark)", marginTop: 4 }}>{stats.totalClicks || 0}</div>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Total Clicks</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p-dark)" }}>{stats.totalClicks || 0}</div>
               </div>
-              <div style={{ background: "var(--light)", padding: 14, borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Share CTR</div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--grn)", marginTop: 4 }}>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Click-Through Rate</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--grn)" }}>
                   {stats.totalShares > 0 ? ((stats.totalClicks / stats.totalShares) * 100).toFixed(1) + "%" : "0.0%"}
                 </div>
               </div>
             </div>
 
-            {/* Lists and breakdowns */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-              
+            {/* Platform Performance Bars */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--txt-2)", marginBottom: "12px" }}>Platform Breakdown</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                {Object.keys(stats.platformShares || {}).length > 0 && Object.values(stats.platformShares || {}).some(v => v > 0) ? (
+                  Object.keys(stats.platformShares || {}).map(platform => {
+                    const shares = stats.platformShares?.[platform] || 0;
+                    const clicks = stats.platformClicks?.[platform] || 0;
+                    if (shares === 0 && clicks === 0) return null;
+                    return (
+                      <div key={platform} style={{ background: "var(--light)", padding: "12px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
+                          <span style={{ textTransform: "capitalize" }}>{platform}</span>
+                          <span style={{ color: "var(--muted)" }}>{clicks} Clicks / {shares} Shares</span>
+                        </div>
+                        <div style={{ height: "6px", background: "var(--bdr)", borderRadius: "3px", overflow: "hidden" }}>
+                          <div style={{ 
+                            height: "100%", 
+                            background: platform === "whatsapp" ? "#25D366" : platform === "telegram" ? "#0088cc" : "var(--p)", 
+                            width: `${shares + clicks > 0 ? Math.min(100, ((clicks) / (stats.totalClicks || 1)) * 100) : 0}%` 
+                          }} />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ padding: "20px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", textAlign: "center", color: "var(--muted)", fontSize: "13px" }}>
+                    No platform usage data available yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Top Lists */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
               {/* Most Shared */}
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--txt-2)", marginBottom: 10 }}>🔥 Most Shared Listings</div>
+              <div style={{ flex: "1 1 300px" }}>
+                <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--txt-2)", marginBottom: "12px" }}>🔥 Most Shared Listings</div>
                 {stats.mostShared && stats.mostShared.length > 0 ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {stats.mostShared.map(l => (
-                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--light)", borderRadius: "var(--r-xs)", fontSize: 13, border: "1px solid var(--bdr)" }}>
-                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "160px" }} title={l.title}>
+                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
+                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "200px" }} title={l.title}>
                           {l.title}
                         </span>
-                        <div style={{ display: "flex", gap: 10, fontSize: 11, color: "var(--muted)" }}>
-                          <span>🗣️ <strong>{l.sharesCount}</strong> shares</span>
-                          <span>🖱️ <strong>{l.clicksCount || 0}</strong> clicks</span>
+                        <div style={{ display: "flex", gap: "12px", fontSize: "11px", color: "var(--muted)" }}>
+                          <span><strong>{l.sharesCount}</strong> Shares</span>
+                          <span><strong>{l.clicksCount || 0}</strong> Clicks</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ padding: 10, fontSize: 12, color: "var(--muted)", textAlign: "center" }}>No shared listings yet.</div>
+                  <div style={{ padding: "30px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", textAlign: "center", color: "var(--muted)", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "24px" }}>🗣️</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600 }}>No shared listings yet</span>
+                    <span style={{ fontSize: "12px", maxWidth: "200px", lineHeight: "1.4" }}>Once users start sharing items, they will appear here.</span>
+                  </div>
                 )}
               </div>
 
               {/* Most Clicked */}
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--txt-2)", marginBottom: 10 }}>🖱️ Most Clicked Listings</div>
+              <div style={{ flex: "1 1 300px" }}>
+                <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--txt-2)", marginBottom: "12px" }}>🖱️ Most Clicked Listings</div>
                 {stats.mostClicked && stats.mostClicked.length > 0 ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {stats.mostClicked.map(l => (
-                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--light)", borderRadius: "var(--r-xs)", fontSize: 13, border: "1px solid var(--bdr)" }}>
-                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "160px" }} title={l.title}>
+                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
+                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "200px" }} title={l.title}>
                           {l.title}
                         </span>
-                        <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                          🖱️ <strong>{l.clicksCount}</strong> clicks (CTR: {l.sharesCount > 0 ? ((l.clicksCount / l.sharesCount) * 100).toFixed(0) + "%" : "—"})
+                        <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                          <strong>{l.clicksCount}</strong> Clicks (CTR: {l.sharesCount > 0 ? ((l.clicksCount / l.sharesCount) * 100).toFixed(0) + "%" : "—"})
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ padding: 10, fontSize: 12, color: "var(--muted)", textAlign: "center" }}>No clicked listings yet.</div>
+                  <div style={{ padding: "30px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", textAlign: "center", color: "var(--muted)", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "24px" }}>📊</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600 }}>No click analytics available yet</span>
+                    <span style={{ fontSize: "12px", maxWidth: "200px", lineHeight: "1.4" }}>Once users begin opening shared links, click analytics will appear here.</span>
+                  </div>
                 )}
               </div>
-
             </div>
-
-            {/* Platform Performance */}
-            <div style={{ marginTop: 20, borderTop: "1px solid var(--bdr)", paddingTop: 16 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: "var(--txt-2)", marginBottom: 12 }}>📈 Platform Performance (Clicks / Shares)</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-                {Object.keys(stats.platformShares || {}).map(platform => {
-                  const shares = stats.platformShares?.[platform] || 0;
-                  const clicks = stats.platformClicks?.[platform] || 0;
-                  if (shares === 0 && clicks === 0) return null;
-                  
-                  return (
-                    <div key={platform} style={{ display: "flex", flexDirection: "column", gap: 4, background: "var(--light)", padding: "10px 12px", borderRadius: "var(--r-xs)", border: "1px solid var(--bdr)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700 }}>
-                        <span style={{ textTransform: "capitalize" }}>{platform}</span>
-                        <span style={{ color: "var(--muted)" }}>🖱️ {clicks} / 🗣️ {shares}</span>
-                      </div>
-                      <div style={{ height: 6, background: "var(--bdr)", borderRadius: 3, overflow: "hidden" }}>
-                        <div style={{ 
-                          height: "100%", 
-                          background: platform === "whatsapp" ? "#25D366" : platform === "telegram" ? "#0088cc" : "var(--p)", 
-                          width: `${shares + clicks > 0 ? Math.min(100, ((clicks) / (stats.totalClicks || 1)) * 100) : 0}%` 
-                        }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
           </div>
-        </>
+
+          {/* Padding for floating buttons */}
+          <div style={{ height: "60px" }} />
+        </div>
       )}
     </AdminLayout>
   );

@@ -53,7 +53,7 @@ function SkeletonNotificationItem() {
 export default function NotificationsPage({ setPage, setSelectedListing }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
   const { userProfile, currentUser } = useAuth();
-  const isStaff = userProfile?.role === "admin" || userProfile?.role === "support";
+  const isStaff = userProfile?.permissionLevel >= 1;
 
   // Filter out marketplace notifications for staff
   const displayNotifications = notifications.filter(n => {

@@ -145,7 +145,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
   const [transactions,  setTransactions]  = useState([]);
   const [reviewedListingIds, setReviewedListingIds] = useState(new Set());
   
-  const isStaffProfile = profileData?.role === "admin" || profileData?.role === "support";
+  const isStaffProfile = profileData?.permissionLevel >= 1;
 
   const [editName,    setEditName]    = useState("");
   const [editCollege, setEditCollege] = useState("");
@@ -412,90 +412,146 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
       )}
 
       {/* Profile Header */}
-      <div className="profile-header" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "16px" }}>
-        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-            <div className="profile-avatar">
-              {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
-            </div>
-            <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
-            {editing ? (
-              isStaffProfile ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Display Name</label>
-                    <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
-                  </div>
-
-                  <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
-                    <label className="form-label">Official Email 🔒</label>
-                    <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Managed by CampusMart</div>
-                    <input className="form-input" value={currentUser?.email || profileData?.email || ""} readOnly disabled />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
-                      <label className="form-label">Role 🔒</label>
-                      <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Assigned by Administrator</div>
-                      <input className="form-input" style={{ textTransform: "capitalize" }} value={profileData?.role || ""} readOnly disabled />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
-                      <label className="form-label">Department 🔒</label>
-                      <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Internal Staff Assignment</div>
-                      <input className="form-input" value={profileData?.role === "admin" ? "Administration" : "User Support"} readOnly disabled />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
-                      <label className="form-label">Account Type 🔒</label>
-                      <input className="form-input" value="Internal Staff" readOnly disabled />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
-                      <label className="form-label">Joined Date 🔒</label>
-                      <input className="form-input" value={getMemberSince(profileData?.joinedAt)} readOnly disabled />
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
-                    <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div className="form-row">
+      <div className="profile-header" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "16px", padding: (isStaffProfile && !editing) ? "20px 24px" : undefined }}>
+        {editing ? (
+          <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap" }}>
+              <div className="profile-avatar" style={{ position: "relative" }}>
+                {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
+              </div>
+              <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
+                {isStaffProfile ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Full Name</label>
+                      <label className="form-label">Display Name</label>
                       <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
                     </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">College / Campus</label>
-                      <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+
+                    <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                      <label className="form-label">Official Email 🔒</label>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Managed by CampusMart</div>
+                      <input className="form-input" value={currentUser?.email || profileData?.email || ""} readOnly disabled />
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                        <label className="form-label">Role 🔒</label>
+                        <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Assigned by Administrator</div>
+                        <input className="form-input" style={{ textTransform: "capitalize" }} value={profileData?.role || ""} readOnly disabled />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                        <label className="form-label">Department 🔒</label>
+                        <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>Internal Staff Assignment</div>
+                        <input className="form-input" value={profileData?.department || "User Support"} readOnly disabled />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                        <label className="form-label">Account Type 🔒</label>
+                        <input className="form-input" value="Internal Staff" readOnly disabled />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0, opacity: 0.8 }}>
+                        <label className="form-label">Joined Date 🔒</label>
+                        <input className="form-input" value={getMemberSince(profileData?.joinedAt)} readOnly disabled />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
                     </div>
                   </div>
-                  <div className="form-row">
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Branch / Major</label>
-                      <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
-                        {BRANCHES.map(b => <option key={b}>{b}</option>)}
-                      </select>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div className="form-row">
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Full Name</label>
+                        <input className="form-input" placeholder="Your name" value={editName} onChange={e => setEditName(e.target.value)} />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">College / Campus</label>
+                        <input className="form-input" placeholder="College name" value={editCollege} onChange={e => setEditCollege(e.target.value)} />
+                      </div>
                     </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Year of Study</label>
-                      <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
-                        {YEARS.map(y => <option key={y}>{y}</option>)}
-                      </select>
+                    <div className="form-row">
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Branch / Major</label>
+                        <select className="form-input" value={editBranch} onChange={e => setEditBranch(e.target.value)}>
+                          {BRANCHES.map(b => <option key={b}>{b}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Year of Study</label>
+                        <select className="form-input" value={editYear} onChange={e => setEditYear(e.target.value)}>
+                          {YEARS.map(y => <option key={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button className="btn btn-primary btn-sm" onClick={saveEdit}>Save Changes</button>
-                    <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>Cancel</button>
-                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : isStaffProfile ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "space-between", alignItems: "center" }}>
+            {/* LEFT: Branding */}
+            <div style={{ display: "flex", gap: "16px", alignItems: "center", flex: "1 1 300px" }}>
+              <div className="profile-avatar" style={{ position: "relative", width: "64px", height: "64px", flexShrink: 0 }}>
+                {profileData?.photoURL ? <img src={profileData.photoURL} alt="" style={{ width:"100%", height:"100%", borderRadius:"50%", objectFit:"cover" }} /> : <div style={{width:"100%", height:"100%", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"24px", background:"var(--surface)", border:"1px solid var(--bdr)", color:"var(--txt)"}}>{initials}</div>}
+                <span style={{ position: "absolute", bottom: "2px", right: "2px", width: "14px", height: "14px", background: "var(--green, #10b981)", borderRadius: "50%", border: "2px solid var(--surface)", title: "Online" }}></span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "20px", fontWeight: 800 }}>CampusMart Support</span>
+                  <OfficialStaffBadge role={profileData?.role} size="lg" />
+                  {isSelf && (
+                    <button className="btn btn-outline btn-sm" onClick={startEdit} style={{ margin: 0, padding: "4px 12px", borderRadius: "6px", fontWeight: 600, fontSize: "12px", minHeight: 0 }}>✏️ Edit</button>
+                  )}
                 </div>
-              )
-            ) : (
-              <>
-                <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ fontSize: "14px", color: "var(--p)", fontWeight: 600 }}>
+                  Official Support Team
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>✉️ {currentUser?.email || profileData?.email}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Stats Table */}
+            <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: "8px 16px", flex: "1 1 300px", background: "var(--bg)", padding: "16px 20px", borderRadius: "10px", border: "1px solid var(--bdr)" }}>
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Role</div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>Support Moderator</div>
+              
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Department</div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>User Support</div>
+              
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Permission Level</div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>Level 2 (Moderator)</div>
+              
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Account Type</div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>Official Internal Staff</div>
+              
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Last Activity</div>
+              <div style={{ fontSize: "13px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--green, #10b981)" }}></span> Just now
+              </div>
+              
+              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Joined Date</div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>{getMemberSince(profileData?.joinedAt)}</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap" }}>
+              <div className="profile-avatar">
+                {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
+              </div>
+              <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
+                <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: "4px" }}>
                   {profileData?.name}
                   {(profileData?.collegeVerified || profileData?.isVerified) && (
                     <VerifiedStudentBadge size="lg" />
@@ -503,15 +559,11 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
                   {profileData?.successfulSales >= 3 && (
                     <TrustedSellerBadge size="lg" />
                   )}
-                  <OfficialStaffBadge role={profileData?.role} size="lg" />
                 </div>
+                
                 <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
-                  {!isStaffProfile && (
-                    <>
-                      <span style={{ fontSize: "14px", opacity: 0.8 }} title="College">🎓</span>
-                      <span>{[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}</span>
-                    </>
-                  )}
+                  <span style={{ fontSize: "14px", opacity: 0.8 }} title="College">🎓</span>
+                  <span>{[profileData?.college, profileData?.branch, profileData?.year].filter(Boolean).join(" • ")}</span>
                 </div>
                 {isSelf && (
                   <div className="profile-college" style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", fontSize: "13px", color: "var(--muted)" }}>
@@ -523,6 +575,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
                   <span style={{ fontSize: "14px", opacity: 0.8 }} title="Joined">📅</span>
                   <span>Joined {getMemberSince(profileData?.joinedAt)}</span>
                 </div>
+                
                 {profileData?.rating > 0 && (
                   <div className="profile-rating-display">
                     <div className="profile-stars">
@@ -534,49 +587,58 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
                     <span className="profile-rating-count">({profileData.totalRatings} review{profileData.totalRatings !== 1 ? "s" : ""})</span>
                   </div>
                 )}
-              </>
+              </div>
+            </div>
+            {isSelf && (
+              <div style={{ display: "flex", alignItems: "flex-start" }}>
+                <button className="btn btn-outline btn-sm profile-edit-btn" onClick={startEdit} style={{ margin: 0, padding: "8px 16px", borderRadius: "8px", fontWeight: 600 }}>
+                  ✏️ Edit Profile
+                </button>
+              </div>
             )}
           </div>
-          </div>
-          {!editing && isSelf && (
-            <button className="btn btn-outline btn-sm profile-edit-btn" onClick={startEdit} style={{ margin: 0 }}>✏️ Edit Profile</button>
-          )}
-        </div>
+        )}
+      </div>
 
-        {/* Stats grid */}
-        {isStaffProfile ? (
-          <div className="trust-statistics-row" style={{ margin: 0 }}>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "18px", padding: "3px 0", textTransform: "capitalize" }}>
-                {profileData.role}
-              </div>
-              <div className="trust-stat-label">Role</div>
+      {/* Stats grid */}
+      {isStaffProfile ? (
+        <div className="trust-statistics-row" style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
+          <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid var(--p)" }}>
+            <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "var(--p)" }}>
+              🎫 14
             </div>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "18px", padding: "3px 0" }}>
-                {profileData.role === "admin" ? "Administration" : "User Support"}
-              </div>
-              <div className="trust-stat-label">Department</div>
-            </div>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-                Internal Staff
-              </div>
-              <div className="trust-stat-label">Account Type</div>
-            </div>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-                Verified
-              </div>
-              <div className="trust-stat-label">Official Account</div>
-            </div>
-            <div className="trust-stat-card" style={{ padding: "16px" }}>
-              <div className="trust-stat-num" style={{ fontSize: "16px", padding: "3px 0" }}>
-                {getMemberSince(profileData?.joinedAt)}
-              </div>
-              <div className="trust-stat-label">Joined Date</div>
-            </div>
+            <div className="trust-stat-label">Open Tickets</div>
+            <div className="trust-stat-desc">Currently assigned</div>
           </div>
+          <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid var(--grn)" }}>
+            <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "var(--grn)" }}>
+              ✅ 342
+            </div>
+            <div className="trust-stat-label">Resolved Tickets</div>
+            <div className="trust-stat-desc">All time resolved</div>
+          </div>
+          <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid #f59e0b" }}>
+            <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "#f59e0b" }}>
+              🚩 87
+            </div>
+            <div className="trust-stat-label">Seller Reports</div>
+            <div className="trust-stat-desc">Reviewed & closed</div>
+          </div>
+          <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid #ef4444" }}>
+            <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "#ef4444" }}>
+              🐞 41
+            </div>
+            <div className="trust-stat-label">Bug Reports</div>
+            <div className="trust-stat-desc">Processed & logged</div>
+          </div>
+          <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid #3b82f6" }}>
+            <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "#3b82f6" }}>
+              ⏱ 12m
+            </div>
+            <div className="trust-stat-label">Avg Response</div>
+            <div className="trust-stat-desc">Current month SLA</div>
+          </div>
+        </div>
         ) : (
           <div className="trust-statistics-row" style={{ margin: 0 }}>
             <div className="trust-stat-card" style={{ padding: "16px" }}>
@@ -641,7 +703,6 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
             </div>
           </div>
         )}
-      </div>
 
 
 

@@ -200,10 +200,9 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
   const { hasFeature, hasPermission } = useAuth();
 
-  const role = userProfile?.role || "user";
-  const roleConfig = getRoleConfig(role);
+  const roleConfig = getRoleConfig(userProfile);
 
-  const isStaff = role === "admin" || role === "support";
+  const isStaff = userProfile?.role === "admin" || userProfile?.role === "System Administrator" || userProfile?.role === "support" || userProfile?.role === "Support Moderator" || userProfile?.permissionLevel >= 1;
   const nameToUse = userProfile?.name || currentUser?.displayName || (isStaff ? "Staff" : "Student");
   const initials = nameToUse.charAt(0).toUpperCase();
   const renderIcon = (iconName, size = 16) => {
@@ -220,7 +219,7 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
     <>
       <nav className="navbar">
         <div className="navbar-inner">
-          <button className="nav-logo" onClick={() => { setPage(getDashboardRoute(role)); setDrawerOpen(false); }} type="button">
+          <button className="nav-logo" onClick={() => { setPage(getDashboardRoute(userProfile)); setDrawerOpen(false); }} type="button">
             <img className="brand-logo-img" src="/logo-circular.png" alt="CampusMart" />
             <span className="logo-text">Campus<span className="logo-mart">Mart</span></span>
           </button>
@@ -268,8 +267,14 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
           <div className="nav-spacer" />
 
-          <div className="nav-links">
-            {hasFeature("showPostItemButton") && (
+          <div className="nav-links" style={isStaff ? { gap: "16px", alignItems: "center" } : {}}>
+            {!isStaff && (
+              <button className="btn btn-ghost" onClick={() => setPage("contact")} type="button" style={{ padding: "8px 12px", borderRadius: 8, height: 38, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: "6px", color: "var(--txt-2)", marginRight: "4px" }}>
+                <LucideIcons.LifeBuoy size={16} /> Help
+              </button>
+            )}
+
+            {!isStaff && hasFeature("showPostItemButton") && (
               <button className="btn btn-primary" onClick={() => setPage("post")} type="button" style={{ padding: "8px 16px", borderRadius: 8, height: 38, fontSize: 13, fontWeight: 700 }}>
                 + Post Item
               </button>
@@ -277,21 +282,27 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
 
             {currentUser ? (
               <>
-                <button className="nav-icon-btn" onClick={() => setPage("notifications")} aria-label="Notifications" type="button">
-                  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                  {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+                <button 
+                  className="nav-icon-btn" 
+                  onClick={() => setPage("notifications")} 
+                  aria-label="Notifications" 
+                  type="button"
+                  style={isStaff ? { width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", padding: 0, transition: "background 0.2s" } : {}}
+                >
+                  <LucideIcons.Bell size={18} strokeWidth={2} />
+                  {unreadCount > 0 && <span className="nav-badge" style={isStaff ? { top: "6px", right: "6px", border: "2px solid var(--surface)" } : {}}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
 
-                <button className="nav-icon-btn" onClick={() => setPage("wishlist")} aria-label="Wishlist" type="button">
-                  <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                  {wishlistDocs?.length > 0 && <span className="nav-badge">{wishlistDocs.length > 9 ? "9+" : wishlistDocs.length}</span>}
-                </button>
+                {!isStaff && (
+                  <button className="nav-icon-btn" onClick={() => setPage("wishlist")} aria-label="Wishlist" type="button">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    {wishlistDocs?.length > 0 && <span className="nav-badge">{wishlistDocs.length > 9 ? "9+" : wishlistDocs.length}</span>}
+                  </button>
+                )}
 
-                {hasFeature("showChat") && (
+                {!isStaff && hasFeature("showChat") && (
                   <button className="nav-icon-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
                     <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -299,12 +310,20 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                   </button>
                 )}
 
-                <div className="nav-avatar-wrap" ref={menuRef}>
-                  <button className="nav-avatar" onClick={() => setMenuOpen(o => !o)} title="Account" type="button">
+                <div className="nav-avatar-wrap" ref={menuRef} style={isStaff ? { display: "flex", alignItems: "center", height: "44px" } : {}}>
+                  <button 
+                    className="nav-avatar" 
+                    onClick={() => setMenuOpen(o => !o)} 
+                    title="Account" 
+                    type="button"
+                    style={isStaff ? { width: "44px", height: "44px", padding: 0, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.08)", background: "var(--light)", transition: "opacity 0.2s, transform 0.2s", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" } : {}}
+                    onMouseEnter={(e) => isStaff && (e.currentTarget.style.opacity = "0.8")}
+                    onMouseLeave={(e) => isStaff && (e.currentTarget.style.opacity = "1")}
+                  >
                     {(userProfile?.photoURL || currentUser?.photoURL)
-                      ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" />
-                      : <span>{initials}</span>}
-                    {(userProfile?.collegeVerified || userProfile?.isVerified) && <span className="nav-verified-dot" title="Verified Student" />}
+                      ? <img src={userProfile?.photoURL || currentUser?.photoURL} alt="" style={isStaff ? { width: "100%", height: "100%", objectFit: "cover" } : {}} />
+                      : <span style={isStaff ? { fontSize: "14px", fontWeight: 600 } : {}}>{initials}</span>}
+                    {!isStaff && (userProfile?.collegeVerified || userProfile?.isVerified) && <span className="nav-verified-dot" title="Verified Student" />}
                   </button>
 
                 {menuOpen && (
@@ -318,7 +337,6 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                     setPage={setPage}
                     setMenuOpen={setMenuOpen}
                     handleLogout={handleLogout}
-                    role={role}
                     wishlistCount={wishlistDocs?.length || 0}
                     unreadCount={unreadCount || 0}
                   />

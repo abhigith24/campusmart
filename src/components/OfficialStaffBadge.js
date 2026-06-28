@@ -1,9 +1,17 @@
 import React from "react";
+import { PERMISSION_LEVELS, hasMinimumLevel } from "../config/rbac";
 
-export default function OfficialStaffBadge({ role, size = "md" }) {
-  if (role !== "admin" && role !== "support") return null;
+export default function OfficialStaffBadge({ permissionLevel, role, size = "md" }) {
+  let level = permissionLevel;
+  if (level === undefined) {
+    if (role === "admin" || role === "System Administrator") level = PERMISSION_LEVELS.SYSTEM_ADMIN;
+    else if (role === "support" || role?.includes("Support")) level = PERMISSION_LEVELS.SUPPORT_MODERATOR;
+    else level = 0;
+  }
 
-  const isAdmin = role === "admin";
+  if (level < 1) return null;
+
+  const isAdmin = hasMinimumLevel(level, PERMISSION_LEVELS.SYSTEM_ADMIN);
   const label = isAdmin ? "🔵 Official Administrator" : "🟢 Official Support Team";
   
   const styles = isAdmin 

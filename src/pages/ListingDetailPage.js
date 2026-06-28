@@ -990,6 +990,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
           sellerId={listing.sellerId}
           sellerName={sellerData?.name || listing.sellerName || "Seller"}
           listingId={listing.id}
+          listingTitle={listing.title}
         />
       )}
 

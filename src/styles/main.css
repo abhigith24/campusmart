@@ -1693,8 +1693,8 @@ input,textarea,select { font-family:inherit }
 ════════════════════════════════════════════════════ */
 .site-footer { background:#0f172a; color:#e2e8f0; margin-top:auto }
 .footer-grid {
-  display:grid; grid-template-columns:2fr 1fr 1fr 1fr;
-  gap:40px; padding:52px 0 40px;
+  display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr;
+  gap:40px; padding:40px 0 28px;
 }
 .footer-logo {
   display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:14px;
@@ -1704,7 +1704,7 @@ input,textarea,select { font-family:inherit }
   width:fit-content;
 }
 .footer-logo-icon { font-size:22px; -webkit-text-fill-color:initial }
-.footer-tagline { font-size:13px; color:#94a3b8; line-height:1.7; margin-bottom:14px; max-width:260px }
+.footer-tagline { font-size:13px; color:#94a3b8; line-height:1.7; margin-bottom:26px; max-width:260px }
 .footer-badge {
   display:inline-block; padding:5px 12px;
   background:rgba(249,115,22,.15); color:#fb923c;
@@ -1718,19 +1718,19 @@ input,textarea,select { font-family:inherit }
 .footer-link {
   display:block; font-size:13px; color:#cbd5e1; font-weight:500;
   border:none; background:transparent; cursor:pointer;
-  padding:5px 0; text-align:left; font-family:inherit;
+  padding:8px 0; text-align:left; font-family:inherit;
   text-decoration:none; transition:color .15s; width:100%;
 }
 .footer-link:hover { color:#f97316 }
 .footer-divider { height:1px; background:rgba(255,255,255,.06) }
 .footer-bottom {
-  padding:24px 0; display:flex;
+  padding:16px 0 20px; display:flex;
   align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap;
 }
 .footer-copyright p { font-size:13px; color:#94a3b8; font-weight:500 }
 .footer-copyright p strong { color:#cbd5e1 }
 .footer-legal-note { font-size:11px; color:#475569; line-height:1.7; margin-top:8px; max-width:680px }
-.footer-badges { display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0 }
+.footer-badges { display:flex; gap:12px; flex-wrap:wrap; flex-shrink:0; padding-right:24px }
 .footer-trust-badge {
   padding:5px 12px; background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.1); border-radius:var(--r-full);
@@ -8108,11 +8108,12 @@ a,
    PROFILE DROPDOWN OPTIMIZATION (Phase 1)
 ════════════════════════════════════════════════════ */
 .nav-dropdown {
-  min-width: 280px; /* slightly wider for richer content */
-  padding: 8px 0;
+  min-width: 290px; /* slightly wider for richer content */
+  padding: 12px 0 24px 0;
   max-height: calc(100vh - 80px);
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--bdr) transparent;
 }
@@ -8131,13 +8132,13 @@ a,
 .nav-dropdown-user-header {
   display: flex;
   flex-direction: column;
-  padding: 16px 20px;
+  padding: 16px 20px 28px;
   gap: 12px;
   position: sticky;
   top: 0;
   background: var(--surface);
   z-index: 10;
-  margin-top: -8px; /* Offset parent padding */
+  margin-top: -12px; /* Offset parent padding */
   border-bottom: 1px solid var(--bdr);
 }
 
@@ -8201,6 +8202,7 @@ a,
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+  margin-top: 8px;
 }
 
 .nav-dropdown-stats {
@@ -8260,21 +8262,23 @@ a,
 .nav-dropdown-section-title {
   font-size: 11px;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--txt-2);
   text-transform: uppercase;
-  padding: 12px 20px 4px;
-  letter-spacing: 0.5px;
+  padding: 16px 20px 4px;
+  letter-spacing: 1px;
 }
 
 .nav-dropdown-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
+  padding: 8px 12px;
+  margin: 2px 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   color: var(--txt-2);
-  width: 100%;
+  width: calc(100% - 20px);
   text-align: left;
   background: transparent;
   border: none;
@@ -8295,7 +8299,7 @@ a,
 }
 
 .nav-dropdown-item.active {
-  background: var(--p-light);
+  background: rgba(var(--p-rgb, 59, 130, 246), 0.08);
   color: var(--p-dark);
   font-weight: 600;
 }
@@ -8325,8 +8329,11 @@ a,
 .nav-dropdown-item:hover .nav-icon {
   color: var(--txt);
 }
+.nav-dropdown-item.danger {
+  /* margin-top is handled by the section group div now */
+}
 .nav-dropdown-item.danger:hover {
-  background: var(--red-light);
+  background: rgba(239, 68, 68, 0.08); /* softer red bg */
   color: var(--red);
 }
 .nav-dropdown-item.danger:hover .nav-icon {
@@ -8731,3 +8738,12 @@ a,
 
 
 
+
+
+/* Admin Table Row Hover */
+.report-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+.report-table tbody tr:hover {
+  background-color: rgba(59, 130, 246, 0.04) !important;
+}
