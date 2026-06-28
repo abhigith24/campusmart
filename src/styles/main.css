@@ -14346,3 +14346,336 @@ a,
   .request-timeline { padding: 0 4px !important; margin-top: 8px !important; }
   .request-timeline-step { font-size: 10px !important; padding: 2px 6px !important; border-radius: 8px !important; }
 }
+
+/* ════════════════════════════════════════════════════
+   SUPPORT REQUESTS DASHBOARD UX POLISH
+════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* 1. Header */
+  .admin-main-content .page-header { margin-bottom: 16px !important; }
+  .admin-main-content .page-header h2 { font-size: 20px !important; }
+  .admin-main-content .page-header p { font-size: 12px !important; }
+
+  /* 2. Filters & Search */
+  .sr-filters-row { gap: 8px !important; }
+  .sr-search-wrapper { min-width: 100% !important; order: 1; }
+  .sr-search-wrapper input { min-height: 44px !important; }
+  .sr-btn-filter, .sr-btn-sort { flex: 1; min-height: 44px !important; order: 2; font-size: 14px !important; }
+
+  /* 3. Ticket Card Layout & 8. Spacing */
+  .support-requests-table tr {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    padding: 12px !important;
+    gap: 0 !important;
+    align-items: center !important;
+  }
+  
+  .support-requests-table td {
+    border-bottom: none !important;
+    padding: 4px 0 !important;
+    display: flex !important;
+  }
+  
+  .support-requests-table td::before {
+    display: none !important; /* Hide standard row labels to build custom card */
+  }
+
+  /* Hierarchy Ordering */
+  .sr-td-id { order: 1; width: 50% !important; font-size: 15px !important; color: var(--txt) !important; align-items: center !important; }
+  .sr-td-status { order: 2; width: 50% !important; justify-content: flex-end !important; }
+  
+  .sr-td-message { order: 3; width: 100% !important; margin-top: 6px !important; }
+  
+  .sr-td-user { 
+    order: 4; width: 50% !important; 
+    flex-direction: column !important; 
+    align-items: flex-start !important; 
+    gap: 2px !important; 
+    margin-top: 8px !important; 
+  }
+  
+  .sr-td-date { order: 5; width: 50% !important; justify-content: flex-end !important; margin-top: 8px !important; font-size: 12px !important; color: var(--muted) !important; align-items: center !important; }
+  .sr-td-priority { order: 6; width: 100% !important; margin-top: 6px !important; align-items: center !important; }
+  
+  .sr-td-actions { order: 7; width: 100% !important; margin-top: 10px !important; }
+
+  /* 4 & 5. User & Message Styling */
+  .sr-user-name { font-size: 13px !important; color: var(--txt-2) !important; }
+  .sr-user-email { 
+    font-size: 11px !important; 
+    color: var(--muted) !important; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    max-width: 100%; 
+  }
+  .sr-message-preview { font-size: 15px !important; color: var(--txt) !important; line-height: 1.4 !important; font-weight: 500 !important; }
+
+  /* 6. Status & Priority Badges */
+  .sr-select-status { padding: 4px 10px !important; font-size: 11px !important; height: auto !important; min-height: 32px !important; line-height: 1 !important; }
+  .sr-badge-priority { padding: 4px 10px !important; font-size: 11px !important; white-space: nowrap; }
+
+  /* 7. Action Buttons (44x44 Touch Target) */
+  .sr-btn-view { width: 100% !important; justify-content: center !important; min-height: 44px !important; font-size: 14px !important; }
+}
+
+/* ════════════════════════════════════════════════════
+   SELLER REPORTS DASHBOARD UX POLISH
+════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* 1. Desktop/Mobile Visibility Overrides */
+  .desktop-hide-status { display: flex !important; }
+  .mobile-hide-status { display: none !important; }
+  
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+  div.mobile-only, section.mobile-only { display: block !important; }
+  span.mobile-only { display: inline-block !important; }
+  .mobile-only.flex { display: flex !important; }
+  
+  /* 2. Stat Cards Compact Polish */
+  .sr-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  .stat-card { padding: 12px !important; gap: 10px !important; min-height: 80px !important; align-items: center !important; flex-direction: column !important; justify-content: center !important; text-align: center !important; }
+  .stat-icon-wrapper { padding: 8px !important; border-radius: 8px !important; margin-bottom: 4px !important; }
+  .stat-icon-wrapper svg { width: 18px !important; height: 18px !important; }
+  .stat-card > div:last-child { display: flex; flex-direction: column; align-items: center; }
+  .stat-card div:last-child > div:first-child { font-size: 22px !important; line-height: 1 !important; margin-bottom: 2px !important; }
+  .stat-card div:last-child > div:last-child { font-size: 11px !important; }
+
+  /* 3. Report Table to Responsive Card */
+  .seller-reports-table thead { display: none !important; }
+  .seller-report-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    padding: 10px 12px !important;
+    gap: 0 !important;
+    align-items: flex-start !important;
+    border: 1px solid var(--bdr) !important;
+    border-radius: var(--r-md, 8px) !important;
+    margin-bottom: 10px !important;
+    background: var(--card-bg, #fff) !important;
+  }
+
+  [data-theme="dark"] .seller-report-row {
+    background: var(--card-bg) !important;
+  }
+  
+  .seller-reports-table td {
+    border-bottom: none !important;
+    padding: 2px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important; /* Base width */
+  }
+  
+  .seller-reports-table td::before { display: none !important; } /* Hide generic labels */
+
+  /* 4. Information Hierarchy */
+  .sr-td-id { order: 1; width: 50% !important; font-size: 14px !important; padding-bottom: 4px !important; }
+  .sr-td-status { order: 2; width: 50% !important; justify-content: flex-end !important; padding-bottom: 4px !important; }
+  
+  .sr-td-user { order: 3; margin-top: 4px !important; }
+  .sr-td-product { order: 4; margin-top: 2px !important; }
+  .sr-td-reason { order: 5; margin-top: 2px !important; }
+  
+  .sr-td-date { order: 6; margin-top: 6px !important; justify-content: flex-start !important; }
+  
+  .sr-td-actions { order: 7; margin-top: 8px !important; justify-content: center !important; }
+
+  /* 5. Typography & Truncation (2 lines max) */
+  .sr-user-name { font-size: 15px !important; font-weight: 700 !important; color: var(--txt) !important; }
+  .sr-product-title { 
+    font-size: 14px !important; 
+    color: var(--txt) !important; 
+    font-weight: 600 !important; 
+    max-width: 100% !important; 
+    white-space: normal !important; 
+    line-height: 1.4 !important; 
+  }
+  .sr-reason-preview { 
+    font-size: 13px !important; 
+    color: var(--txt-2) !important; 
+    line-height: 1.4 !important; 
+    white-space: normal !important; 
+  }
+  
+  /* 6. Status Badge Equality */
+  .sr-badge-status { 
+    padding: 4px 10px !important; 
+    font-size: 11px !important; 
+    height: auto !important; 
+    min-height: 24px !important; 
+    line-height: 1 !important; 
+    display: inline-flex !important; 
+    align-items: center !important; 
+  }
+  
+  /* 7. Support Team Profile Mobile Polish */
+  .support-profile-header {
+    gap: 12px !important;
+    padding: 8px 0 !important;
+  }
+  .support-profile-avatar {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .support-profile-left {
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  .support-profile-info {
+    gap: 4px !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+  .support-title-row {
+    gap: 8px !important;
+  }
+  .support-title-row > span {
+    font-size: 18px !important;
+  }
+  .support-badge-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  .support-badge-actions > * {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    margin: 0 !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+  .support-edit-btn {
+    padding: 0 16px !important;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .support-edit-btn::after {
+    content: '';
+    position: absolute;
+    top: -6px; bottom: -6px; left: -6px; right: -6px;
+  }
+  .support-edit-btn:active {
+    transform: scale(0.96);
+  }
+  
+  /* Support Profile Info Card Mobile */
+  .support-info-card {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+    padding: 20px !important;
+    margin-top: 8px !important;
+  }
+  .support-info-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    border-bottom: 1px solid var(--bdr) !important;
+    padding-bottom: 16px !important;
+  }
+  .support-info-row:nth-last-child(-n+2) {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .support-info-label {
+    width: auto !important;
+    flex: none !important;
+    font-size: 12px !important;
+    color: var(--txt-2) !important;
+    font-weight: 500 !important;
+  }
+  .support-info-value {
+    width: auto !important;
+    flex: none !important;
+    font-size: 14px !important;
+    text-align: left !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    font-weight: 600 !important;
+    color: var(--txt) !important;
+  }
+  .support-info-value.active-status-val {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+  .support-info-value.active-status-val span {
+    margin-top: 5px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Support Stats Grid */
+  .support-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  .support-stats-grid .trust-stat-card {
+    padding: 12px !important;
+    min-height: auto !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .support-stats-grid .trust-stat-num {
+    font-size: 18px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .support-stats-grid .trust-stat-desc {
+    font-size: 11px !important;
+  }
+  .support-stats-grid .trust-stat-card:last-child:nth-child(odd) {
+    grid-column: span 2;
+    width: calc(50% - 6px);
+    justify-self: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-hide-status { display: none !important; }
+  .desktop-only { display: block !important; }
+  div.desktop-only, section.desktop-only { display: block !important; }
+  table.desktop-only { display: table !important; }
+  .desktop-only.flex { display: flex !important; }
+  .mobile-only { display: none !important; }
+}
+
+/* Support Profile Info Card Desktop Base */
+.support-info-card {
+  display: grid !important;
+  grid-template-columns: 130px 1fr !important;
+  gap: 8px 16px !important;
+}
+.support-info-row {
+  display: contents;
+}
+.support-info-label {
+  color: var(--txt-2);
+  font-size: 13px;
+}
+.support-info-value {
+  font-size: 13px;
+  font-weight: 700;
+}

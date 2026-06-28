@@ -354,8 +354,6 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
                     )}
                   </div>
 
-                  </div>
-
                   {/* ================= WORKFLOW TIMELINE ================= */}
                   {req.status !== REQUEST_STATUS.DECLINED && req.status !== REQUEST_STATUS.CANCELLED ? (
                     <div className="request-timeline">

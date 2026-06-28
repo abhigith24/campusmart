@@ -57,8 +57,8 @@ export default function SupportRequestsPage({ setPage }) {
         </div>
 
         {/* Search & Filters Section */}
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ flex: 1, position: "relative", minWidth: "250px" }}>
+        <div className="sr-filters-row" style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+          <div className="sr-search-wrapper" style={{ flex: 1, position: "relative", minWidth: "250px" }}>
             <input
               className="form-input"
               style={{ width: "100%", padding: "10px 16px", paddingLeft: "36px", fontSize: "14px" }}
@@ -68,8 +68,8 @@ export default function SupportRequestsPage({ setPage }) {
             />
             <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)", display: "flex", alignItems: "center" }}><Search size={16} /></span>
           </div>
-          <button className="btn btn-outline" style={{ height: "42px", gap: "8px" }}><Filter size={16}/> Filter</button>
-          <button className="btn btn-outline" style={{ height: "42px", gap: "8px" }}><SortDesc size={16}/> Sort</button>
+          <button className="btn btn-outline sr-btn-filter" style={{ height: "42px", gap: "8px" }}><Filter size={16}/> Filter</button>
+          <button className="btn btn-outline sr-btn-sort" style={{ height: "42px", gap: "8px" }}><SortDesc size={16}/> Sort</button>
         </div>
 
         {/* Support Table Section */}
@@ -86,7 +86,7 @@ export default function SupportRequestsPage({ setPage }) {
               </div>
             ) : (
               <div className="table-responsive-wrapper">
-                <table className="report-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                <table className="report-table support-requests-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                 <thead>
                   <tr style={{ background: "var(--light)", borderBottom: "1px solid var(--bdr)" }}>
                     <th style={{ padding: "14px 16px", fontSize: "13px", color: "var(--muted)", fontWeight: 600 }}>Ticket ID</th>
@@ -105,18 +105,18 @@ export default function SupportRequestsPage({ setPage }) {
                       background: t.status === "closed" ? "var(--bg-secondary)" : "transparent",
                       transition: "background 0.2s" 
                     }}>
-                      <td style={{ padding: "16px", fontWeight: 700, color: "var(--muted)", fontSize: "13px", whiteSpace: "nowrap" }}>
+                      <td data-label="Ticket ID" className="sr-td-id" style={{ padding: "16px", fontWeight: 700, color: "var(--muted)", fontSize: "13px", whiteSpace: "nowrap" }}>
                         #{t.id.slice(0, 6).toUpperCase()}
                       </td>
-                      <td style={{ padding: "16px", fontSize: "13px", whiteSpace: "nowrap", color: "var(--txt)" }}>
+                      <td data-label="Date" className="sr-td-date" style={{ padding: "16px", fontSize: "13px", whiteSpace: "nowrap", color: "var(--txt)" }}>
                         {t.createdAt?.toDate ? t.createdAt.toDate().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently"}
                       </td>
-                      <td style={{ padding: "16px" }}>
-                        <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--txt)" }}>{t.name || "Anonymous User"}</div>
-                        <div style={{ fontSize: "12px", color: "var(--muted)" }}>{t.email || "No email provided"}</div>
+                      <td data-label="User" className="sr-td-user" style={{ padding: "16px" }}>
+                        <div className="sr-user-name" style={{ fontWeight: 600, fontSize: "14px", color: "var(--txt)" }}>{t.name || "Anonymous User"}</div>
+                        <div className="sr-user-email" style={{ fontSize: "12px", color: "var(--muted)" }}>{t.email || "No email provided"}</div>
                       </td>
-                      <td style={{ padding: "16px", maxWidth: "250px" }}>
-                        <div style={{
+                      <td data-label="Message" className="sr-td-message" style={{ padding: "16px", maxWidth: "250px" }}>
+                        <div className="sr-message-preview" style={{
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
@@ -129,22 +129,23 @@ export default function SupportRequestsPage({ setPage }) {
                           {t.message}
                         </div>
                       </td>
-                      <td style={{ padding: "16px" }}>
-                        <span style={{ 
+                      <td data-label="Priority" className="sr-td-priority" style={{ padding: "16px" }}>
+                        <span className={`sr-badge-priority sr-priority-${(t.priority || "Normal").toLowerCase()}`} style={{ 
                           fontSize: "12px", fontWeight: 700, padding: "4px 10px", borderRadius: "12px", 
-                          background: t.priority === "High" ? "var(--status-rejected-bg)" : "var(--light)", 
-                          color: t.priority === "High" ? "var(--status-rejected-txt)" : "var(--muted)",
+                          background: t.priority === "High" || t.priority === "Urgent" ? "var(--status-rejected-bg)" : "var(--light)", 
+                          color: t.priority === "High" || t.priority === "Urgent" ? "var(--status-rejected-txt)" : "var(--muted)",
                           border: "1px solid var(--bdr)"
                         }}>
                           {t.priority || "Normal"}
                         </span>
                       </td>
-                      <td style={{ padding: "16px" }}>
+                      <td data-label="Status" className="sr-td-status" style={{ padding: "16px" }}>
                         <select
+                          className={`sr-select-status sr-status-${(t.status || "open").toLowerCase()}`}
                           style={{
                             padding: "6px 12px", fontSize: "12px", fontWeight: 700, borderRadius: "20px", border: "1px solid var(--bdr)", cursor: "pointer",
-                            background: t.status === "closed" ? "var(--light)" : t.status === "in-progress" ? "var(--status-pending-bg)" : "rgba(59, 130, 246, 0.1)",
-                            color: t.status === "closed" ? "var(--muted)" : t.status === "in-progress" ? "var(--status-pending-txt)" : "#3b82f6",
+                            background: t.status === "closed" || t.status === "resolved" ? "var(--light)" : t.status === "in-progress" ? "var(--status-pending-bg)" : "rgba(59, 130, 246, 0.1)",
+                            color: t.status === "closed" || t.status === "resolved" ? "var(--muted)" : t.status === "in-progress" ? "var(--status-pending-txt)" : "#3b82f6",
                             outline: "none", appearance: "none", WebkitAppearance: "none", paddingRight: "16px"
                           }}
                           value={t.status || "open"}
@@ -152,12 +153,13 @@ export default function SupportRequestsPage({ setPage }) {
                         >
                           <option value="open">Open</option>
                           <option value="in-progress">In Progress</option>
+                          <option value="resolved">Resolved</option>
                           <option value="closed">Closed</option>
                         </select>
                       </td>
-                      <td style={{ padding: "16px" }}>
+                      <td data-label="Actions" className="sr-td-actions" style={{ padding: "16px" }}>
                         <button 
-                          className="btn btn-outline"
+                          className="btn btn-outline sr-btn-view"
                           style={{ minHeight: "32px", padding: "6px 12px", fontSize: "13px", gap: "6px", display: "inline-flex", alignItems: "center" }}
                           onClick={() => {
                             alert(`Ticket #${t.id.slice(0, 6).toUpperCase()}\n\nFrom: ${t.name || "Anonymous"} (${t.email || "No email"})\n\nMessage:\n${t.message}`);

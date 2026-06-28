@@ -10,7 +10,7 @@ import * as Icons from "lucide-react";
 function AdminSkeletonLoader() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingTop: "8px" }}>
-      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
+      <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
         <div style={{ padding: "16px", borderBottom: "1px solid var(--bdr)", background: "var(--bg-secondary)" }}>
           <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
         </div>
@@ -22,6 +22,27 @@ function AdminSkeletonLoader() {
             <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
             <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
             <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "8px" }}></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mobile-only admin-mobile-cards" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", flexDirection: "column", gap: "16px", boxShadow: "var(--s0)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="skeleton" style={{ width: "40px", height: "40px", borderRadius: "50%", flexShrink: 0 }}></div>
+              <div className="skeleton" style={{ flex: 1, height: "24px", borderRadius: "4px" }}></div>
+              <div className="skeleton" style={{ width: "24px", height: "24px", borderRadius: "4px", flexShrink: 0 }}></div>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <div className="skeleton" style={{ width: "80px", height: "24px", borderRadius: "12px" }}></div>
+              <div className="skeleton" style={{ width: "80px", height: "24px", borderRadius: "12px" }}></div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="skeleton" style={{ width: "60%", height: "14px", borderRadius: "4px" }}></div>
+              <div className="skeleton" style={{ width: "70%", height: "14px", borderRadius: "4px" }}></div>
+              <div className="skeleton" style={{ width: "40%", height: "14px", borderRadius: "4px" }}></div>
+            </div>
           </div>
         ))}
       </div>
@@ -246,7 +267,7 @@ export default function UserManagementPage({ setPage }) {
         <>
           {/* Stats Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Users size={20} />
               </div>
@@ -256,7 +277,7 @@ export default function UserManagementPage({ setPage }) {
               </div>
             </div>
             
-            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.BadgeCheck size={20} />
               </div>
@@ -266,7 +287,7 @@ export default function UserManagementPage({ setPage }) {
               </div>
             </div>
 
-            <div style={{ background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#7c3aed", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Shield size={20} />
               </div>
@@ -276,7 +297,7 @@ export default function UserManagementPage({ setPage }) {
               </div>
             </div>
 
-            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Headphones size={20} />
               </div>
@@ -286,7 +307,7 @@ export default function UserManagementPage({ setPage }) {
               </div>
             </div>
 
-            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Ban size={20} />
               </div>
@@ -373,123 +394,249 @@ export default function UserManagementPage({ setPage }) {
               </button>
             </div>
           ) : (
-            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
-              <div className="table-responsive-wrapper">
-                <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                  <tr>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Name</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Email</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>College</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Joined</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Status</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Role</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "right" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map(u => {
-                    const currentRole = getComputedRole(u);
-                    const isSelf = userProfile?.uid && u.uid === userProfile.uid;
-                    const isSystemAdmin = currentRole === "System Administrator";
-                    
-                    let joinedDate = "—";
-                    if (u.joinedAt?.toMillis) {
-                      joinedDate = new Date(u.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-                    }
+            <>
+              {/* DESKTOP TABLE */}
+              <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+                <div className="table-responsive-wrapper">
+                  <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                    <tr>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Name</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Email</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>College</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Joined</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Status</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Role</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map(u => {
+                      const currentRole = getComputedRole(u);
+                      const isSelf = userProfile?.uid && u.uid === userProfile.uid;
+                      const isSystemAdmin = currentRole === "System Administrator";
+                      
+                      let joinedDate = "—";
+                      if (u.joinedAt?.toMillis) {
+                        joinedDate = new Date(u.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                      }
 
-                    // Status Badge
-                    let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
-                    if (u.banned) {
-                      statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
-                    } else if (u.isVerified || u.collegeVerified) {
-                      statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
-                    }
+                      // Status Badge
+                      let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                      if (u.banned) {
+                        statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
+                      } else if (u.isVerified || u.collegeVerified) {
+                        statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
+                      }
 
-                    // Role Badge
-                    let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
-                    if (currentRole === "System Administrator") {
-                      roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
-                    } else if (currentRole === "Support Moderator") {
-                      roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
-                    }
+                      // Role Badge
+                      let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
+                      if (currentRole === "System Administrator") {
+                        roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
+                      } else if (currentRole === "Support Moderator") {
+                        roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
+                      }
 
-                    // Avatar
-                    const initial = u.name ? u.name.charAt(0).toUpperCase() : "?";
+                      // Avatar
+                      const initial = u.name ? u.name.charAt(0).toUpperCase() : "?";
 
-                    return (
-                    <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }}>
-                      <td data-label="Name" style={{ padding: "14px 16px", fontWeight: 700, display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
-                          {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                      return (
+                      <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }}>
+                        <td data-label="Name" style={{ padding: "14px 16px", fontWeight: 700, display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
+                            {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                          </div>
+                          <span style={{ maxWidth: "160px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</span>
+                        </td>
+                        <td data-label="Email" style={{ padding: "14px 16px", fontSize: 13 }}>{u.email}</td>
+                        <td data-label="College" style={{ padding: "14px 16px", fontSize: 13 }}>{u.college || "—"}</td>
+                        <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
+                        <td data-label="Status" style={{ padding: "14px 16px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
+                            {statusBadge.label}
+                          </span>
+                        </td>
+                        <td data-label="Role" style={{ padding: "14px 16px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
+                            {roleBadge.label}
+                          </span>
+                        </td>
+                        <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
+                          {processingUid === u.id ? (
+                            <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
+                          ) : isSelf || isSystemAdmin ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "16px", border: "1px solid var(--bdr)" }}>
+                              <Icons.ShieldCheck size={14} /> Protected Account
+                            </span>
+                          ) : (
+                            <div style={{ position: "relative", display: "inline-block" }}>
+                              {u.banned ? (
+                                 <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                              ) : (
+                                 <button 
+                                   type="button" 
+                                   className="btn btn-ghost btn-sm" 
+                                   style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
+                                   onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
+                                 >
+                                   <Icons.MoreVertical size={18} />
+                                 </button>
+                              )}
+                              
+                              {openMenuUid === u.id && !u.banned && (
+                                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }}>
+                                    <Icons.User size={14} /> View Profile
+                                  </button>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
+                                    <Icons.Shield size={14} /> Change Role
+                                  </button>
+                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
+                                    <Icons.Key size={14} /> Reset Password
+                                  </button>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
+                                    <Icons.Download size={14} /> Export Data
+                                  </button>
+                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--status-rejected-txt)", fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
+                                    <Icons.Ban size={14} /> Ban User
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )})}
+                  </tbody>
+                </table>
+                </div>
+              </div>
+
+              {/* MOBILE CARDS */}
+              <div className="mobile-only admin-mobile-cards" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {filteredUsers.map(u => {
+                  const currentRole = getComputedRole(u);
+                  const isSelf = userProfile?.uid && u.uid === userProfile.uid;
+                  const isSystemAdmin = currentRole === "System Administrator";
+                  
+                  let joinedDate = "—";
+                  if (u.joinedAt?.toMillis) {
+                    joinedDate = new Date(u.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                  }
+
+                  // Status Badge
+                  let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                  if (u.banned) {
+                    statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
+                  } else if (u.isVerified || u.collegeVerified) {
+                    statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
+                  }
+
+                  // Role Badge
+                  let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
+                  if (currentRole === "System Administrator") {
+                    roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
+                  } else if (currentRole === "Support Moderator") {
+                    roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
+                  }
+
+                  // Avatar
+                  const initial = u.name ? u.name.charAt(0).toUpperCase() : "?";
+
+                  return (
+                    <div key={`mob-${u.id}`} className="admin-mobile-card" style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "var(--s0)" }}>
+                      
+                      {/* Header Layer */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                          <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", flexShrink: 0, overflow: "hidden" }}>
+                            {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                          </div>
+                          <h3 style={{ fontSize: "18px", fontWeight: "800", color: "var(--txt)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</h3>
                         </div>
-                        <span style={{ maxWidth: "160px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</span>
-                      </td>
-                      <td data-label="Email" style={{ padding: "14px 16px", fontSize: 13 }}>{u.email}</td>
-                      <td data-label="College" style={{ padding: "14px 16px", fontSize: 13 }}>{u.college || "—"}</td>
-                      <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
-                      <td data-label="Status" style={{ padding: "14px 16px" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
-                          {statusBadge.label}
-                        </span>
-                      </td>
-                      <td data-label="Role" style={{ padding: "14px 16px" }}>
+                        
+                        {/* Overflow Actions */}
+                        <div style={{ flexShrink: 0, position: "relative" }}>
+                          {processingUid === u.id ? (
+                            <span style={{ fontSize: 12, color: "var(--p)" }}>...</span>
+                          ) : isSelf || isSystemAdmin ? (
+                            <Icons.ShieldCheck size={18} style={{ color: "var(--muted)", marginTop: "4px" }} />
+                          ) : (
+                            <>
+                              {u.banned ? (
+                                <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                              ) : (
+                                <button 
+                                  type="button" 
+                                  className="btn btn-ghost btn-sm" 
+                                  style={{ padding: "4px", height: "32px", borderRadius: "6px" }} 
+                                  onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === `mob-${u.id}` ? null : `mob-${u.id}`); }}
+                                >
+                                  <Icons.MoreVertical size={20} />
+                                </button>
+                              )}
+                              
+                              {openMenuUid === `mob-${u.id}` && !u.banned && (
+                                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: "180px", zIndex: 100, padding: "4px", textAlign: "left" }}>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }}>
+                                    <Icons.User size={16} /> View Profile
+                                  </button>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
+                                    <Icons.Shield size={16} /> Change Role
+                                  </button>
+                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "14px", color: "var(--muted)" }} disabled>
+                                    <Icons.Key size={16} /> Reset Password
+                                  </button>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "14px", color: "var(--muted)" }} disabled>
+                                    <Icons.Download size={16} /> Export Data
+                                  </button>
+                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--status-rejected-txt)", fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
+                                    <Icons.Ban size={16} /> Ban User
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Status & Role Layer */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
                           {roleBadge.label}
                         </span>
-                      </td>
-                      <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
-                        {processingUid === u.id ? (
-                          <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
-                        ) : isSelf || isSystemAdmin ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "16px", border: "1px solid var(--bdr)" }}>
-                            <Icons.ShieldCheck size={14} /> Protected Account
-                          </span>
-                        ) : (
-                          <div style={{ position: "relative", display: "inline-block" }}>
-                            {u.banned ? (
-                               <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
-                            ) : (
-                               <button 
-                                 type="button" 
-                                 className="btn btn-ghost btn-sm" 
-                                 style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
-                                 onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
-                               >
-                                 <Icons.MoreVertical size={18} />
-                               </button>
-                            )}
-                            
-                            {openMenuUid === u.id && !u.banned && (
-                              <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
-                                <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }}>
-                                  <Icons.User size={14} /> View Profile
-                                </button>
-                                <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
-                                  <Icons.Shield size={14} /> Change Role
-                                </button>
-                                <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
-                                  <Icons.Key size={14} /> Reset Password
-                                </button>
-                                <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
-                                  <Icons.Download size={14} /> Export Data
-                                </button>
-                                <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--status-rejected-txt)", fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
-                                  <Icons.Ban size={14} /> Ban User
-                                </button>
-                              </div>
-                            )}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color, whiteSpace: "nowrap" }}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+
+                      {/* Metadata Layer */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px", fontSize: "13px", color: "var(--muted)" }}>
+                        {u.college && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                            <Icons.Book size={14} style={{ flexShrink: 0 }} />
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.college}</span>
                           </div>
                         )}
-                      </td>
-                    </tr>
-                  )})}
-                </tbody>
-              </table>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                          <Icons.Mail size={14} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <Icons.Calendar size={14} style={{ flexShrink: 0 }} />
+                          <span>Joined {joinedDate}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </>
           )}
         </>
       )}

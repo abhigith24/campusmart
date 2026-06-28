@@ -9,7 +9,7 @@ import * as Icons from "lucide-react";
 function AdminSkeletonLoader() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingTop: "8px" }}>
-      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
+      <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflow: "hidden" }}>
         <div style={{ padding: "16px", borderBottom: "1px solid var(--bdr)", background: "var(--bg-secondary)" }}>
           <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
         </div>
@@ -20,6 +20,28 @@ function AdminSkeletonLoader() {
             <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
             <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
             <div className="skeleton" style={{ flex: 1, height: "36px", borderRadius: "8px" }}></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mobile-only admin-mobile-cards" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "var(--s0)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="skeleton" style={{ width: "60%", height: "20px", borderRadius: "4px" }}></div>
+              <div className="skeleton" style={{ width: "80%", height: "16px", borderRadius: "4px" }}></div>
+            </div>
+            <div style={{ marginTop: "4px" }}>
+              <div className="skeleton" style={{ width: "90px", height: "24px", borderRadius: "12px" }}></div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div className="skeleton" style={{ width: "40%", height: "14px", borderRadius: "4px" }}></div>
+              <div className="skeleton" style={{ width: "50%", height: "14px", borderRadius: "4px" }}></div>
+            </div>
+            <div style={{ marginTop: "8px", paddingTop: "12px", borderTop: "1px solid var(--bdr)", display: "flex", gap: "8px" }}>
+              <div className="skeleton" style={{ flex: 1, height: "44px", borderRadius: "8px" }}></div>
+              <div className="skeleton" style={{ flex: 1, height: "44px", borderRadius: "8px" }}></div>
+            </div>
           </div>
         ))}
       </div>
@@ -184,6 +206,55 @@ export default function VerificationRequestsPage({ setPage }) {
     }).length
   };
 
+  const renderVerificationActions = (u) => (
+    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", width: "100%" }}>
+      {u.verificationStatus === "pending" && (
+        <>
+          <button 
+            type="button"
+            className="btn btn-green admin-action-btn" 
+            style={{ flex: 1, minWidth: "115px", height: "44px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+            onClick={() => handleApproveVerification(u.id)}
+            disabled={actionLoading}
+          >
+            Approve
+          </button>
+          <button 
+            type="button"
+            className="btn btn-danger admin-action-btn" 
+            style={{ flex: 1, minWidth: "115px", height: "44px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+            onClick={() => handleRejectVerification(u.id)}
+            disabled={actionLoading}
+          >
+            Reject
+          </button>
+        </>
+      )}
+      {u.verificationStatus === "approved" && (
+        <button 
+          type="button"
+          className="btn btn-outline admin-action-btn" 
+          style={{ flex: 1, minWidth: "140px", height: "44px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px", borderColor: "var(--status-rejected-txt)", color: "var(--status-rejected-txt)" }}
+          onClick={() => setUserToRevoke(u.id)}
+          disabled={actionLoading}
+        >
+          Revoke
+        </button>
+      )}
+      {u.verificationStatus === "rejected" && (
+        <button 
+          type="button"
+          className="btn btn-green admin-action-btn" 
+          style={{ flex: 1, minWidth: "140px", height: "44px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
+          onClick={() => handleApproveVerification(u.id)}
+          disabled={actionLoading}
+        >
+          Approve Anyway
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <AdminLayout activePage="admin-verifications" setPage={setPage}>
       <div className="page-header" style={{ marginBottom: "24px" }}>
@@ -195,7 +266,7 @@ export default function VerificationRequestsPage({ setPage }) {
         <>
           {/* Stats Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
                 <Icons.Clock size={24} />
               </div>
@@ -205,7 +276,7 @@ export default function VerificationRequestsPage({ setPage }) {
               </div>
             </div>
             
-            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
                 <Icons.CheckCircle size={24} />
               </div>
@@ -215,7 +286,7 @@ export default function VerificationRequestsPage({ setPage }) {
               </div>
             </div>
 
-            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
                 <Icons.XCircle size={24} />
               </div>
@@ -225,7 +296,7 @@ export default function VerificationRequestsPage({ setPage }) {
               </div>
             </div>
 
-            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ background: "var(--surface)", width: "48px", height: "48px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
                 <Icons.Calendar size={24} />
               </div>
@@ -280,111 +351,143 @@ export default function VerificationRequestsPage({ setPage }) {
               </button>
             </div>
           ) : (
-            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
-              <table className="report-table">
-                <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                  <tr>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>User Name</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Email</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>College</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Status</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Date</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>ID Card</th>
-                    <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map(u => {
-                    const submittedAt = u.verificationSubmittedAt?.toDate
-                      ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                      : "—";
-                    
-                    let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
-                    if (u.collegeVerified && u.verificationStatus === "approved") {
-                      statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
-                    } else if (u.verificationStatus === "pending") {
-                      statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
-                    } else if (u.verificationStatus === "rejected") {
-                      statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
-                    }
+            <>
+              <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+                <table className="report-table">
+                  <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                    <tr>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>User Name</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Email</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>College</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Status</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Date</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>ID Card</th>
+                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map(u => {
+                      const submittedAt = u.verificationSubmittedAt?.toDate
+                        ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                        : "—";
+                      
+                      let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                      if (u.collegeVerified && u.verificationStatus === "approved") {
+                        statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
+                      } else if (u.verificationStatus === "pending") {
+                        statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
+                      } else if (u.verificationStatus === "rejected") {
+                        statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
+                      }
 
-                    return (
-                      <tr key={u.id}>
-                        <td data-label="User Name" style={{ fontWeight: 700, padding: "14px 16px" }}>{u.name}</td>
-                        <td data-label="Email" style={{ fontSize: 13, padding: "14px 16px", wordBreak: "break-all" }}>{u.email}</td>
-                        <td data-label="College" style={{ padding: "14px 16px" }}>{u.college || "—"}</td>
-                        <td data-label="Status" style={{ padding: "14px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
-                            {statusBadgeColor.label}
-                          </span>
-                        </td>
-                        <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)", padding: "14px 16px", whiteSpace: "nowrap" }}>{submittedAt}</td>
-                        <td data-label="ID Card" style={{ padding: "14px 16px" }}>
-                          {u.collegeIdCardUrl ? (
-                            <button 
-                              type="button"
-                              className="btn btn-outline"
-                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "32px", padding: "0 12px", borderRadius: "8px", fontSize: "13px" }}
-                              onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
-                            >
-                              <Icons.Eye size={16} /> View ID
-                            </button>
-                          ) : (
-                            <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
-                          )}
-                        </td>
-                        <td data-label="Action" style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                          {u.verificationStatus === "pending" && (
-                            <div style={{ display: "flex", gap: 6 }}>
+                      return (
+                        <tr key={u.id}>
+                          <td data-label="User Name" style={{ fontWeight: 700, padding: "14px 16px" }}>{u.name}</td>
+                          <td data-label="Email" style={{ fontSize: 13, padding: "14px 16px", wordBreak: "break-all" }}>{u.email}</td>
+                          <td data-label="College" style={{ padding: "14px 16px" }}>{u.college || "—"}</td>
+                          <td data-label="Status" style={{ padding: "14px 16px" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
+                              {statusBadgeColor.label}
+                            </span>
+                          </td>
+                          <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)", padding: "14px 16px", whiteSpace: "nowrap" }}>{submittedAt}</td>
+                          <td data-label="ID Card" style={{ padding: "14px 16px" }}>
+                            {u.collegeIdCardUrl ? (
                               <button 
                                 type="button"
-                                className="btn btn-green" 
-                                style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
-                                onClick={() => handleApproveVerification(u.id)}
-                                disabled={actionLoading}
+                                className="btn btn-outline"
+                                style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "32px", padding: "0 12px", borderRadius: "8px", fontSize: "13px" }}
+                                onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
                               >
-                                Approve
+                                <Icons.Eye size={16} /> View ID
                               </button>
-                              <button 
-                                type="button"
-                                className="btn btn-danger" 
-                                style={{ width: "115px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
-                                onClick={() => handleRejectVerification(u.id)}
-                                disabled={actionLoading}
-                              >
-                                Reject
-                              </button>
+                            ) : (
+                              <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
+                            )}
+                          </td>
+                          <td data-label="Action" style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", maxWidth: "240px" }}>
+                              {renderVerificationActions(u)}
                             </div>
-                          )}
-                          {u.verificationStatus === "approved" && (
-                            <button 
-                              type="button"
-                              className="btn btn-outline" 
-                              style={{ width: "140px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px", borderColor: "var(--status-rejected-txt)", color: "var(--status-rejected-txt)" }}
-                              onClick={() => setUserToRevoke(u.id)}
-                              disabled={actionLoading}
-                            >
-                              Revoke
-                            </button>
-                          )}
-                          {u.verificationStatus === "rejected" && (
-                            <button 
-                              type="button"
-                              className="btn btn-green" 
-                              style={{ width: "140px", height: "36px", display: "inline-flex", justifyContent: "center", alignItems: "center", borderRadius: "8px" }}
-                              onClick={() => handleApproveVerification(u.id)}
-                              disabled={actionLoading}
-                            >
-                              Approve Anyway
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* MOBILE CARDS */}
+              <div className="mobile-only admin-mobile-cards" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {filteredUsers.map(u => {
+                  const submittedAt = u.verificationSubmittedAt?.toDate
+                    ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    : "—";
+                  
+                  let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                  if (u.collegeVerified && u.verificationStatus === "approved") {
+                    statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
+                  } else if (u.verificationStatus === "pending") {
+                    statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
+                  } else if (u.verificationStatus === "rejected") {
+                    statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
+                  }
+
+                  return (
+                    <div key={u.id} className="admin-mobile-card" style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "16px", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "var(--s0)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: "18px", fontWeight: "800", color: "var(--txt)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</h3>
+                          <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--txt-2)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word" }}>
+                            {u.college || "—"}
+                          </div>
+                        </div>
+                        {u.collegeIdCardUrl ? (
+                          <div 
+                            style={{ width: "48px", height: "48px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--bdr)", flexShrink: 0, cursor: "pointer", background: "var(--bg-secondary)" }}
+                            onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
+                          >
+                            <img src={u.collegeIdCardUrl} alt="ID Thumbnail" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                        ) : (
+                          <div style={{ width: "48px", height: "48px", borderRadius: "8px", border: "1px solid var(--bdr)", flexShrink: 0, background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted-2)" }}>
+                            <Icons.FileX size={20} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
+                          {statusBadgeColor.label}
+                        </span>
+                        <div style={{ fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Icons.Calendar size={14} /> {submittedAt}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--muted)", fontSize: "13px", minWidth: 0 }}>
+                        <Icons.Mail size={14} style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</span>
+                      </div>
+
+                      <div style={{ marginTop: "8px", paddingTop: "12px", borderTop: "1px solid var(--bdr)", width: "100%" }}>
+                        {u.collegeIdCardUrl && (
+                          <button 
+                            type="button"
+                            className="btn btn-outline admin-action-btn"
+                            style={{ width: "100%", height: "44px", display: "inline-flex", justifyContent: "center", alignItems: "center", gap: "6px", borderRadius: "8px", marginBottom: "8px" }}
+                            onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
+                          >
+                            <Icons.Eye size={16} /> View ID
+                          </button>
+                        )}
+                        {renderVerificationActions(u)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </>
       )}

@@ -5,6 +5,63 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import AdminLayout from "../components/AdminLayout";
 
+function AnalyticsSkeletonLoader() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingTop: "8px" }}>
+      {/* Executive Summary Skeleton */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+        <div className="skeleton" style={{ width: "160px", height: "20px", borderRadius: "4px", margin: "0 auto 16px auto" }}></div>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", maxWidth: "900px", margin: "0 auto" }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ flex: "1 1 240px", maxWidth: "280px", display: "flex", alignItems: "center", gap: "16px", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div className="skeleton" style={{ width: "48px", height: "48px", borderRadius: "12px", flexShrink: 0 }}></div>
+              <div style={{ flex: 1 }}>
+                <div className="skeleton" style={{ width: "60%", height: "14px", borderRadius: "4px", marginBottom: "8px" }}></div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+                  <div className="skeleton" style={{ width: "40%", height: "24px", borderRadius: "4px" }}></div>
+                  <div className="skeleton" style={{ width: "25%", height: "14px", borderRadius: "4px" }}></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Marketplace Operations Skeleton */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+        <div className="skeleton" style={{ width: "200px", height: "20px", borderRadius: "4px", marginBottom: "16px" }}></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px" }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", minHeight: "110px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                <div className="skeleton" style={{ width: "24px", height: "24px", borderRadius: "4px" }}></div>
+                <div className="skeleton" style={{ width: "40px", height: "14px", borderRadius: "4px" }}></div>
+              </div>
+              <div style={{ marginTop: "auto" }}>
+                <div className="skeleton" style={{ width: "60%", height: "24px", borderRadius: "4px", marginBottom: "6px" }}></div>
+                <div className="skeleton" style={{ width: "80%", height: "14px", borderRadius: "4px" }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Platform Health Skeleton */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px" }}>
+        <div className="skeleton" style={{ width: "150px", height: "20px", borderRadius: "4px", marginBottom: "16px" }}></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div className="skeleton" style={{ width: "70%", height: "14px", borderRadius: "4px", marginBottom: "8px" }}></div>
+              <div className="skeleton" style={{ width: "40%", height: "24px", borderRadius: "4px" }}></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsReportsPage({ setPage }) {
   const { userProfile } = useAuth();
   const toast = useToast();
@@ -122,8 +179,8 @@ export default function AnalyticsReportsPage({ setPage }) {
           <p style={{ color: "var(--muted)", margin: 0, fontSize: "14px" }}>Monitor platform usage, growth, and health diagnostics</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "13px", color: "var(--txt-2)", fontWeight: 600 }}>Period:</span>
-          <select className="form-input" style={{ width: "160px", padding: "6px 12px", height: "36px", fontSize: "13px", cursor: "pointer", borderRadius: "8px" }}>
+          <label htmlFor="period-filter" style={{ fontSize: "13px", color: "var(--txt-2)", fontWeight: 600 }}>Period:</label>
+          <select id="period-filter" className="form-input" style={{ width: "160px", padding: "0 12px", height: "44px", fontSize: "14px", cursor: "pointer", borderRadius: "8px" }}>
             <option value="today">Today</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -134,9 +191,7 @@ export default function AnalyticsReportsPage({ setPage }) {
       </div>
 
       {loading ? (
-        <div className="loading-center" style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
-          <div className="btn-spinner" style={{ width: "36px", height: "36px", border: "3px solid var(--bdr)", borderTopColor: "var(--p)" }} />
-        </div>
+        <AnalyticsSkeletonLoader />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           
@@ -145,19 +200,19 @@ export default function AnalyticsReportsPage({ setPage }) {
             <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)", textAlign: "center" }}>Executive Summary</h3>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px", maxWidth: "900px", margin: "0 auto" }}>
               {[
-                { lbl: "Total Users", num: stats.users, icon: "👤", accent: "var(--p)", bg: "rgba(37, 99, 235, 0.1)", trend: "↑ +12%" },
-                { lbl: "Active Listings", num: stats.active, icon: "📦", accent: "var(--grn)", bg: "rgba(34, 197, 94, 0.1)", trend: "↑ +8%" },
-                { lbl: "Active Sellers", num: stats.activeSellers, icon: "🏪", accent: "var(--yel)", bg: "rgba(245, 158, 11, 0.1)", trend: "—" },
+                { lbl: "Total Users", num: stats.users, icon: "👤", bg: "rgba(37, 99, 235, 0.1)", trend: "↑ +12%" },
+                { lbl: "Active Listings", num: stats.active, icon: "📦", bg: "rgba(34, 197, 94, 0.1)", trend: "↑ +8%" },
+                { lbl: "Active Sellers", num: stats.activeSellers, icon: "🏪", bg: "rgba(245, 158, 11, 0.1)", trend: "—" },
               ].map((s, i) => (
-                <div key={i} style={{ flex: "1 1 240px", maxWidth: "280px", display: "flex", alignItems: "center", gap: "16px", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+                <div key={i} style={{ flex: "1 1 240px", maxWidth: "280px", display: "flex", alignItems: "center", gap: "16px", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", minHeight: "82px" }}>
                   <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>
                     {s.icon}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{s.lbl}</div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginTop: "4px" }}>
-                      <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--txt)" }}>{s.num ?? 0}</div>
-                      <span style={{ fontSize: "12px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : "var(--grn)" }}>{s.trend}</span>
+                      <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--txt)", lineHeight: "1" }}>{s.num ?? 0}</div>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : "var(--grn)", minWidth: "45px" }}>{s.trend}</span>
                     </div>
                   </div>
                 </div>
@@ -177,13 +232,13 @@ export default function AnalyticsReportsPage({ setPage }) {
                 { lbl: "Pending Requests", num: stats.pendingReqs, icon: "⏳", trend: "↓ -2%" },
                 { lbl: "Flagged Listings", num: stats.flagged, icon: "🚩", trend: "—" },
               ].map((s, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", minHeight: "100px" }}>
+                <div key={i} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", minHeight: "110px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "18px" }}>{s.icon}</span>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : (s.trend.includes("-") ? "var(--p)" : "var(--grn)") }}>{s.trend}</span>
+                    <div style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>{s.icon}</div>
+                    <div style={{ fontSize: "11px", fontWeight: 600, color: s.trend === "—" ? "var(--muted)" : (s.trend.includes("-") ? "var(--p)" : "var(--grn)"), minWidth: "40px", textAlign: "right", height: "16px" }}>{s.trend}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "22px", fontWeight: 800, color: "var(--txt)", marginBottom: "4px" }}>{s.num ?? 0}</div>
+                    <div style={{ fontSize: "22px", fontWeight: 800, color: "var(--txt)", marginBottom: "4px", lineHeight: "1" }}>{s.num ?? 0}</div>
                     <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>{s.lbl}</div>
                   </div>
                 </div>
@@ -197,28 +252,28 @@ export default function AnalyticsReportsPage({ setPage }) {
               <span style={{ color: "var(--grn)" }}>●</span> Platform Health
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
-              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "84px" }}>
                 <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Conversion Rate</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--grn)", lineHeight: "1" }}>
                   {stats.totalListings > 0 ? `${Math.round((stats.sold / stats.totalListings) * 100)}%` : "—"}
                 </div>
               </div>
-              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "84px" }}>
                 <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Deal Acceptance</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--grn)", lineHeight: "1" }}>
                   {stats.requestsCount > 0 ? `${Math.round((stats.acceptedReqs / stats.requestsCount) * 100)}%` : "—"}
                 </div>
               </div>
-              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "84px" }}>
                 <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Donation Ratio</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--grn)", lineHeight: "1" }}>
                   {stats.totalListings > 0 ? `${Math.round((stats.free / stats.totalListings) * 100)}%` : "—"}
                 </div>
               </div>
-              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
+              <div style={{ padding: "16px", background: "var(--light)", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "84px" }}>
                 <div style={{ fontSize: "12px", color: "var(--txt-2)", fontWeight: 600, marginBottom: "4px" }}>Average Rating</div>
-                <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--grn)" }}>
-                  {stats.avgRating} / 5
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "var(--grn)", lineHeight: "1" }}>
+                  {stats.avgRating} <span style={{ fontSize: "14px" }}>/ 5</span>
                 </div>
               </div>
             </div>
@@ -234,10 +289,10 @@ export default function AnalyticsReportsPage({ setPage }) {
             ].map((chart, i) => (
               <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "20px", display: "flex", flexDirection: "column" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: 700, margin: "0 0 16px 0", color: "var(--txt)" }}>{chart.title}</h3>
-                <div style={{ flex: 1, minHeight: "150px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--muted)", gap: "8px" }}>
-                  <span style={{ fontSize: "24px" }}>📈</span>
-                  <span style={{ fontSize: "13px", fontWeight: 600 }}>No historical data available</span>
-                  <span style={{ fontSize: "11px" }}>{chart.type} placeholder</span>
+                <div style={{ flex: 1, minHeight: "220px", background: "var(--bg)", border: "1px dashed var(--bdr)", borderRadius: "var(--r-sm)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--muted)", gap: "8px", padding: "20px" }}>
+                  <span style={{ fontSize: "28px", marginBottom: "4px" }}>📈</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--txt-2)", textAlign: "center" }}>No historical data available</span>
+                  <span style={{ fontSize: "12px", textAlign: "center", maxWidth: "200px" }}>{chart.type} placeholder</span>
                 </div>
               </div>
             ))}
@@ -250,18 +305,18 @@ export default function AnalyticsReportsPage({ setPage }) {
             </h3>
             
             {/* KPI Cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px", justifyContent: "center" }}>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100px" }}>
                 <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Total Shares</div>
-                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p)" }}>{stats.totalShares || 0}</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p)", lineHeight: "1" }}>{stats.totalShares || 0}</div>
               </div>
-              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100px" }}>
                 <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Total Clicks</div>
-                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p-dark)" }}>{stats.totalClicks || 0}</div>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--p-dark)", lineHeight: "1" }}>{stats.totalClicks || 0}</div>
               </div>
-              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ background: "var(--light)", padding: "16px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100px" }}>
                 <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px" }}>Click-Through Rate</div>
-                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--grn)" }}>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: "var(--grn)", lineHeight: "1" }}>
                   {stats.totalShares > 0 ? ((stats.totalClicks / stats.totalShares) * 100).toFixed(1) + "%" : "0.0%"}
                 </div>
               </div>
@@ -279,10 +334,10 @@ export default function AnalyticsReportsPage({ setPage }) {
                     return (
                       <div key={platform} style={{ background: "var(--light)", padding: "12px", borderRadius: "var(--r-sm)", border: "1px solid var(--bdr)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
-                          <span style={{ textTransform: "capitalize" }}>{platform}</span>
-                          <span style={{ color: "var(--muted)" }}>{clicks} Clicks / {shares} Shares</span>
+                          <span style={{ textTransform: "capitalize", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginRight: "8px" }}>{platform}</span>
+                          <span style={{ color: "var(--muted)", flexShrink: 0 }}>{clicks} Clicks / {shares} Shares</span>
                         </div>
-                        <div style={{ height: "6px", background: "var(--bdr)", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{ height: "8px", background: "var(--bdr)", borderRadius: "4px", overflow: "hidden" }}>
                           <div style={{ 
                             height: "100%", 
                             background: platform === "whatsapp" ? "#25D366" : platform === "telegram" ? "#0088cc" : "var(--p)", 
@@ -308,11 +363,11 @@ export default function AnalyticsReportsPage({ setPage }) {
                 {stats.mostShared && stats.mostShared.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {stats.mostShared.map(l => (
-                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
-                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "200px" }} title={l.title}>
+                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
+                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", flex: 1, minWidth: 0 }} title={l.title}>
                           {l.title}
                         </span>
-                        <div style={{ display: "flex", gap: "12px", fontSize: "11px", color: "var(--muted)" }}>
+                        <div style={{ display: "flex", gap: "12px", fontSize: "11px", color: "var(--muted)", flexShrink: 0 }}>
                           <span><strong>{l.sharesCount}</strong> Shares</span>
                           <span><strong>{l.clicksCount || 0}</strong> Clicks</span>
                         </div>
@@ -334,11 +389,11 @@ export default function AnalyticsReportsPage({ setPage }) {
                 {stats.mostClicked && stats.mostClicked.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {stats.mostClicked.map(l => (
-                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
-                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "200px" }} title={l.title}>
+                      <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "10px 14px", background: "var(--light)", borderRadius: "var(--r-sm)", fontSize: "13px", border: "1px solid var(--bdr)" }}>
+                        <span style={{ fontWeight: 600, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", flex: 1, minWidth: 0 }} title={l.title}>
                           {l.title}
                         </span>
-                        <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                        <span style={{ fontSize: "11px", color: "var(--muted)", flexShrink: 0 }}>
                           <strong>{l.clicksCount}</strong> Clicks (CTR: {l.sharesCount > 0 ? ((l.clicksCount / l.sharesCount) * 100).toFixed(0) + "%" : "—"})
                         </span>
                       </div>

@@ -497,51 +497,68 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
             </div>
           </div>
         ) : isStaffProfile ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="support-profile-header" style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "space-between", alignItems: "center" }}>
             {/* LEFT: Branding */}
-            <div style={{ display: "flex", gap: "16px", alignItems: "center", flex: "1 1 300px" }}>
-              <div className="profile-avatar" style={{ position: "relative", width: "64px", height: "64px", flexShrink: 0 }}>
+            <div className="support-profile-left" style={{ display: "flex", gap: "16px", alignItems: "center", flex: "1 1 300px" }}>
+              <div className="profile-avatar support-profile-avatar" style={{ position: "relative", width: "64px", height: "64px", flexShrink: 0 }}>
                 {profileData?.photoURL ? <img src={profileData.photoURL} alt="" style={{ width:"100%", height:"100%", borderRadius:"50%", objectFit:"cover" }} /> : <div style={{width:"100%", height:"100%", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"24px", background:"var(--surface)", border:"1px solid var(--bdr)", color:"var(--txt)"}}>{initials}</div>}
                 <span style={{ position: "absolute", bottom: "2px", right: "2px", width: "14px", height: "14px", background: "var(--green, #10b981)", borderRadius: "50%", border: "2px solid var(--surface)", title: "Online" }}></span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <div className="support-profile-info" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div className="support-title-row" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "20px", fontWeight: 800 }}>CampusMart Support</span>
-                  <OfficialStaffBadge role={profileData?.role} size="lg" />
-                  {isSelf && (
-                    <button className="btn btn-outline btn-sm" onClick={startEdit} style={{ margin: 0, padding: "4px 12px", borderRadius: "6px", fontWeight: 600, fontSize: "12px", minHeight: 0 }}>✏️ Edit</button>
-                  )}
+                  <div className="support-badge-actions" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <OfficialStaffBadge role={profileData?.role} size="lg" />
+                    {isSelf && (
+                      <button className="btn btn-outline btn-sm support-edit-btn" onClick={startEdit} style={{ margin: 0, padding: "4px 12px", borderRadius: "6px", fontWeight: 600, fontSize: "12px", minHeight: 0 }}>✏️ Edit</button>
+                    )}
+                  </div>
                 </div>
                 <div style={{ fontSize: "14px", color: "var(--p)", fontWeight: 600 }}>
                   Official Support Team
                 </div>
-                <div style={{ fontSize: "13px", color: "var(--muted)", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>✉️ {currentUser?.email || profileData?.email}</span>
+                <div className="support-email-row" style={{ fontSize: "13px", color: "var(--muted)", display: "flex", alignItems: "center", gap: "6px", width: "100%", overflow: "hidden" }}>
+                  <span style={{ fontSize: "14px", lineHeight: 1, flexShrink: 0 }}>✉️</span>
+                  <span title={currentUser?.email || profileData?.email} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
+                    {currentUser?.email || profileData?.email}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* RIGHT: Stats Table */}
-            <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: "8px 16px", flex: "1 1 300px", background: "var(--bg)", padding: "16px 20px", borderRadius: "10px", border: "1px solid var(--bdr)" }}>
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Role</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>Support Moderator</div>
-              
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Department</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>User Support</div>
-              
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Permission Level</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>Level 2 (Moderator)</div>
-              
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Account Type</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>Official Internal Staff</div>
-              
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Last Activity</div>
-              <div style={{ fontSize: "13px", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--green, #10b981)" }}></span> Just now
+            <div className="support-info-card" style={{ display: "flex", flexDirection: "column", gap: "12px", flex: "1 1 300px", background: "var(--bg)", padding: "20px", borderRadius: "10px", border: "1px solid var(--bdr)" }}>
+              <div className="support-info-row">
+                <div className="support-info-label">Role</div>
+                <div className="support-info-value" style={{ textTransform: "capitalize" }}>{profileData?.role || "Support Moderator"}</div>
               </div>
               
-              <div style={{ color: "var(--txt-2)", fontSize: "13px" }}>Joined Date</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>{getMemberSince(profileData?.joinedAt)}</div>
+              <div className="support-info-row">
+                <div className="support-info-label">Department</div>
+                <div className="support-info-value" style={{ textTransform: "capitalize" }}>{profileData?.department || "User Support"}</div>
+              </div>
+              
+              <div className="support-info-row">
+                <div className="support-info-label">Permission Level</div>
+                <div className="support-info-value">{profileData?.permissionLevel ? `Level ${profileData.permissionLevel}` : "Level 2 (Moderator)"}</div>
+              </div>
+              
+              <div className="support-info-row">
+                <div className="support-info-label">Account Type</div>
+                <div className="support-info-value">Official Internal Staff</div>
+              </div>
+              
+              <div className="support-info-row">
+                <div className="support-info-label">Last Activity</div>
+                <div className="support-info-value active-status-val" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--green, #10b981)", flexShrink: 0 }}></span> Active &bull; Just now
+                </div>
+              </div>
+              
+              <div className="support-info-row">
+                <div className="support-info-label">Joined Date</div>
+                <div className="support-info-value">{getMemberSince(profileData?.joinedAt) || "Not Available"}</div>
+              </div>
             </div>
           </div>
         ) : (
@@ -602,7 +619,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
 
       {/* Stats grid */}
       {isStaffProfile ? (
-        <div className="trust-statistics-row" style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
+        <div className="trust-statistics-row support-stats-grid" style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
           <div className="trust-stat-card" style={{ padding: "16px", borderTop: "3px solid var(--p)" }}>
             <div className="trust-stat-num" style={{ fontSize: "20px", padding: "3px 0", color: "var(--p)" }}>
               🎫 14
