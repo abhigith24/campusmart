@@ -181,26 +181,25 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
   }, [incoming, outgoing, tab, searchTerm, activeFilter]);
 
   return (
-    <div className="container" style={{ maxWidth: 1000, paddingTop: 28, paddingBottom: 80 }}>
+    <div className="container purchase-requests-container" style={{ maxWidth: 1000 }}>
       {/* Title */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+      <div className="pr-header" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <button 
-          className="btn btn-ghost" 
+          className="btn btn-ghost pr-back-btn" 
           onClick={() => setPage("home")} 
-          style={{ padding: "6px 10px", fontSize: "18px" }}
           type="button"
           aria-label="Back to home"
         >
           ←
         </button>
         <div>
-          <h2 style={{ margin: 0 }}>🛒 Purchase Requests Dashboard</h2>
-          <p style={{ fontSize: "13px", color: "var(--muted)", marginTop: "4px" }}>Manage transaction offers and exchanges</p>
+          <h2 className="pr-title" style={{ margin: 0 }}>🛒 Purchase Requests Dashboard</h2>
+          <p className="pr-subtitle" style={{ color: "var(--muted)", margin: 0 }}>Manage transaction offers and exchanges</p>
         </div>
       </div>
 
       {/* Navigation tabs */}
-      <div className="profile-tabs" style={{ marginBottom: "20px" }}>
+      <div className="profile-tabs pr-tabs">
         <button className={`profile-tab ${tab === "incoming" ? "active" : ""}`} onClick={() => { setTab("incoming"); setActiveFilter("All"); }}>
           Incoming Offers ({incoming.filter(r => r.status === REQUEST_STATUS.PENDING).length} pending)
         </button>
@@ -210,7 +209,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
       </div>
 
       {/* ================= SUMMARY STATISTIC CARDS ================= */}
-      <div className="seller-summary-grid" style={{ marginBottom: "20px" }}>
+      <div className="seller-summary-grid pr-stats-grid">
         <div className="seller-summary-card">
           <div className="seller-summary-header"><Inbox size={14} style={{ color: "var(--p)" }} /> Total</div>
           <div className="seller-summary-value">{metrics.total}</div>
@@ -293,7 +292,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="pr-list">
           {filteredRequests.map(req => {
             const s = STATUS_STYLE[req.status] || STATUS_STYLE[REQUEST_STATUS.PENDING];
             const priceVal = req.isFree ? "Free 💚" : req.price !== undefined ? `₹${req.price.toLocaleString("en-IN")}` : "Price Not Available";
@@ -302,21 +301,32 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
             const mockTrustScore = Math.round(70 + ((req.buyerName?.length || 0) % 25));
 
             return (
-              <div key={req.id} className="request-card" style={{ display: "flex", gap: "16px", background: "var(--card-bg)", border: "1px solid var(--bdr)", padding: "16px", borderRadius: "var(--r-xl)", flexWrap: "wrap", position: "relative" }}>
+              <div key={req.id} className="request-card pr-card">
                 
                 {/* Image */}
                 {req.listingImage ? (
-                  <img src={req.listingImage} alt="" className="request-img" style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "var(--r-lg)", flexShrink: 0 }} />
+                  <img src={req.listingImage} alt="" className="request-img" />
                 ) : (
-                  <div style={{ width: "90px", height: "90px", background: "var(--light)", borderRadius: "var(--r-lg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>📦</div>
+                  <div className="request-img-placeholder">📦</div>
                 )}
 
                 {/* Body */}
-                <div style={{ flex: 1, minWidth: "220px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <div style={{ fontSize: "16px", fontWeight: "750", color: "var(--txt)" }}>{req.listingTitle}</div>
+                <div className="pr-card-body">
+                  <div className="pr-card-title">{req.listingTitle}</div>
+                  
+                  {/* Price, Badge, Time (Moved up) */}
+                  <div className="pr-price-row">
+                    <span className="pr-price">{priceVal}</span>
+                    <span className="pr-status-badge" style={{ background: s.bg, color: s.color }}>
+                      {s.label}
+                    </span>
+                    <span className="pr-time">
+                      Requested {timeAgo(req.createdAt)}
+                    </span>
+                  </div>
                   
                   {/* Participant info */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <div className="pr-participant-info">
                     {tab === "incoming" ? (
                       <>
                         <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", background: "var(--light)", border: "1px solid var(--bdr)" }}>
@@ -344,15 +354,6 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
                     )}
                   </div>
 
-                  {/* Price, Badge, Time */}
-                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", marginTop: "4px" }}>
-                    <span style={{ fontSize: "18px", fontWeight: "850", color: "var(--p)" }}>{priceVal}</span>
-                    <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "700", background: s.bg, color: s.color }}>
-                      {s.label}
-                    </span>
-                    <span style={{ fontSize: "12px", color: "var(--muted)" }}>
-                      Requested {timeAgo(req.createdAt)}
-                    </span>
                   </div>
 
                   {/* ================= WORKFLOW TIMELINE ================= */}
@@ -371,43 +372,45 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
                 </div>
 
                 {/* Actions Panel */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", justifyContent: "center", minWidth: "120px", flexShrink: 0 }}>
+                <div className="pr-actions-panel">
                   
                   {/* Pending Incoming state actions */}
                   {tab === "incoming" && req.status === REQUEST_STATUS.PENDING && (
                     <>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleAccept(req)}>Accept Offer</button>
-                      <button className="btn btn-outline btn-sm" style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.2)" }} onClick={() => handleReject(req)}>Decline</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleViewProfile(req.buyerId)}>View Profile</button>
+                      <button className="btn btn-primary pr-btn" onClick={() => handleAccept(req)}>Accept Offer</button>
+                      <div className="pr-secondary-actions">
+                        <button className="btn btn-outline pr-btn pr-btn-decline" onClick={() => handleReject(req)}>Decline</button>
+                        <button className="btn btn-outline pr-btn" onClick={() => handleViewProfile(req.buyerId)}>View Profile</button>
+                      </div>
                     </>
                   )}
 
                   {/* Accepted Incoming state actions */}
                   {tab === "incoming" && req.status === REQUEST_STATUS.ACCEPTED && (
                     <>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
-                        <MessageSquare size={13} /> Continue Chat
+                      <button className="btn btn-outline pr-btn" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                        <MessageSquare size={16} /> Continue Chat
                       </button>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleMarkExchanged(req)}>Mark Exchanged</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleCancelAcceptance(req)} style={{ color: "var(--red)", borderColor: "rgba(239,68,68,0.2)" }}>Cancel Acceptance</button>
+                      <button className="btn btn-primary pr-btn" onClick={() => handleMarkExchanged(req)}>Mark Exchanged</button>
+                      <button className="btn btn-outline pr-btn pr-btn-decline" onClick={() => handleCancelAcceptance(req)}>Cancel Acceptance</button>
                     </>
                   )}
 
                   {/* Outgoing Accepted action */}
                   {tab === "outgoing" && req.status === REQUEST_STATUS.ACCEPTED && (
-                    <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
-                      <MessageSquare size={13} /> Chat with Seller
+                    <button className="btn btn-outline pr-btn" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                      <MessageSquare size={16} /> Chat with Seller
                     </button>
                   )}
 
                   {/* Completed transaction review options */}
                   {req.status === REQUEST_STATUS.EXCHANGED && (
                     <>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
-                        <MessageSquare size={13} /> View Chat logs
+                      <button className="btn btn-outline pr-btn" onClick={() => handleOpenChat(req)} style={{ gap: "4px" }}>
+                        <MessageSquare size={16} /> View Chat logs
                       </button>
                       {tab === "outgoing" && (
-                        <button className="btn btn-primary btn-sm" onClick={() => setPage("reviews", { sellerId: req.sellerId })}>
+                        <button className="btn btn-primary pr-btn" onClick={() => setPage("reviews", { sellerId: req.sellerId })}>
                           Leave Review
                         </button>
                       )}

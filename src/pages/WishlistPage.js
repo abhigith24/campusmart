@@ -195,7 +195,7 @@ export default function WishlistPage({ setPage }) {
       {wishlistItems.length > 0 && (
         <div className="seller-search-filter-bar">
           <div className="seller-search-row">
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: "160px" }}>
               <Search size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
               <input 
                 className="form-input" 

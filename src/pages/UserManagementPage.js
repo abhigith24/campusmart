@@ -374,7 +374,8 @@ export default function UserManagementPage({ setPage }) {
             </div>
           ) : (
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
-              <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div className="table-responsive-wrapper">
+                <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
                   <tr>
                     <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)", textAlign: "left" }}>Name</th>
@@ -487,6 +488,7 @@ export default function UserManagementPage({ setPage }) {
                   )})}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </>

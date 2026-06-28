@@ -575,6 +575,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
   const [priceMin, setPriceMin]               = useState("");
   const [priceMax, setPriceMax]               = useState("");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [priceAlignRight, setPriceAlignRight] = useState(false);
   const priceRef                              = useRef(null);
 
@@ -1294,7 +1295,27 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
           className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
         >
           <div className="filter-bar">
-            <div className="filter-controls-scroll">
+            {/* Mobile filters trigger */}
+            <div className="mobile-filters-trigger desktop-hidden">
+              <button 
+                type="button" 
+                className="mobile-filters-btn"
+                onClick={() => setIsMobileDrawerOpen(true)}
+              >
+                Filters
+                {activeFilters > 0 && <span className="mobile-filter-badge">{activeFilters}</span>}
+              </button>
+            </div>
+            
+            <div className={`mobile-drawer-backdrop desktop-hidden ${isMobileDrawerOpen ? "show" : ""}`} onClick={() => setIsMobileDrawerOpen(false)} />
+            
+            <div className={`filter-controls-scroll ${isMobileDrawerOpen ? "mobile-drawer-open" : ""}`}>
+              <div className="mobile-drawer-header desktop-hidden">
+                <h3>Filters</h3>
+                <button type="button" className="btn btn-ghost" onClick={() => setIsMobileDrawerOpen(false)} aria-label="Close filters" style={{fontSize: "24px", padding: 0, height: "32px", width: "32px", display: "flex", alignItems: "center", justifyContent: "center"}}>×</button>
+              </div>
+
+              <div className="filter-dropdowns-group">
               <CategoryDropdown
                 label="Category"
                 options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
@@ -1396,6 +1417,12 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, req
                 >
                   <span className="filter-toggle-knob" />
                 </button>
+              </div>
+              </div>
+
+              <div className="mobile-drawer-footer desktop-hidden">
+                <button type="button" className="btn btn-outline" style={{ flex: 1, marginRight: 8 }} onClick={clearAllFilters}>Reset All</button>
+                <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)}>Apply</button>
               </div>
             </div>
 

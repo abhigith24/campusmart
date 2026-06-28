@@ -359,7 +359,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
         <div className="profile-header" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           <div style={{ display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap" }}>
             <div className="profile-avatar skeleton" style={{ width: 80, height: 80, borderRadius: "50%" }} />
-            <div style={{ flex: 1, minWidth: "200px" }}>
+            <div style={{ flex: 1, minWidth: "160px" }}>
               <div className="skeleton" style={{ height: 28, width: "40%", marginBottom: 8 }} />
               <div className="skeleton" style={{ height: 16, width: "60%", marginBottom: 6 }} />
               <div className="skeleton" style={{ height: 14, width: "30%" }} />
@@ -419,7 +419,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
               <div className="profile-avatar" style={{ position: "relative" }}>
                 {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
               </div>
-              <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
+              <div style={{ flex: 1, minWidth: "160px", textAlign: "left" }}>
                 {isStaffProfile ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
@@ -550,7 +550,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
               <div className="profile-avatar">
                 {profileData?.photoURL ? <img src={profileData.photoURL} alt="" /> : initials}
               </div>
-              <div style={{ flex: 1, minWidth: "200px", textAlign: "left" }}>
+              <div style={{ flex: 1, minWidth: "160px", textAlign: "left" }}>
                 <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: "4px" }}>
                   {profileData?.name}
                   {(profileData?.collegeVerified || profileData?.isVerified) && (
@@ -810,7 +810,7 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
                   ) : (
                     <div style={{ width: "80px", height: "80px", borderRadius: "8px", background: "var(--light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>📦</div>
                   )}
-                  <div style={{ flex: 1, minWidth: "200px" }}>
+                  <div style={{ flex: 1, minWidth: "160px" }}>
                     <div style={{ fontSize: "16px", fontWeight: "700", color: "var(--txt)", marginBottom: "4px" }}>{tx.listingTitle}</div>
                     <div style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "4px" }}>
                       {isBuyer ? `🛍️ Bought from ${tx.sellerName}` : `🏪 Sold to ${tx.buyerName}`}

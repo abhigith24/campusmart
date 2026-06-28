@@ -207,7 +207,8 @@ export default function SellerReportsPage({ setPage }) {
               <span style={{ fontSize: "16px", fontWeight: 600 }}>No reports found matching your criteria.</span>
             </div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+            <div className="table-responsive-wrapper">
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
               <thead>
                 <tr style={{ background: "var(--light)", borderBottom: "1px solid var(--bdr)" }}>
                   <th style={{ padding: "16px", color: "var(--muted)", fontWeight: 700, fontSize: "12px", textTransform: "uppercase" }}>Report ID</th>
@@ -259,6 +260,7 @@ export default function SellerReportsPage({ setPage }) {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

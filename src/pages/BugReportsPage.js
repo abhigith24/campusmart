@@ -86,7 +86,8 @@ export default function BugReportsPage({ setPage }) {
                 <span style={{ fontSize: "16px", fontWeight: 600 }}>No bug reports found matching your search.</span>
               </div>
             ) : (
-              <table className="report-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <div className="table-responsive-wrapper">
+                <table className="report-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                 <thead>
                   <tr style={{ background: "var(--light)", borderBottom: "1px solid var(--bdr)" }}>
                     <th style={{ padding: "14px 16px", fontSize: "13px", color: "var(--muted)", fontWeight: 600 }}>Bug ID</th>
@@ -170,6 +171,7 @@ export default function BugReportsPage({ setPage }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         )}
