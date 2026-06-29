@@ -934,7 +934,7 @@ select {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 6px;
   margin: 0
 }
 
@@ -8441,7 +8441,7 @@ button {
   color: var(--p-dark);
 }
 
-.nav-mobile-icons {
+.nav-mobile-actions {
   display: none;
 }
 
