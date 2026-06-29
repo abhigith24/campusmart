@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { collection, getDocs, doc, updateDoc, query, where } from "firebase/firestore";
-import { db } from "../firebase";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { collection, getDocs, doc, updateDoc, getDoc, query, where } from "firebase/firestore";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { db, auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import AdminLayout from "../components/AdminLayout";
@@ -94,6 +95,14 @@ export default function UserManagementPage({ setPage }) {
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [newRoleSelection, setNewRoleSelection] = useState("");
 
+  // View Profile state
+  const [viewProfileUser, setViewProfileUser] = useState(null);
+  const [viewProfileLoading, setViewProfileLoading] = useState(false);
+
+  // Reset Password state
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     title: "",
@@ -137,6 +146,77 @@ export default function UserManagementPage({ setPage }) {
     setRoleModalUser(u);
     setNewRoleSelection(currentRole);
   };
+
+  // View Profile handler
+  async function openViewProfile(u) {
+    setViewProfileLoading(true);
+    setViewProfileUser(u);
+    try {
+      const snap = await getDoc(doc(db, "users", u.id));
+      if (snap.exists()) {
+        setViewProfileUser({ id: snap.id, ...snap.data() });
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Failed to load profile details.", "error");
+    } finally {
+      setViewProfileLoading(false);
+    }
+  }
+
+  // Reset Password handler
+  async function handleResetPassword() {
+    if (!resetPasswordUser?.email) return;
+    setResetPasswordLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, resetPasswordUser.email);
+      toast(`Password reset email sent to ${resetPasswordUser.email}`, "success");
+      setResetPasswordUser(null);
+    } catch (err) {
+      console.error(err);
+      toast("Failed to send password reset email. ❌", "error");
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  }
+
+  // Export User Data handler (CSV)
+  function exportUserCSV() {
+    // Permission check
+    const isAdmin = userProfile?.permissionLevel >= 4 || userProfile?.role === "System Administrator" || userProfile?.role === "admin";
+    if (!isAdmin) {
+      toast("Only System Administrators can export user data.", "error");
+      return;
+    }
+    try {
+      const headers = ["Name", "Email", "College", "Role", "Verification Status", "Joined Date", "UID"];
+      const rows = filteredUsers.map(u => {
+        const role = getComputedRole(u);
+        const status = u.banned ? "Banned" : (u.isVerified || u.collegeVerified) ? "Verified" : "Unverified";
+        let joined = "—";
+        if (u.joinedAt?.toMillis) {
+          joined = new Date(u.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        }
+        // Escape CSV fields
+        const esc = (v) => `"${String(v || "").replace(/"/g, '""')}"`;
+        return [esc(u.name), esc(u.email), esc(u.college), esc(role), esc(status), esc(joined), esc(u.uid || u.id)].join(",");
+      });
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "users.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast(`Exported ${filteredUsers.length} users to CSV.`, "success");
+    } catch (err) {
+      console.error(err);
+      toast("Failed to export user data. ❌", "error");
+    }
+  }
 
   async function executeRoleChange() {
     if (!roleModalUser) return;
@@ -519,17 +599,17 @@ export default function UserManagementPage({ setPage }) {
                               
                               {openMenuUid === u.id && !u.banned && (
                                 <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }}>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openViewProfile(u); }}>
                                     <Icons.User size={14} /> View Profile
                                   </button>
                                   <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
                                     <Icons.Shield size={14} /> Change Role
                                   </button>
                                   <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); setResetPasswordUser(u); }}>
                                     <Icons.Key size={14} /> Reset Password
                                   </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); exportUserCSV(); }}>
                                     <Icons.Download size={14} /> Export Data
                                   </button>
                                   <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
@@ -713,6 +793,83 @@ export default function UserManagementPage({ setPage }) {
               <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setRoleModalUser(null)}>Cancel</button>
               <button type="button" className="btn btn-primary" style={{ borderRadius: "8px" }} onClick={executeRoleChange} disabled={processingUid === roleModalUser.id}>
                 {processingUid === roleModalUser.id ? "Saving..." : "Save Role"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Profile Modal */}
+      {viewProfileUser && (
+        <div className="modal-overlay" onClick={() => setViewProfileUser(null)} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", maxHeight: "80vh", overflowY: "auto" }} onKeyDown={e => { if (e.key === "Escape") setViewProfileUser(null); }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>User Profile</h3>
+              <button type="button" onClick={() => setViewProfileUser(null)} style={{ border: "none", background: "none", fontSize: 20, color: "var(--muted-2)", cursor: "pointer", fontWeight: "bold", lineHeight: 1, padding: "4px" }} aria-label="Close">✕</button>
+            </div>
+            {viewProfileLoading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0", gap: "12px" }}>
+                <div className="skeleton" style={{ width: "64px", height: "64px", borderRadius: "50%" }} />
+                <div className="skeleton" style={{ width: "160px", height: "20px", borderRadius: "4px" }} />
+                <div className="skeleton" style={{ width: "200px", height: "16px", borderRadius: "4px" }} />
+              </div>
+            ) : (
+              <>
+                {/* Profile Header */}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px", padding: "16px", background: "var(--bg-secondary)", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
+                  <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 800, flexShrink: 0, overflow: "hidden" }}>
+                    {viewProfileUser.photoURL ? <img src={viewProfileUser.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (viewProfileUser.name ? viewProfileUser.name.charAt(0).toUpperCase() : "?")}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "16px", fontWeight: 800, marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewProfileUser.name || "—"}</div>
+                    <div style={{ fontSize: "13px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewProfileUser.email || "—"}</div>
+                  </div>
+                </div>
+                {/* Profile Details */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                  {[
+                    { label: "UID", value: viewProfileUser.uid || viewProfileUser.id, mono: true },
+                    { label: "College", value: viewProfileUser.college },
+                    { label: "Branch", value: viewProfileUser.branch },
+                    { label: "Role", value: getComputedRole(viewProfileUser) },
+                    { label: "Verification", value: (viewProfileUser.isVerified || viewProfileUser.collegeVerified) ? "✅ Verified" : "Unverified" },
+                    { label: "Account Status", value: viewProfileUser.banned ? "🚫 Banned" : "Active" },
+                    { label: "Joined", value: viewProfileUser.joinedAt?.toMillis ? new Date(viewProfileUser.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : null },
+                    { label: "Last Login", value: viewProfileUser.lastLoginAt?.toMillis ? new Date(viewProfileUser.lastLoginAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null }
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
+                      <span style={{ fontSize: "13px", color: "var(--muted)", fontWeight: 600, flexShrink: 0 }}>{item.label}</span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...(item.mono ? { fontFamily: "monospace", fontSize: "11px" } : {}) }}>{item.value || "—"}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
+                  <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setViewProfileUser(null)}>Close</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Confirmation Modal */}
+      {resetPasswordUser && (
+        <div className="modal-overlay" onClick={() => { if (!resetPasswordLoading) setResetPasswordUser(null); }} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 800 }}>Reset Password</h3>
+            <p style={{ color: "var(--muted)", marginBottom: "6px", fontSize: "14px", lineHeight: 1.5 }}>
+              Send a password reset email to:
+            </p>
+            <p style={{ fontWeight: 700, fontSize: "14px", marginBottom: "4px" }}>{resetPasswordUser.name}</p>
+            <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "20px", wordBreak: "break-all" }}>{resetPasswordUser.email}</p>
+            <p style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "20px", lineHeight: 1.5, background: "var(--bg-secondary)", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--bdr)" }}>
+              <Icons.Info size={14} style={{ verticalAlign: "middle", marginRight: "6px" }} />
+              The user will receive an email with a link to create a new password. No temporary password will be generated.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setResetPasswordUser(null)} disabled={resetPasswordLoading}>Cancel</button>
+              <button type="button" className="btn btn-primary" style={{ borderRadius: "8px" }} onClick={handleResetPassword} disabled={resetPasswordLoading}>
+                {resetPasswordLoading ? "Sending..." : "Send Reset Email"}
               </button>
             </div>
           </div>
