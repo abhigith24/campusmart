@@ -260,7 +260,7 @@ export default function UserManagementPage({ setPage }) {
       else if (newRoleTitle === "Support Moderator") newRoleObj = ROLES.SUPPORT_MODERATOR;
 
       await updateDoc(doc(db, "users", uid), { 
-        role: newRoleObj.title,
+        role: newRoleObj.legacyRole,
         permissionLevel: newRoleObj.level,
         department: newRoleObj.department,
         accountType: newRoleObj.accountType
