@@ -31,6 +31,12 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   const [isSignupSuccess, setIsSignupSuccess] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
 
+  // Redirect welcome flow states
+  const [loginResolved, setLoginResolved] = useState(false);
+  const [fadeOutSuccess, setFadeOutSuccess] = useState(false);
+  const [dynamicSubtitle, setDynamicSubtitle] = useState("");
+  const authStartTimeRef = useRef(null);
+
   // Login fields
   const [loginEmail, setLoginEmail] = useState(() => {
     return localStorage.getItem("rememberedEmail") || "";
@@ -67,7 +73,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   // Keyboard navigation highlight indexes
   const [colHighlight, setColHighlight] = useState(0);
 
-  const { signInWithGoogle, signUpWithEmail, loginWithEmail, resetPassword, logout } = useAuth();
+  const { signInWithGoogle, signUpWithEmail, loginWithEmail, resetPassword, logout, userProfile, currentUser } = useAuth();
   const toast = useToast();
   
   const modalRef = useRef(null);
@@ -146,6 +152,63 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
     return () => document.removeEventListener("keydown", handleKeyDownGlobal);
   }, [handleCloseAttempt]);
 
+  // Redirect and welcome modal transition manager
+  useEffect(() => {
+    if (!loginResolved) return;
+
+    const checkTimer = setInterval(() => {
+      if (!authStartTimeRef.current) return;
+      const elapsed = Date.now() - authStartTimeRef.current;
+
+      // 1. Show the success welcome screen if it's taking more than 500ms
+      if (elapsed >= 500 && !showSuccessScreen) {
+        setShowSuccessScreen(true);
+      }
+
+      // 2. Dynamic loading subtitles based on elapsed time and role
+      if (elapsed > 5000) {
+        setDynamicSubtitle("Almost ready...");
+      } else if (elapsed > 3000) {
+        setDynamicSubtitle("Syncing your preferences...");
+      } else {
+        if (userProfile) {
+          const userRole = (userProfile.permissionLevel >= 4 || userProfile.role === "admin" || userProfile.role === "System Administrator") ? "System Administrator" :
+                           (userProfile.permissionLevel >= 1 || userProfile.role === "support" || userProfile.role === "Support Moderator") ? "Support Moderator" : "User";
+          if (userRole === "System Administrator") {
+            setDynamicSubtitle("Loading Administrator Dashboard...");
+          } else if (userRole === "Support Moderator") {
+            setDynamicSubtitle("Loading Support Dashboard...");
+          } else {
+            setDynamicSubtitle("Preparing your CampusMart marketplace...");
+          }
+        } else {
+          setDynamicSubtitle("Loading your account...");
+        }
+      }
+
+      // 3. Check if loading is complete (userProfile is fully resolved)
+      if (userProfile) {
+        clearInterval(checkTimer);
+        
+        if (elapsed < 500) {
+          // Instant load: Skip the modal completely and navigate directly!
+          onSuccess();
+        } else {
+          // Slow load: Ensure it stays visible for at least 1500ms total to prevent flashing
+          const remainingTime = Math.max(0, 1500 - elapsed);
+          setTimeout(() => {
+            setFadeOutSuccess(true);
+            setTimeout(() => {
+              onSuccess();
+            }, 250); // wait for fade-out CSS animation
+          }, remainingTime);
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(checkTimer);
+  }, [loginResolved, userProfile, showSuccessScreen, onSuccess]);
+
   // Auto-focus first input on tab/step change
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -207,11 +270,10 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   async function handleGoogle() {
     setError("");
     setLoading(true);
+    authStartTimeRef.current = Date.now();
     try {
       await signInWithGoogle();
-      setSuccessTitle("Welcome Back");
-      setShowSuccessScreen(true);
-      setTimeout(() => onSuccess(), 850);
+      setLoginResolved(true);
     } catch (e) {
       setError(e.message);
       setLoading(false);
@@ -222,6 +284,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
     e.preventDefault();
     setError("");
     setLoading(true);
+    authStartTimeRef.current = Date.now();
     try {
       await loginWithEmail(loginEmail, loginPass);
       if (rememberMe) {
@@ -229,9 +292,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      setSuccessTitle("Welcome Back");
-      setShowSuccessScreen(true);
-      setTimeout(() => onSuccess(), 850);
+      setLoginResolved(true);
     } catch {
       setError("Incorrect email or password");
       setLoading(false);
@@ -460,7 +521,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
     <div className="am-overlay">
       <div 
         ref={modalRef} 
-        className="am-modal"
+        className={`am-modal ${fadeOutSuccess ? "fade-out" : ""}`}
         onKeyUp={handleKeyUp}
         role="dialog"
         aria-modal="true"
@@ -469,29 +530,51 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
         <div className="am-scrollable" ref={bodyRef}>
           {/* Header */}
           <div className="am-header-top">
-            <div className="am-logo-container">
+            <div className="am-logo-container" style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: showSuccessScreen ? "center" : "flex-start", width: showSuccessScreen ? "100%" : "auto" }}>
               <img src="/logo-circular.png" alt="CampusMart Logo" />
               CampusMart
             </div>
-            <button
-              onClick={handleCloseAttempt}
-              type="button"
-              className="am-close-btn"
-              aria-label="Close authentication modal"
-            >
-              <X size={18} />
-            </button>
+            {!showSuccessScreen && (
+              <button
+                onClick={handleCloseAttempt}
+                type="button"
+                className="am-close-btn"
+                aria-label="Close authentication modal"
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
 
-          {showSuccessScreen ? (
-            <div style={{ textAlign: "center", marginTop: 40 }}>
-              <div style={{ color: "#10b981", marginBottom: 16, display: "flex", justifyContent: "center" }}>
-                <CheckCircle2 size={48} />
+          {showSuccessScreen ? (() => {
+            const displayName = userProfile?.name || currentUser?.displayName || "";
+            const firstName = displayName ? displayName.trim().split(/\s+/)[0] : "";
+            const greeting = firstName ? `Welcome back, ${firstName}!` : "Welcome back!";
+
+            return (
+              <div style={{ textAlign: "center", marginTop: 24, padding: "20px 8px" }}>
+                <div className="am-success-icon" style={{ color: "#10b981", marginBottom: 24, display: "flex", justifyContent: "center" }}>
+                  <CheckCircle2 size={56} />
+                </div>
+                <h2 className="am-title" style={{ fontSize: "24px", fontWeight: "800", color: "var(--txt)", margin: "0 0 8px 0" }}>
+                  {greeting}
+                </h2>
+                <p className="am-subtitle" style={{ fontSize: "14px", color: "var(--muted)", fontWeight: "500", margin: "0" }}>
+                  {dynamicSubtitle || "Loading your account..."}
+                </p>
+                <div style={{ 
+                  width: "100%", 
+                  height: "4px", 
+                  background: "var(--bdr)", 
+                  borderRadius: "2px", 
+                  overflow: "hidden", 
+                  marginTop: "28px" 
+                }}>
+                  <div className="am-progress-fill" />
+                </div>
               </div>
-              <h2 className="am-title">{successTitle}</h2>
-              <p className="am-subtitle">Redirecting you to campus deals...</p>
-            </div>
-          ) : isSignupSuccess ? (
+            );
+          })() : isSignupSuccess ? (
             <div style={{ textAlign: "center", marginTop: 40 }}>
               <div style={{ color: "#10b981", marginBottom: 16, display: "flex", justifyContent: "center" }}>
                 <CheckCircle2 size={48} />

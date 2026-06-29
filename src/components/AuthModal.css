@@ -609,3 +609,36 @@ select.am-input-field {
 .am-confirm-dialog {
   padding: 24px;
 }
+
+/* Success Welcome UI/UX Animations */
+.am-success-icon {
+  animation: amSuccessScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: center;
+}
+
+@keyframes amSuccessScale {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.am-modal.fade-out {
+  animation: amModalFadeOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes amModalFadeOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(-10px); }
+}
+
+.am-progress-fill {
+  animation: amProgressShift 1.5s infinite ease-in-out;
+  width: 40% !important;
+  height: 100%;
+  background: var(--p);
+  border-radius: 2px;
+}
+
+@keyframes amProgressShift {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
