@@ -15,24 +15,13 @@ function AdminSkeletonLoader() {
           <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
         </div>
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} style={{ display: "flex", alignItems: "center", padding: "18px 24px", borderBottom: "1px solid var(--bdr)", gap: "24px" }}>
-            {/* Avatar & Name */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "25%" }}>
-              <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }}></div>
-              <div className="skeleton" style={{ width: "60%", height: "20px", borderRadius: "4px" }}></div>
-            </div>
-            {/* Email */}
-            <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
-            {/* College */}
+          <div key={i} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
+            <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }}></div>
+            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
+            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
             <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
-            {/* Joined */}
-            <div className="skeleton" style={{ width: "10%", height: "20px", borderRadius: "4px" }}></div>
-            {/* Status */}
-            <div className="skeleton" style={{ width: "10%", height: "26px", borderRadius: "20px" }}></div>
-            {/* Actions */}
-            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "8px" }}></div>
-            </div>
+            <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
+            <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "8px" }}></div>
           </div>
         ))}
       </div>
@@ -269,156 +258,145 @@ export default function UserManagementPage({ setPage }) {
 
   return (
     <AdminLayout activePage="admin-users" setPage={setPage}>
-      <div className="page-header" style={{ marginBottom: "32px" }}>
-        <h2 style={{ fontSize: "24px", fontWeight: 800 }}>👤 User Management</h2>
-        <p style={{ color: "var(--muted)" }}>Manage platform users and check accounts</p>
-      </div>
+      <div className="um-page-container">
+        <div className="page-header um-header">
+          <h2>👤 User Management</h2>
+          <p>Manage platform users and check accounts</p>
+        </div>
 
-      {!loading && (
-        <>
-          {/* Stats Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "32px" }}>
-            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
-              <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                <Icons.Users size={20} />
+        {!loading && (
+          <>
+            {/* Stats Cards */}
+            <div className="um-stats-grid">
+              <div className="um-stat-card total-users">
+                <div className="um-stat-icon-wrapper">
+                  <Icons.Users size={20} />
+                </div>
+                <div className="um-stat-content">
+                  <div className="um-stat-number">{stats.total}</div>
+                  <div className="um-stat-label">Total Users</div>
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#2563eb", lineHeight: "1.2" }}>{stats.total}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Users</div>
+              
+              <div className="um-stat-card verified-users">
+                <div className="um-stat-icon-wrapper">
+                  <Icons.BadgeCheck size={20} />
+                </div>
+                <div className="um-stat-content">
+                  <div className="um-stat-number">{stats.verified}</div>
+                  <div className="um-stat-label">Verified</div>
+                </div>
+              </div>
+
+              <div className="um-stat-card admin-users">
+                <div className="um-stat-icon-wrapper">
+                  <Icons.Shield size={20} />
+                </div>
+                <div className="um-stat-content">
+                  <div className="um-stat-number">{stats.admins}</div>
+                  <div className="um-stat-label">Admins</div>
+                </div>
+              </div>
+
+              <div className="um-stat-card support-users">
+                <div className="um-stat-icon-wrapper">
+                  <Icons.Headphones size={20} />
+                </div>
+                <div className="um-stat-content">
+                  <div className="um-stat-number">{stats.support}</div>
+                  <div className="um-stat-label">Support</div>
+                </div>
+              </div>
+
+              <div className="um-stat-card banned-users">
+                <div className="um-stat-icon-wrapper">
+                  <Icons.Ban size={20} />
+                </div>
+                <div className="um-stat-content">
+                  <div className="um-stat-number">{stats.banned}</div>
+                  <div className="um-stat-label">Banned</div>
+                </div>
               </div>
             </div>
-            
-            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
-              <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                <Icons.BadgeCheck size={20} />
+
+            {/* Inline Filter Bar */}
+            <div className="um-toolbar">
+              <div className="um-search-container">
+                <Icons.Search size={18} className="um-search-icon" />
+                <input
+                  className="form-input um-search-input"
+                  placeholder="Search users..."
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                />
               </div>
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669", lineHeight: "1.2" }}>{stats.verified}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Verified</div>
-              </div>
+              <select className="form-input um-select-filter" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+                <option value="all">All Roles</option>
+                <option value="System Administrator">Administrators</option>
+                <option value="Support Moderator">Support</option>
+                <option value="User">Users</option>
+              </select>
+              <select className="form-input um-select-filter um-select-college" value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)}>
+                <option value="all">All Colleges</option>
+                {uniqueColleges.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select className="form-input um-select-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="all">All Status</option>
+                <option value="verified">Verified</option>
+                <option value="unverified">Unverified</option>
+                <option value="banned">Banned</option>
+              </select>
+              <select className="form-input um-select-filter" value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
             </div>
 
-            <div style={{ background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
-              <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#7c3aed", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                <Icons.Shield size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#7c3aed", lineHeight: "1.2" }}>{stats.admins}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Admins</div>
-              </div>
+            {/* Record Count Tabs */}
+            <div className="um-tabs-container">
+              {[
+                { id: "all", label: `All (${stats.total})` },
+                { id: "user", label: `Users (${stats.total - stats.admins - stats.support})` },
+                { id: "support", label: `Support (${stats.support})` },
+                { id: "admin", label: `Administrators (${stats.admins})` },
+                { id: "verified", label: `Verified (${stats.verified})` },
+                { id: "banned", label: `Banned (${stats.banned})` }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`um-tab-btn ${tabFilter === f.id ? "active" : ""}`}
+                  onClick={() => setTabFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
+          </>
+        )}
 
-            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
-              <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                <Icons.Headphones size={20} />
+        {loading ? (
+          <AdminSkeletonLoader />
+        ) : (
+          <>
+            {filteredUsers.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
+                <Icons.Users size={48} style={{ color: "var(--muted)", marginBottom: "16px" }} />
+                <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>No users found</h3>
+                <p style={{ color: "var(--muted)", marginBottom: "20px" }}>Try changing your search or filters.</p>
+                <button 
+                  className="btn btn-outline" 
+                  onClick={() => { setUserSearch(""); setTabFilter("all"); setCollegeFilter("all"); setStatusFilter("all"); setRoleFilter("all"); }} 
+                  style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                >
+                  <Icons.RefreshCcw size={16} /> Reset Filters
+                </button>
               </div>
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#d97706", lineHeight: "1.2" }}>{stats.support}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Support</div>
-              </div>
-            </div>
-
-            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
-              <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
-                <Icons.Ban size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#dc2626", lineHeight: "1.2" }}>{stats.banned}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Banned</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Inline Filter Bar */}
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
-              <Icons.Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
-              <input
-                className="form-input"
-                style={{ width: "100%", padding: "0 16px 0 40px", height: "44px", borderRadius: "12px", fontSize: "14px" }}
-                placeholder="Search users..."
-                value={userSearch}
-                onChange={e => setUserSearch(e.target.value)}
-              />
-            </div>
-            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-              <option value="all">All Roles</option>
-              <option value="System Administrator">Administrators</option>
-              <option value="Support Moderator">Support</option>
-              <option value="User">Users</option>
-            </select>
-            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)}>
-              <option value="all">All Colleges</option>
-              {uniqueColleges.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="all">All Status</option>
-              <option value="verified">Verified</option>
-              <option value="unverified">Unverified</option>
-              <option value="banned">Banned</option>
-            </select>
-            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-            </select>
-          </div>
-
-          {/* Record Count Tabs */}
-          <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "16px", flexWrap: "nowrap", whiteSpace: "nowrap", borderBottom: "1px solid var(--bdr)", marginBottom: "24px" }}>
-            {[
-              { id: "all", label: `All (${stats.total})` },
-              { id: "user", label: `Users (${stats.total - stats.admins - stats.support})` },
-              { id: "support", label: `Support (${stats.support})` },
-              { id: "admin", label: `Administrators (${stats.admins})` },
-              { id: "verified", label: `Verified (${stats.verified})` },
-              { id: "banned", label: `Banned (${stats.banned})` }
-            ].map(f => (
-              <button
-                key={f.id}
-                type="button"
-                className={`btn btn-sm ${tabFilter === f.id ? "btn-primary" : "btn-outline"}`}
-                style={{ 
-                  fontSize: "13px", 
-                  padding: "0 16px", 
-                  height: "36px", 
-                  borderRadius: "20px", 
-                  transition: "all 0.2s ease",
-                  boxShadow: tabFilter === f.id ? "0 2px 8px rgba(var(--p-rgb), 0.2)" : "none",
-                  border: tabFilter === f.id ? "none" : "1px solid var(--bdr)"
-                }}
-                onClick={() => setTabFilter(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {loading ? (
-        <AdminSkeletonLoader />
-      ) : (
-        <>
-          {filteredUsers.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
-              <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(59, 130, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" }}>
-                <Icons.SearchX size={32} style={{ color: "#3b82f6" }} />
-              </div>
-              <h3 style={{ fontSize: "20px", fontWeight: "800", marginBottom: "8px" }}>No Users Found</h3>
-              <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "24px", maxWidth: "300px" }}>We couldn't find any users matching your current filters and search criteria.</p>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => { setUserSearch(""); setTabFilter("all"); setCollegeFilter("all"); setStatusFilter("all"); setRoleFilter("all"); }} 
-                style={{ display: "inline-flex", alignItems: "center", gap: "8px", height: "44px", padding: "0 24px", borderRadius: "8px", fontWeight: "600" }}
-              >
-                <Icons.ListFilter size={18} /> Clear Filters
-              </button>
-            </div>
-          ) : (
-            <>
+            ) : (
+              <>
               {/* DESKTOP TABLE */}
-              <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)" }}>
-                <table className="admin-data-table user-management-table">
+              <div className="desktop-only um-table-wrapper">
+                <table className="report-table user-management-table">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -427,7 +405,7 @@ export default function UserManagementPage({ setPage }) {
                       <th>Joined</th>
                       <th>Status</th>
                       <th>Role</th>
-                      <th>Actions</th>
+                      <th className="actions-header">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -441,103 +419,104 @@ export default function UserManagementPage({ setPage }) {
                         joinedDate = new Date(u.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
                       }
 
-                      // Status Badge
-                      let statusBadgeClass = "admin-badge admin-badge-neutral";
-                      let statusLabel = "● Unverified";
+                      // We still compute statusBadge and roleBadge for mobile cards to avoid breaking them
+                      let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                      let statusClass = "badge-unverified";
+                      let statusText = "● Unverified";
                       if (u.banned) {
-                        statusBadgeClass = "admin-badge admin-badge-danger";
-                        statusLabel = "● Banned";
+                        statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
+                        statusClass = "badge-banned";
+                        statusText = "● Banned";
                       } else if (u.isVerified || u.collegeVerified) {
-                        statusBadgeClass = "admin-badge admin-badge-success";
-                        statusLabel = "● Verified";
+                        statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
+                        statusClass = "badge-verified";
+                        statusText = "● Verified";
                       }
 
-                      // Role Badge
-                      let roleBadgeClass = "admin-badge admin-badge-neutral";
-                      let roleLabel = "● User";
+                      let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
+                      let roleClass = "role-user";
+                      let roleText = "User";
                       if (currentRole === "System Administrator") {
-                        roleBadgeClass = "admin-badge admin-badge-primary";
-                        roleLabel = "● System Administrator";
+                        roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
+                        roleClass = "role-admin";
+                        roleText = "Administrator";
                       } else if (currentRole === "Support Moderator") {
-                        roleBadgeClass = "admin-badge admin-badge-warning";
-                        roleLabel = "● Support Moderator";
+                        roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
+                        roleClass = "role-support";
+                        roleText = "Support";
                       }
 
-                      // Avatar
                       const initial = u.name ? u.name.charAt(0).toUpperCase() : "?";
 
                       return (
-                      <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }}>
-                        <td data-label="Name" style={{ fontWeight: 700 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                            <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
-                              {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                        <tr key={u.id} className={`${u.banned ? "row-banned" : ""} ${isSelf ? "row-self" : ""} ${openMenuUid === u.id ? "row-active-menu" : ""}`}>
+                          <td data-label="Name" className="um-avatar-cell">
+                            <div className="um-avatar">
+                              {u.photoURL ? <img src={u.photoURL} alt={initial} /> : initial}
                             </div>
-                            <span title={u.name} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{u.name}</span>
-                          </div>
-                        </td>
-                        <td data-label="Email" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.email}</td>
-                        <td data-label="College" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.college || "—"}</td>
-                        <td data-label="Joined" style={{ fontSize: 13, color: "var(--muted)" }}>{joinedDate}</td>
-                        <td data-label="Status">
-                          <span className={statusBadgeClass}>
-                            {statusLabel}
-                          </span>
-                        </td>
-                        <td data-label="Role">
-                          <span className={roleBadgeClass}>
-                            {roleLabel}
-                          </span>
-                        </td>
-                        <td data-label="Actions">
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                            <span className="um-username">{u.name}</span>
+                          </td>
+                          <td data-label="Email" className="um-email-cell">{u.email}</td>
+                          <td data-label="College" className="um-college-cell">{u.college || "—"}</td>
+                          <td data-label="Joined" className="um-date-cell">{joinedDate}</td>
+                          <td data-label="Status">
+                            <span className={`um-status-badge ${statusClass}`}>
+                              {statusText}
+                            </span>
+                          </td>
+                          <td data-label="Role">
+                            <span className={`um-role-badge ${roleClass}`}>
+                              {roleText}
+                            </span>
+                          </td>
+                          <td data-label="Actions" className="um-actions-cell">
                             {processingUid === u.id ? (
-                              <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
+                              <span className="processing-text">Processing...</span>
                             ) : isSelf || isSystemAdmin ? (
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "6px 12px", borderRadius: "20px", border: "1px solid var(--bdr)" }}>
-                                <Icons.ShieldCheck size={14} /> Protected
+                              <span className="protected-account">
+                                <Icons.ShieldCheck size={14} /> Protected Account
                               </span>
                             ) : (
-                              <div style={{ position: "relative", display: "inline-block" }}>
+                              <div className="um-action-menu-container">
                                 {u.banned ? (
-                                   <button type="button" className="btn btn-green btn-sm" style={{ padding: "0 12px", height: "36px", borderRadius: "8px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                                  <button type="button" className="btn btn-green btn-sm unban-btn" onClick={() => unbanUser(u.id)}>✅ Unban</button>
                                 ) : (
-                                   <button 
-                                     type="button" 
-                                     className="btn btn-ghost center-content" 
-                                     style={{ width: "36px", height: "36px", borderRadius: "8px", padding: 0 }} 
-                                     onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
-                                   >
-                                     <Icons.MoreVertical size={18} />
-                                   </button>
+                                  <button 
+                                    type="button" 
+                                    className="um-action-btn"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
+                                  >
+                                    <Icons.MoreVertical size={18} />
+                                  </button>
                                 )}
-                               {openMenuUid === u.id && !u.banned && (
-                                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }}>
-                                    <Icons.User size={14} /> View Profile
-                                  </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
-                                    <Icons.Shield size={14} /> Change Role
-                                  </button>
-                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
-                                    <Icons.Key size={14} /> Reset Password
-                                  </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "13px", color: "var(--muted)" }} disabled>
-                                    <Icons.Download size={14} /> Export Data
-                                  </button>
-                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--status-rejected-txt)", fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
-                                    <Icons.Ban size={14} /> Ban User
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          </div>
-                        </td>
-                      </tr>
-                    )})}
+                                
+                                {openMenuUid === u.id && !u.banned && (
+                                  <div className="um-action-dropdown-menu">
+                                    <button type="button" className="menu-item">
+                                      <Icons.User size={14} /> View Profile
+                                    </button>
+                                    <button type="button" className="menu-item" onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
+                                      <Icons.Shield size={14} /> Change Role
+                                    </button>
+                                    <div className="menu-divider"></div>
+                                    <button type="button" className="menu-item" disabled>
+                                      <Icons.Key size={14} /> Reset Password
+                                    </button>
+                                    <button type="button" className="menu-item" disabled>
+                                      <Icons.Download size={14} /> Export Data
+                                    </button>
+                                    <div className="menu-divider"></div>
+                                    <button type="button" className="menu-item text-danger" onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
+                                      <Icons.Ban size={14} /> Ban User
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -703,7 +682,9 @@ export default function UserManagementPage({ setPage }) {
         </div>
       )}
 
+      </div>
       <ConfirmModal {...modalConfig} onClose={closeModal} />
     </AdminLayout>
   );
 }
+
