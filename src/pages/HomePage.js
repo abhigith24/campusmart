@@ -1212,7 +1212,7 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
       </div>
 
       <div className="container listings-section" id="listings-section" style={{ paddingTop: 24, paddingBottom: 48 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--bdr)", paddingBottom: "8px", marginBottom: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px" }}>
           <h2 className="homepage-section-title" style={{ margin: 0, border: "none", padding: 0 }}>
             All Campus Listings
           </h2>
@@ -1499,11 +1499,10 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
         </div>
 
         {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
-        <div className="desktop-only">
-          <div
-            className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
-          >
-            <div className="filter-bar">
+        <div
+          className={`desktop-only filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
+        >
+          <div className="filter-bar">
               {/* Mobile filters trigger */}
               <div className="mobile-filters-trigger desktop-hidden">
                 <button 
@@ -1643,7 +1642,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
               )}
             </div>
           </div>
-        </div>
 
         {/* Dedicated row for Active Filter Chips beneath the sticky toolbar */}
         {activeFilters > 0 && (
