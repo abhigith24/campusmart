@@ -352,6 +352,28 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             </svg>
           </button>
 
+          {currentUser && (
+            <div className="nav-mobile-icons">
+              <button 
+                className="nav-icon-btn mobile-icon-btn" 
+                onClick={() => setPage("notifications")} 
+                aria-label="Notifications" 
+                type="button"
+              >
+                <LucideIcons.Bell size={18} strokeWidth={2.5} />
+                {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+              </button>
+              
+              {!isStaff && hasFeature("showChat") && (
+                <button className="nav-icon-btn mobile-icon-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
           <button
             className="nav-hamburger"
             onClick={() => setDrawerOpen(o => !o)}
