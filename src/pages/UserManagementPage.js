@@ -121,6 +121,19 @@ export default function UserManagementPage({ setPage }) {
     return () => window.removeEventListener('click', handleClick);
   }, [openMenuUid]);
 
+  // Handle ESC key press for all modals
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (viewProfileUser) setViewProfileUser(null);
+        else if (roleModalUser && processingUid !== roleModalUser.id) setRoleModalUser(null);
+        else if (resetPasswordUser && !resetPasswordLoading) setResetPasswordUser(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [viewProfileUser, roleModalUser, resetPasswordUser, processingUid, resetPasswordLoading]);
+
   useEffect(() => {
     loadData();
   }, [userProfile]);
@@ -181,7 +194,7 @@ export default function UserManagementPage({ setPage }) {
   }
 
   // Export User Data handler (CSV)
-  function exportUserCSV() {
+  function exportUserCSV(singleUser = null) {
     // Permission check
     const isAdmin = userProfile?.permissionLevel >= 4 || userProfile?.role === "System Administrator" || userProfile?.role === "admin";
     if (!isAdmin) {
@@ -190,7 +203,8 @@ export default function UserManagementPage({ setPage }) {
     }
     try {
       const headers = ["Name", "Email", "College", "Role", "Verification Status", "Joined Date", "UID"];
-      const rows = filteredUsers.map(u => {
+      const targetList = singleUser ? [singleUser] : filteredUsers;
+      const rows = targetList.map(u => {
         const role = getComputedRole(u);
         const status = u.banned ? "Banned" : (u.isVerified || u.collegeVerified) ? "Verified" : "Unverified";
         let joined = "—";
@@ -206,12 +220,12 @@ export default function UserManagementPage({ setPage }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "users.csv";
+      a.download = singleUser ? `user-${singleUser.name?.replace(/\s+/g, "_") || "profile"}.csv` : "users.csv";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast(`Exported ${filteredUsers.length} users to CSV.`, "success");
+      toast(singleUser ? `Exported data for ${singleUser.name}.` : `Exported ${filteredUsers.length} users to CSV.`, "success");
     } catch (err) {
       console.error(err);
       toast("Failed to export user data. ❌", "error");
@@ -239,7 +253,6 @@ export default function UserManagementPage({ setPage }) {
     }
 
     setProcessingUid(uid);
-    setRoleModalUser(null);
     try {
       const { ROLES } = await import("../config/rbac.js");
       let newRoleObj = ROLES.USER;
@@ -253,6 +266,7 @@ export default function UserManagementPage({ setPage }) {
         accountType: newRoleObj.accountType
       });
       toast(`User role updated to ${newRoleTitle}`, "success");
+      setRoleModalUser(null);
       loadData();
     } catch (err) {
       console.error(err);
@@ -454,6 +468,16 @@ export default function UserManagementPage({ setPage }) {
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
             </select>
+            {(userProfile?.permissionLevel >= 4 || userProfile?.role === "System Administrator" || userProfile?.role === "admin") && (
+              <button 
+                type="button" 
+                className="btn btn-outline" 
+                style={{ marginLeft: "auto", height: "44px", borderRadius: "12px", display: "inline-flex", alignItems: "center", gap: "8px", padding: "0 16px", fontSize: "14px", fontWeight: "600", color: "var(--txt)", cursor: "pointer" }} 
+                onClick={() => exportUserCSV()}
+              >
+                <Icons.Download size={16} /> Export CSV
+              </button>
+            )}
           </div>
 
           {/* Record Count Tabs */}
@@ -609,7 +633,7 @@ export default function UserManagementPage({ setPage }) {
                                   <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); setResetPasswordUser(u); }}>
                                     <Icons.Key size={14} /> Reset Password
                                   </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); exportUserCSV(); }}>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); exportUserCSV(u); }}>
                                     <Icons.Download size={14} /> Export Data
                                   </button>
                                   <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
@@ -695,17 +719,17 @@ export default function UserManagementPage({ setPage }) {
                               
                               {openMenuUid === `mob-${u.id}` && !u.banned && (
                                 <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", minWidth: "180px", zIndex: 100, padding: "4px", textAlign: "left" }}>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }}>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openViewProfile(u); }}>
                                     <Icons.User size={16} /> View Profile
                                   </button>
                                   <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
                                     <Icons.Shield size={16} /> Change Role
                                   </button>
                                   <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "14px", color: "var(--muted)" }} disabled>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); setResetPasswordUser(u); }}>
                                     <Icons.Key size={16} /> Reset Password
                                   </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "not-allowed", fontSize: "14px", color: "var(--muted)" }} disabled>
+                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); exportUserCSV(u); }}>
                                     <Icons.Download size={16} /> Export Data
                                   </button>
                                   <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
@@ -758,7 +782,7 @@ export default function UserManagementPage({ setPage }) {
 
       {/* Change Role Modal */}
       {roleModalUser && (
-        <div className="modal-overlay" onClick={() => setRoleModalUser(null)} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
+        <div className="modal-overlay" onClick={() => { if (processingUid !== roleModalUser.id) setRoleModalUser(null); }} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}>
             <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 800 }}>Change Role</h3>
             <p style={{ color: "var(--muted)", marginBottom: "20px", fontSize: "14px", lineHeight: 1.5 }}>
@@ -766,22 +790,22 @@ export default function UserManagementPage({ setPage }) {
             </p>
             
             <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "User" ? "1.5px solid #3b82f6" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "User" ? "rgba(96, 165, 250, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
-                <input type="radio" name="role" value="User" checked={newRoleSelection === "User"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "User" ? "1.5px solid #3b82f6" : "1px solid var(--bdr)", borderRadius: "8px", cursor: processingUid === roleModalUser.id ? "not-allowed" : "pointer", background: newRoleSelection === "User" ? "rgba(96, 165, 250, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease", opacity: processingUid === roleModalUser.id ? 0.6 : 1, pointerEvents: processingUid === roleModalUser.id ? "none" : "auto" }}>
+                <input type="radio" name="role" value="User" checked={newRoleSelection === "User"} onChange={e => setNewRoleSelection(e.target.value)} disabled={processingUid === roleModalUser.id} style={{ width: "16px", height: "16px" }} />
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "User" ? "#3b82f6" : "var(--txt)" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#60a5fa", flexShrink: 0 }} />
                   User
                 </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "Support Moderator" ? "1.5px solid #d97706" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "Support Moderator" ? "rgba(245, 158, 11, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
-                <input type="radio" name="role" value="Support Moderator" checked={newRoleSelection === "Support Moderator"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "Support Moderator" ? "1.5px solid #d97706" : "1px solid var(--bdr)", borderRadius: "8px", cursor: processingUid === roleModalUser.id ? "not-allowed" : "pointer", background: newRoleSelection === "Support Moderator" ? "rgba(245, 158, 11, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease", opacity: processingUid === roleModalUser.id ? 0.6 : 1, pointerEvents: processingUid === roleModalUser.id ? "none" : "auto" }}>
+                <input type="radio" name="role" value="Support Moderator" checked={newRoleSelection === "Support Moderator"} onChange={e => setNewRoleSelection(e.target.value)} disabled={processingUid === roleModalUser.id} style={{ width: "16px", height: "16px" }} />
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "Support Moderator" ? "#d97706" : "var(--txt)" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f59e0b", flexShrink: 0 }} />
                   Support Moderator
                 </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "System Administrator" ? "1.5px solid #7c3aed" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "System Administrator" ? "rgba(129, 99, 247, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
-                <input type="radio" name="role" value="System Administrator" checked={newRoleSelection === "System Administrator"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "System Administrator" ? "1.5px solid #7c3aed" : "1px solid var(--bdr)", borderRadius: "8px", cursor: processingUid === roleModalUser.id ? "not-allowed" : "pointer", background: newRoleSelection === "System Administrator" ? "rgba(129, 99, 247, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease", opacity: processingUid === roleModalUser.id ? 0.6 : 1, pointerEvents: processingUid === roleModalUser.id ? "none" : "auto" }}>
+                <input type="radio" name="role" value="System Administrator" checked={newRoleSelection === "System Administrator"} onChange={e => setNewRoleSelection(e.target.value)} disabled={processingUid === roleModalUser.id} style={{ width: "16px", height: "16px" }} />
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "System Administrator" ? "#7c3aed" : "var(--txt)" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#8b5cf6", flexShrink: 0 }} />
                   System Administrator
@@ -790,7 +814,7 @@ export default function UserManagementPage({ setPage }) {
             </div>
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-              <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setRoleModalUser(null)}>Cancel</button>
+              <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setRoleModalUser(null)} disabled={processingUid === roleModalUser.id}>Cancel</button>
               <button type="button" className="btn btn-primary" style={{ borderRadius: "8px" }} onClick={executeRoleChange} disabled={processingUid === roleModalUser.id}>
                 {processingUid === roleModalUser.id ? "Saving..." : "Save Role"}
               </button>
