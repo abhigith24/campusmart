@@ -15018,8 +15018,15 @@ a,
     font-weight: 500 !important;
     border: 1px solid var(--bdr) !important;
     background: var(--surface) !important;
-    padding: 0 16px !important;
+    padding: 0 40px 0 16px !important;
     cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    background-size: 16px !important;
     transition: border-color 180ms ease, box-shadow 180ms ease !important;
   }
 
@@ -15061,7 +15068,7 @@ a,
   }
 
   .um-tab-btn.active {
-    background: var(--p-grad) !important;
+    background: linear-gradient(135deg, var(--p), var(--ind)) !important;
     color: white !important;
     font-weight: 700 !important;
     border-color: transparent !important;
@@ -15116,25 +15123,24 @@ a,
     cursor: pointer !important;
   }
 
-  .user-management-table tbody tr:hover {
-    background-color: rgba(37, 99, 235, 0.02) !important;
+  .user-management-table tbody tr:hover td {
+    background-color: rgba(37, 99, 235, 0.035) !important;
   }
 
   .user-management-table tbody td {
     padding: 0 20px !important;
     vertical-align: middle !important;
     border-bottom: 1px solid var(--bdr) !important;
+    transition: background-color 180ms ease !important;
   }
 
   /* Selected / Self Highlight */
-  .user-management-table tr.row-self {
-    background-color: rgba(37, 99, 235, 0.015) !important;
-  }
   .user-management-table tr.row-self td {
     border-left: 3px solid var(--p) !important;
+    background-color: rgba(37, 99, 235, 0.015) !important;
   }
 
-  .user-management-table tr.row-active-menu {
+  .user-management-table tr.row-active-menu td {
     background-color: rgba(37, 99, 235, 0.03) !important;
   }
 
@@ -15224,7 +15230,7 @@ a,
     width: 40px !important;
     height: 40px !important;
     border-radius: 50% !important;
-    background: var(--p-grad) !important;
+    background: linear-gradient(135deg, var(--p), var(--ind)) !important;
     color: white !important;
     display: flex !important;
     align-items: center !important;
