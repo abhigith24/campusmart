@@ -14828,6 +14828,10 @@ a,
 
 /* User Management Desktop Table Polish */
 @media (min-width: 1024px) {
+  .user-management-table {
+    table-layout: auto;
+  }
+
   .user-management-table thead {
     z-index: 10;
   }
@@ -14840,6 +14844,12 @@ a,
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
 
+  .user-management-table th,
+  .user-management-table td {
+    padding: 18px 24px !important;
+    vertical-align: middle !important;
+  }
+
   .user-management-table th::after {
     content: "";
     position: absolute;
@@ -14847,6 +14857,44 @@ a,
     left: 0;
     right: 0;
     border-bottom: 1px solid var(--bdr);
+  }
+
+  /* Column Widths & Distribution */
+  .user-management-table th:nth-child(1) { width: 25%; }
+  .user-management-table th:nth-child(2) { width: 30%; }
+  .user-management-table th:nth-child(3) { width: 15%; }
+  
+  /* Compact columns */
+  .user-management-table th:nth-child(4),
+  .user-management-table td:nth-child(4),
+  .user-management-table th:nth-child(5),
+  .user-management-table td:nth-child(5),
+  .user-management-table th:nth-child(6),
+  .user-management-table td:nth-child(6) {
+    width: 10%;
+    white-space: nowrap !important;
+  }
+
+  /* Actions column shrink-wrap */
+  .user-management-table th:nth-child(7),
+  .user-management-table td:nth-child(7) {
+    width: 1%;
+    white-space: nowrap !important;
+    padding-right: 32px !important; /* Extra breathing room */
+  }
+
+  /* First column extra padding */
+  .user-management-table th:first-child,
+  .user-management-table td:first-child {
+    padding-left: 32px !important;
+  }
+
+  /* Row Hover State */
+  .user-management-table tbody tr {
+    transition: background-color 0.2s ease;
+  }
+  .user-management-table tbody tr:hover {
+    background-color: var(--p-light) !important;
   }
 }
 

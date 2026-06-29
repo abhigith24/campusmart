@@ -15,13 +15,24 @@ function AdminSkeletonLoader() {
           <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
         </div>
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
-            <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }}></div>
-            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
-            <div className="skeleton" style={{ width: "20%", height: "20px", borderRadius: "4px" }}></div>
+          <div key={i} style={{ display: "flex", alignItems: "center", padding: "18px 24px", borderBottom: "1px solid var(--bdr)", gap: "24px" }}>
+            {/* Avatar & Name */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "25%" }}>
+              <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }}></div>
+              <div className="skeleton" style={{ width: "60%", height: "20px", borderRadius: "4px" }}></div>
+            </div>
+            {/* Email */}
+            <div className="skeleton" style={{ width: "30%", height: "20px", borderRadius: "4px" }}></div>
+            {/* College */}
             <div className="skeleton" style={{ width: "15%", height: "20px", borderRadius: "4px" }}></div>
-            <div className="skeleton" style={{ width: "15%", height: "24px", borderRadius: "12px" }}></div>
-            <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "8px" }}></div>
+            {/* Joined */}
+            <div className="skeleton" style={{ width: "10%", height: "20px", borderRadius: "4px" }}></div>
+            {/* Status */}
+            <div className="skeleton" style={{ width: "10%", height: "26px", borderRadius: "20px" }}></div>
+            {/* Actions */}
+            <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <div className="skeleton" style={{ width: "36px", height: "36px", borderRadius: "8px" }}></div>
+            </div>
           </div>
         ))}
       </div>
@@ -258,7 +269,7 @@ export default function UserManagementPage({ setPage }) {
 
   return (
     <AdminLayout activePage="admin-users" setPage={setPage}>
-      <div className="page-header" style={{ marginBottom: "24px" }}>
+      <div className="page-header" style={{ marginBottom: "32px" }}>
         <h2 style={{ fontSize: "24px", fontWeight: 800 }}>👤 User Management</h2>
         <p style={{ color: "var(--muted)" }}>Manage platform users and check accounts</p>
       </div>
@@ -266,61 +277,61 @@ export default function UserManagementPage({ setPage }) {
       {!loading && (
         <>
           {/* Stats Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "32px" }}>
+            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Users size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#2563eb" }}>{stats.total}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Total Users</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: "#2563eb", lineHeight: "1.2" }}>{stats.total}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Users</div>
               </div>
             </div>
             
-            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.BadgeCheck size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669" }}>{stats.verified}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Verified</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669", lineHeight: "1.2" }}>{stats.verified}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Verified</div>
               </div>
             </div>
 
-            <div style={{ background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#7c3aed", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Shield size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#7c3aed" }}>{stats.admins}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Admins</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: "#7c3aed", lineHeight: "1.2" }}>{stats.admins}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Admins</div>
               </div>
             </div>
 
-            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Headphones size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#d97706" }}>{stats.support}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Support</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: "#d97706", lineHeight: "1.2" }}>{stats.support}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Support</div>
               </div>
             </div>
 
-            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", padding: "20px", display: "flex", alignItems: "center", gap: "16px", height: "100%" }}>
               <div style={{ background: "var(--surface)", width: "42px", height: "42px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", flexShrink: 0 }}>
                 <Icons.Ban size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "22px", fontWeight: "800", color: "#dc2626" }}>{stats.banned}</div>
-                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600" }}>Banned</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", color: "#dc2626", lineHeight: "1.2" }}>{stats.banned}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>Banned</div>
               </div>
             </div>
           </div>
 
           {/* Inline Filter Bar */}
           <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: "200px", maxWidth: "320px" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
               <Icons.Search size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
               <input
                 className="form-input"
@@ -330,30 +341,30 @@ export default function UserManagementPage({ setPage }) {
                 onChange={e => setUserSearch(e.target.value)}
               />
             </div>
-            <select className="form-input" style={{ width: "140px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
               <option value="all">All Roles</option>
               <option value="System Administrator">Administrators</option>
               <option value="Support Moderator">Support</option>
               <option value="User">Users</option>
             </select>
-            <select className="form-input" style={{ minWidth: "140px", maxWidth: "180px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)}>
+            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)}>
               <option value="all">All Colleges</option>
               {uniqueColleges.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select className="form-input" style={{ width: "140px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option value="all">All Status</option>
               <option value="verified">Verified</option>
               <option value="unverified">Unverified</option>
               <option value="banned">Banned</option>
             </select>
-            <select className="form-input" style={{ width: "140px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+            <select className="form-input" style={{ width: "160px", height: "44px", borderRadius: "12px", fontSize: "14px", cursor: "pointer" }} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
             </select>
           </div>
 
           {/* Record Count Tabs */}
-          <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "12px", flexWrap: "nowrap", whiteSpace: "nowrap", borderBottom: "1px solid var(--bdr)", marginBottom: "16px" }}>
+          <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "16px", flexWrap: "nowrap", whiteSpace: "nowrap", borderBottom: "1px solid var(--bdr)", marginBottom: "24px" }}>
             {[
               { id: "all", label: `All (${stats.total})` },
               { id: "user", label: `Users (${stats.total - stats.admins - stats.support})` },
@@ -366,7 +377,15 @@ export default function UserManagementPage({ setPage }) {
                 key={f.id}
                 type="button"
                 className={`btn btn-sm ${tabFilter === f.id ? "btn-primary" : "btn-outline"}`}
-                style={{ fontSize: "13px", padding: "6px 14px", borderRadius: "20px" }}
+                style={{ 
+                  fontSize: "13px", 
+                  padding: "0 16px", 
+                  height: "36px", 
+                  borderRadius: "20px", 
+                  transition: "all 0.2s ease",
+                  boxShadow: tabFilter === f.id ? "0 2px 8px rgba(var(--p-rgb), 0.2)" : "none",
+                  border: tabFilter === f.id ? "none" : "1px solid var(--bdr)"
+                }}
                 onClick={() => setTabFilter(f.id)}
               >
                 {f.label}
@@ -381,16 +400,18 @@ export default function UserManagementPage({ setPage }) {
       ) : (
         <>
           {filteredUsers.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
-              <Icons.Users size={48} style={{ color: "var(--muted)", marginBottom: "16px" }} />
-              <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>No users found</h3>
-              <p style={{ color: "var(--muted)", marginBottom: "20px" }}>Try changing your search or filters.</p>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", textAlign: "center" }}>
+              <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(59, 130, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" }}>
+                <Icons.SearchX size={32} style={{ color: "#3b82f6" }} />
+              </div>
+              <h3 style={{ fontSize: "20px", fontWeight: "800", marginBottom: "8px" }}>No Users Found</h3>
+              <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "24px", maxWidth: "300px" }}>We couldn't find any users matching your current filters and search criteria.</p>
               <button 
-                className="btn btn-outline" 
+                className="btn btn-primary" 
                 onClick={() => { setUserSearch(""); setTabFilter("all"); setCollegeFilter("all"); setStatusFilter("all"); setRoleFilter("all"); }} 
-                style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "8px", height: "44px", padding: "0 24px", borderRadius: "8px", fontWeight: "600" }}
               >
-                <Icons.RefreshCcw size={16} /> Reset Filters
+                <Icons.ListFilter size={18} /> Clear Filters
               </button>
             </div>
           ) : (
@@ -400,13 +421,13 @@ export default function UserManagementPage({ setPage }) {
                 <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>Name</th>
-                      <th style={{ textAlign: "left" }}>Email</th>
-                      <th style={{ textAlign: "left" }}>College</th>
-                      <th style={{ textAlign: "left" }}>Joined</th>
-                      <th style={{ textAlign: "left" }}>Status</th>
-                      <th style={{ textAlign: "left" }}>Role</th>
-                      <th style={{ textAlign: "right" }}>Actions</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>College</th>
+                      <th>Joined</th>
+                      <th>Status</th>
+                      <th>Role</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -441,48 +462,50 @@ export default function UserManagementPage({ setPage }) {
 
                       return (
                       <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }}>
-                        <td data-label="Name" style={{ padding: "14px 16px", fontWeight: 700, display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
-                            {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                        <td data-label="Name" style={{ fontWeight: 700 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
+                              {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                            </div>
+                            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{u.name}</span>
                           </div>
-                          <span style={{ maxWidth: "160px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</span>
                         </td>
-                        <td data-label="Email" style={{ padding: "14px 16px", fontSize: 13 }}>{u.email}</td>
-                        <td data-label="College" style={{ padding: "14px 16px", fontSize: 13 }}>{u.college || "—"}</td>
-                        <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
-                        <td data-label="Status" style={{ padding: "14px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
+                        <td data-label="Email" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.email}</td>
+                        <td data-label="College" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.college || "—"}</td>
+                        <td data-label="Joined" style={{ fontSize: 13, color: "var(--muted)" }}>{joinedDate}</td>
+                        <td data-label="Status">
+                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "26px", padding: "0 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: statusBadge.bg, color: statusBadge.color, whiteSpace: "nowrap" }}>
                             {statusBadge.label}
                           </span>
                         </td>
-                        <td data-label="Role" style={{ padding: "14px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
+                        <td data-label="Role">
+                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "26px", padding: "0 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
                             {roleBadge.label}
                           </span>
                         </td>
-                        <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
-                          {processingUid === u.id ? (
-                            <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
-                          ) : isSelf || isSystemAdmin ? (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "16px", border: "1px solid var(--bdr)" }}>
-                              <Icons.ShieldCheck size={14} /> Protected Account
-                            </span>
-                          ) : (
-                            <div style={{ position: "relative", display: "inline-block" }}>
-                              {u.banned ? (
-                                 <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
-                              ) : (
-                                 <button 
-                                   type="button" 
-                                   className="btn btn-ghost btn-sm" 
-                                   style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
-                                   onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
-                                 >
-                                   <Icons.MoreVertical size={18} />
-                                 </button>
-                              )}
-                              
-                              {openMenuUid === u.id && !u.banned && (
+                        <td data-label="Actions">
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                            {processingUid === u.id ? (
+                              <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
+                            ) : isSelf || isSystemAdmin ? (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "6px 12px", borderRadius: "20px", border: "1px solid var(--bdr)" }}>
+                                <Icons.ShieldCheck size={14} /> Protected
+                              </span>
+                            ) : (
+                              <div style={{ position: "relative", display: "inline-block" }}>
+                                {u.banned ? (
+                                   <button type="button" className="btn btn-green btn-sm" style={{ padding: "0 12px", height: "36px", borderRadius: "8px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                                ) : (
+                                   <button 
+                                     type="button" 
+                                     className="btn btn-ghost center-content" 
+                                     style={{ width: "36px", height: "36px", borderRadius: "8px", padding: 0 }} 
+                                     onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
+                                   >
+                                     <Icons.MoreVertical size={18} />
+                                   </button>
+                                )}
+                               {openMenuUid === u.id && !u.banned && (
                                 <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
                                   <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }}>
                                     <Icons.User size={14} /> View Profile
@@ -505,6 +528,7 @@ export default function UserManagementPage({ setPage }) {
                               )}
                             </div>
                           )}
+                          </div>
                         </td>
                       </tr>
                     )})}
