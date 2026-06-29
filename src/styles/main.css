@@ -8467,6 +8467,7 @@ button {
   }
 
   .nav-mobile-icons .mobile-icon-btn {
+    display: flex !important;
     width: 38px;
     height: 38px;
     margin-right: 0;
