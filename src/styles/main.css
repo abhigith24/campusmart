@@ -14662,6 +14662,22 @@ a,
   .mobile-only { display: none !important; }
 }
 
+/* Mobile Sticky Filter Wrapper */
+.mobile-filter-bar-wrapper {
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--workspace-header-height, 0px));
+  z-index: var(--z-filter);
+  background: var(--surface);
+  padding: 8px 16px;
+  margin: 0 -16px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mobile-filter-bar-wrapper.is-sticky {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--bdr);
+}
+
 /* Mobile Filter Panel Styles */
 .mobile-filter-grid {
   display: grid;

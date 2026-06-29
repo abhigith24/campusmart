@@ -507,7 +507,6 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
   const [localPriceMin, setLocalPriceMin] = useState("");
   const [localPriceMax, setLocalPriceMax] = useState("");
   const [localFreeOnly, setLocalFreeOnly] = useState(false);
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
 
   const [showPriceMobileFilter, setShowPriceMobileFilter] = useState(false);
   const [priceMobileAlignRight, setPriceMobileAlignRight] = useState(false);
@@ -798,9 +797,8 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
       setLocalPriceMin(priceMin);
       setLocalPriceMax(priceMax);
       setLocalFreeOnly(freeOnly);
-      setLocalSearchQuery(searchQuery || "");
     }
-  }, [isMobileFiltersExpanded, category, sortBy, condition, college, priceMin, priceMax, freeOnly, searchQuery]);
+  }, [isMobileFiltersExpanded, category, sortBy, condition, college, priceMin, priceMax, freeOnly]);
 
   useEffect(() => {
     function h(e) {
@@ -1248,303 +1246,260 @@ export default function HomePage({ setPage, setSelectedListing, searchQuery, set
             </button>
           </div>
         </div>
-        {/* Mobile Filters Trigger Row */}
-        <div className="mobile-only" style={{ marginBottom: "12px" }}>
-          <button
-            type="button"
-            className="mobile-filters-btn"
-            onClick={() => setIsMobileFiltersExpanded(o => !o)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              height: "40px",
-              borderRadius: "20px",
-              border: "1.5px solid var(--bdr)",
-              background: "var(--surface)",
-              fontWeight: 600,
-              fontSize: "13.5px",
-              padding: "0 18px",
-              color: "var(--txt)",
-              cursor: "pointer",
-              width: "100%"
-            }}
-          >
-            <span>🔍 Refine & Filter Listings</span>
-            {activeFilters > 0 && (
-              <span style={{
-                background: "var(--p)",
-                color: "white",
-                borderRadius: "50%",
-                minWidth: "20px",
-                height: "20px",
-                display: "inline-flex",
+        {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
+        <div ref={sentinelRef} className="sticky-sentinel" style={{ height: "1px", width: "100%", pointerEvents: "none" }} />
+
+        {/* Mobile Filters Trigger Row & Expandable Panel Wrapper */}
+        <div className={`mobile-only mobile-filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}>
+          {/* Mobile Filters Trigger Row */}
+          <div style={{ marginBottom: isMobileFiltersExpanded ? "12px" : "0px" }}>
+            <button
+              type="button"
+              className="mobile-filters-btn"
+              onClick={() => setIsMobileFiltersExpanded(o => !o)}
+              style={{
+                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "0 6px"
-              }}>
-                {activeFilters}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Mobile Expandable Filter Panel */}
-        <div className="mobile-only" style={{
-          overflow: isMobileFiltersExpanded ? "visible" : "hidden",
-          transition: "max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.25s ease",
-          maxHeight: isMobileFiltersExpanded ? "1000px" : "0px",
-          marginBottom: isMobileFiltersExpanded ? "20px" : "0px",
-          position: "relative",
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: "var(--surface)",
-            border: "1.5px solid var(--bdr)",
-            borderRadius: "16px",
-            padding: "20px 16px 16px 16px",
-            boxShadow: "var(--s1)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            position: "relative"
-          }}>
-            {/* Panel Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingRight: "24px" }}>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "var(--txt)" }}>Filters</h3>
-                <span style={{ fontSize: "12px", color: "var(--muted)", lineHeight: "1.4" }}>
-                  Refine your search using categories, condition, college and price.
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileFiltersExpanded(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "20px",
-                  color: "var(--muted)",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1,
-                  display: "flex",
+                gap: "8px",
+                height: "40px",
+                borderRadius: "20px",
+                border: "1.5px solid var(--bdr)",
+                background: "var(--surface)",
+                fontWeight: 600,
+                fontSize: "13.5px",
+                padding: "0 18px",
+                color: "var(--txt)",
+                cursor: "pointer",
+                width: "100%"
+              }}
+            >
+              <span>🔍 Refine & Filter Listings</span>
+              {activeFilters > 0 && (
+                <span style={{
+                  background: "var(--p)",
+                  color: "white",
+                  borderRadius: "50%",
+                  minWidth: "20px",
+                  height: "20px",
+                  display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "center"
-                }}
-                aria-label="Close filters"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div style={{ height: "1px", background: "var(--bdr)", width: "100%" }} />
+                  justifyContent: "center",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "0 6px"
+                }}>
+                  {activeFilters}
+                </span>
+              )}
+            </button>
+          </div>
 
-            {/* Search Input inside the filter panel */}
-            <div style={{ position: "relative", width: "100%" }}>
-              <input
-                type="text"
-                placeholder="Search by title, seller or category..."
-                value={localSearchQuery}
-                onChange={e => setLocalSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "44px",
-                  padding: "10px 16px 10px 38px",
-                  fontSize: "14px",
-                  border: "1.5px solid var(--bdr)",
-                  borderRadius: "12px",
-                  background: "var(--light)",
-                  color: "var(--txt)",
-                  fontWeight: 500
-                }}
-              />
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted-2)", display: "flex", alignItems: "center" }}>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-              </span>
-              {localSearchQuery && (
+          {/* Mobile Expandable Filter Panel */}
+          <div style={{
+            overflow: isMobileFiltersExpanded ? "visible" : "hidden",
+            transition: "max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 0.25s ease",
+            maxHeight: isMobileFiltersExpanded ? "1000px" : "0px",
+            marginBottom: isMobileFiltersExpanded ? "20px" : "0px",
+            position: "relative",
+            zIndex: 1000
+          }}>
+            <div style={{
+              background: "var(--surface)",
+              border: "1.5px solid var(--bdr)",
+              borderRadius: "16px",
+              padding: "20px 16px 16px 16px",
+              boxShadow: "var(--s1)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              position: "relative"
+            }}>
+              {/* Panel Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingRight: "24px" }}>
+                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "var(--txt)" }}>Filters</h3>
+                  <span style={{ fontSize: "12px", color: "var(--muted)", lineHeight: "1.4" }}>
+                    Refine your search using categories, condition, college and price.
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setLocalSearchQuery("")}
+                  onClick={() => setIsMobileFiltersExpanded(false)}
                   style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    border: "none",
                     background: "none",
-                    color: "var(--muted-2)",
-                    fontSize: "16px",
+                    border: "none",
+                    fontSize: "20px",
+                    color: "var(--muted)",
                     cursor: "pointer",
-                    padding: 0
+                    padding: "4px",
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
                   }}
+                  aria-label="Close filters"
                 >
                   ✕
                 </button>
-              )}
-            </div>
+              </div>
+              
+              <div style={{ height: "1px", background: "var(--bdr)", width: "100%" }} />
 
-            {/* Responsive 2-column Grid of Dropdowns */}
-            <div className="mobile-filter-grid">
-              <CategoryDropdown
-                label="Category"
-                options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
-                selected={localCategory}
-                onSelect={setLocalCategory}
-                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>}
-              />
+              {/* Responsive 2-column Grid of Dropdowns */}
+              <div className="mobile-filter-grid">
+                <CategoryDropdown
+                  label="Category"
+                  options={CATEGORIES.map(c => ({ val: c, label: c === "All" ? "All Categories" : c }))}
+                  selected={localCategory}
+                  onSelect={setLocalCategory}
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>}
+                />
 
-              <DropdownBtn
-                label="Sort"
-                options={SORT_OPTS}
-                selected={localSortBy}
-                onSelect={setLocalSortBy}
-                ariaLabel="Sort listings"
-                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 11V3M7 3L4 6M7 3L10 6M17 13V21M17 21L14 18M17 21L20 18"/></svg>}
-              />
+                <DropdownBtn
+                  label="Sort"
+                  options={SORT_OPTS}
+                  selected={localSortBy}
+                  onSelect={setLocalSortBy}
+                  ariaLabel="Sort listings"
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M7 11V3M7 3L4 6M7 3L10 6M17 13V21M17 21L14 18M17 21L20 18"/></svg>}
+                />
 
-              <DropdownBtn
-                label={localCondition === "All" ? "Condition" : localCondition}
-                options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
-                selected={localCondition}
-                onSelect={setLocalCondition}
-                ariaLabel="Filter by condition"
-                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg>}
-              />
+                <DropdownBtn
+                  label={localCondition === "All" ? "Condition" : localCondition}
+                  options={CONDITIONS.map(c => ({ val: c, label: c === "All" ? "All Conditions" : c }))}
+                  selected={localCondition}
+                  onSelect={setLocalCondition}
+                  ariaLabel="Filter by condition"
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"/></svg>}
+                />
 
-              <CollegeDropdown 
-                label={localCollege === "All" ? "College" : (localCollege.length > 18 ? localCollege.slice(0, 16) + "\u2026" : localCollege)} 
-                options={collegeOptions} 
-                selected={localCollege} 
-                onSelect={setLocalCollege} 
-                icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}
-              />
+                <CollegeDropdown 
+                  label={localCollege === "All" ? "College" : (localCollege.length > 18 ? localCollege.slice(0, 16) + "\u2026" : localCollege)} 
+                  options={collegeOptions} 
+                  selected={localCollege} 
+                  onSelect={setLocalCollege} 
+                  icon={<svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>}
+                />
 
-              {/* Price Dropdown */}
-              <div className="dd-wrap" ref={priceMobileRef} style={{ position: "relative", zIndex: showPriceMobileFilter ? 1001 : undefined }}>
-                <button
-                  type="button"
-                  className={`dd-btn ${showPriceMobileFilter ? "dd-open" : ""} ${localPriceMin !== "" || localPriceMax !== "" ? "dd-active" : ""}`}
-                  onClick={() => setShowPriceMobileFilter(o => !o)}
-                  aria-expanded={showPriceMobileFilter}
-                  aria-label="Filter by price range"
-                  style={{ width: "100%", height: "44px" }}
-                >
-                  {(localPriceMin !== "" || localPriceMax !== "") && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
-                  {!(localPriceMin !== "" || localPriceMax !== "") && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
-                  {(localPriceMin !== "" || localPriceMax !== "") ? `Rs ${localPriceMin||"0"}–${localPriceMax||"any"}` : "Price"}
-                  <span className={`dd-chevron ${showPriceMobileFilter ? "flipped" : ""}`}>⌄</span>
-                </button>
-                {showPriceMobileFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceMobileFilter(false)} style={{ zIndex: 999 }} />}
-                {showPriceMobileFilter && (
-                  <div className={`dd-menu price-dd-menu ${priceMobileAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px", zIndex: 1000 }}>
-                    <div className="dd-mobile-scroll-content">
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <input type="number" min="0" placeholder="Min" value={localPriceMin} onChange={e => setLocalPriceMin(e.target.value)}
-                          className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
-                        <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
-                        <input type="number" min="0" placeholder="Max" value={localPriceMax} onChange={e => setLocalPriceMax(e.target.value)}
-                          className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
-                      </div>
-                      <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                        {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
-                          <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
-                            onClick={() => { setLocalPriceMin(min); setLocalPriceMax(max); }}
+                {/* Price Dropdown */}
+                <div className="dd-wrap" ref={priceMobileRef} style={{ position: "relative", zIndex: showPriceMobileFilter ? 1001 : undefined }}>
+                  <button
+                    type="button"
+                    className={`dd-btn ${showPriceMobileFilter ? "dd-open" : ""} ${localPriceMin !== "" || localPriceMax !== "" ? "dd-active" : ""}`}
+                    onClick={() => setShowPriceMobileFilter(o => !o)}
+                    aria-expanded={showPriceMobileFilter}
+                    aria-label="Filter by price range"
+                    style={{ width: "100%", height: "44px" }}
+                  >
+                    {(localPriceMin !== "" || localPriceMax !== "") && <span className="dd-check-prefix" aria-hidden="true">✓</span>}
+                    {!(localPriceMin !== "" || localPriceMax !== "") && <span style={{display: 'flex', alignItems: 'center', opacity: 0.7, fontSize: 16, fontWeight: 500}}>₹</span>}
+                    {(localPriceMin !== "" || localPriceMax !== "") ? `Rs ${localPriceMin||"0"}–${localPriceMax||"any"}` : "Price"}
+                    <span className={`dd-chevron ${showPriceMobileFilter ? "flipped" : ""}`}>⌄</span>
+                  </button>
+                  {showPriceMobileFilter && <div className="dd-mobile-backdrop" onClick={() => setShowPriceMobileFilter(false)} style={{ zIndex: 999 }} />}
+                  {showPriceMobileFilter && (
+                    <div className={`dd-menu price-dd-menu ${priceMobileAlignRight ? "dd-align-right" : "dd-align-left"}`} style={{ width: 220, padding: "12px 14px", zIndex: 1000 }}>
+                      <div className="dd-mobile-scroll-content">
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 10 }}>Price Range (Rs)</div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <input type="number" min="0" placeholder="Min" value={localPriceMin} onChange={e => setLocalPriceMin(e.target.value)}
+                            className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                          <span style={{ color: "var(--muted)", fontSize: 12 }}>–</span>
+                          <input type="number" min="0" placeholder="Max" value={localPriceMax} onChange={e => setLocalPriceMax(e.target.value)}
+                            className="form-input" style={{ padding: "6px 10px", fontSize: 13, flex: 1 }} />
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                          {[["Under Rs 200","","200"],["Rs 200–500","200","500"],["Rs 500–2k","500","2000"],["Rs 2k+","2000",""]].map(([lbl,min,max]) => (
+                            <button key={lbl} type="button" className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: "3px 8px" }}
+                              onClick={() => { setLocalPriceMin(min); setLocalPriceMax(max); }}
+                            >
+                              {lbl}
+                            </button>
+                          ))}
+                        </div>
+                        {(localPriceMin !== "" || localPriceMax !== "") && (
+                          <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
+                            onClick={() => { setLocalPriceMin(""); setLocalPriceMax(""); }}
                           >
-                            {lbl}
+                            Clear price filter
                           </button>
-                        ))}
+                        )}
                       </div>
-                      {(localPriceMin !== "" || localPriceMax !== "") && (
-                        <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8, width: "100%", justifyContent: "center", fontSize: 12 }}
-                          onClick={() => { setLocalPriceMin(""); setLocalPriceMax(""); }}
-                        >
-                          Clear price filter
-                        </button>
-                      )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Free Only Toggle */}
+                <div className="filter-toggle-container" title={localFreeOnly ? "Showing free items only" : "Showing free and paid items"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "0 12px", background: "var(--surface)", height: "44px", margin: 0 }}>
+                  <span className="filter-toggle-label" style={{ fontSize: "13px", fontWeight: 600, color: "var(--txt-2)", userSelect: "none" }}>Free Only</span>
+                  <button
+                    type="button"
+                    className={`filter-toggle-switch ${localFreeOnly ? "on" : "off"}`}
+                    onClick={() => setLocalFreeOnly(f => !f)}
+                    role="switch"
+                    aria-checked={localFreeOnly}
+                    aria-label="Filter free items only"
+                  >
+                    <span className="filter-toggle-knob" />
+                  </button>
+                </div>
               </div>
 
-              {/* Free Only Toggle */}
-              <div className="filter-toggle-container" title={localFreeOnly ? "Showing free items only" : "Showing free and paid items"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "0 12px", background: "var(--surface)", height: "44px", margin: 0 }}>
-                <span className="filter-toggle-label" style={{ fontSize: "13px", fontWeight: 600, color: "var(--txt-2)", userSelect: "none" }}>Free Only</span>
+              {/* Sticky Action Footer */}
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                marginTop: "8px",
+                paddingTop: "12px",
+                borderTop: "1px solid var(--bdr)",
+                position: "sticky",
+                bottom: 0,
+                background: "var(--surface)",
+                zIndex: 10,
+                boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.03)"
+              }}>
                 <button
                   type="button"
-                  className={`filter-toggle-switch ${localFreeOnly ? "on" : "off"}`}
-                  onClick={() => setLocalFreeOnly(f => !f)}
-                  role="switch"
-                  aria-checked={localFreeOnly}
-                  aria-label="Filter free items only"
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setLocalCategory("All");
+                    setLocalSortBy("newest");
+                    setLocalCondition("All");
+                    setLocalCollege("All");
+                    setLocalPriceMin("");
+                    setLocalPriceMax("");
+                    setLocalFreeOnly(false);
+                  }}
+                  style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
                 >
-                  <span className="filter-toggle-knob" />
+                  Reset All
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setCategory(localCategory);
+                    setSortBy(localSortBy);
+                    setCondition(localCondition);
+                    handleSelectCollege(localCollege);
+                    setPriceMin(localPriceMin);
+                    setPriceMax(localPriceMax);
+                    setFreeOnly(localFreeOnly);
+                    setIsMobileFiltersExpanded(false);
+                    toast("Filters applied successfully!", "success");
+                  }}
+                  style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
+                >
+                  Apply Filters
                 </button>
               </div>
-            </div>
-
-            {/* Sticky Action Footer */}
-            <div style={{
-              display: "flex",
-              gap: "12px",
-              marginTop: "8px",
-              paddingTop: "12px",
-              borderTop: "1px solid var(--bdr)",
-              position: "sticky",
-              bottom: 0,
-              background: "var(--surface)",
-              zIndex: 10,
-              boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.03)"
-            }}>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => {
-                  setLocalCategory("All");
-                  setLocalSortBy("newest");
-                  setLocalCondition("All");
-                  setLocalCollege("All");
-                  setLocalPriceMin("");
-                  setLocalPriceMax("");
-                  setLocalFreeOnly(false);
-                  setLocalSearchQuery("");
-                }}
-                style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
-              >
-                Reset All
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setCategory(localCategory);
-                  setSortBy(localSortBy);
-                  setCondition(localCondition);
-                  handleSelectCollege(localCollege);
-                  setPriceMin(localPriceMin);
-                  setPriceMax(localPriceMax);
-                  setFreeOnly(localFreeOnly);
-                  setSearchQuery(localSearchQuery);
-                  setIsMobileFiltersExpanded(false);
-                  toast("Filters applied successfully!", "success");
-                }}
-                style={{ flex: 1, minHeight: "48px", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
-              >
-                Apply Filters
-              </button>
             </div>
           </div>
         </div>
 
         {/* Sticky sentinel element to trigger sticky shadow via IntersectionObserver */}
         <div className="desktop-only">
-          <div ref={sentinelRef} className="sticky-sentinel" />
           <div
             className={`filter-bar-wrapper ${isSticky ? "is-sticky" : ""}`}
           >
