@@ -14984,53 +14984,60 @@ a,
     transform: translateY(0.2px) !important;
   }
 
-  /* Badge Color Palette Mapping */
+  /* Badge Color Palette — Enterprise Color System */
+
+  /* Status: Unverified — Slate Gray */
   .user-management-table .status-unverified {
-    background-color: var(--light) !important;
-    color: var(--txt-2) !important;
+    background-color: rgba(100, 116, 139, 0.10) !important;
+    color: #64748b !important;
   }
   .user-management-table .status-unverified .badge-dot {
-    background-color: var(--txt-2) !important;
+    background-color: #94a3b8 !important;
   }
 
+  /* Status: Banned — Red (unchanged) */
   .user-management-table .status-banned {
-    background-color: var(--status-rejected-bg) !important;
-    color: var(--status-rejected-txt) !important;
+    background-color: rgba(239, 68, 68, 0.10) !important;
+    color: #dc2626 !important;
   }
   .user-management-table .status-banned .badge-dot {
-    background-color: var(--status-rejected-txt) !important;
+    background-color: #dc2626 !important;
   }
 
+  /* Status: Verified — Emerald Green */
   .user-management-table .status-verified {
-    background-color: var(--status-accepted-bg) !important;
-    color: var(--status-accepted-txt) !important;
+    background-color: rgba(16, 185, 129, 0.10) !important;
+    color: #059669 !important;
   }
   .user-management-table .status-verified .badge-dot {
-    background-color: var(--status-accepted-txt) !important;
+    background-color: #10b981 !important;
   }
 
+  /* Role: User — Calm Neutral Blue */
   .user-management-table .role-user {
-    background-color: rgba(148, 163, 184, 0.15) !important;
-    color: var(--txt-2) !important;
+    background-color: rgba(96, 165, 250, 0.10) !important;
+    color: #3b82f6 !important;
   }
   .user-management-table .role-user .badge-dot {
-    background-color: var(--txt-2) !important;
+    background-color: #60a5fa !important;
   }
 
+  /* Role: System Administrator — Indigo / Purple */
   .user-management-table .role-admin {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-    color: #2563eb !important;
+    background-color: rgba(129, 99, 247, 0.10) !important;
+    color: #7c3aed !important;
   }
   .user-management-table .role-admin .badge-dot {
-    background-color: #2563eb !important;
+    background-color: #8b5cf6 !important;
   }
 
+  /* Role: Support Moderator — Amber / Orange */
   .user-management-table .role-support {
-    background-color: rgba(245, 158, 11, 0.1) !important;
+    background-color: rgba(245, 158, 11, 0.10) !important;
     color: #d97706 !important;
   }
   .user-management-table .role-support .badge-dot {
-    background-color: #d97706 !important;
+    background-color: #f59e0b !important;
   }
 
   /* Interactions */

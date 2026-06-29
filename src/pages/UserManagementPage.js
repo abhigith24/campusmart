@@ -686,17 +686,26 @@ export default function UserManagementPage({ setPage }) {
             </p>
             
             <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "User" ? "rgba(59, 130, 246, 0.05)" : "var(--bg-secondary)" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "User" ? "1.5px solid #3b82f6" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "User" ? "rgba(96, 165, 250, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
                 <input type="radio" name="role" value="User" checked={newRoleSelection === "User"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
-                <span style={{ fontWeight: 600 }}>🟢 User</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "User" ? "#3b82f6" : "var(--txt)" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#60a5fa", flexShrink: 0 }} />
+                  User
+                </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "Support Moderator" ? "rgba(59, 130, 246, 0.05)" : "var(--bg-secondary)" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "Support Moderator" ? "1.5px solid #d97706" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "Support Moderator" ? "rgba(245, 158, 11, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
                 <input type="radio" name="role" value="Support Moderator" checked={newRoleSelection === "Support Moderator"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
-                <span style={{ fontWeight: 600 }}>🟠 Support Moderator</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "Support Moderator" ? "#d97706" : "var(--txt)" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f59e0b", flexShrink: 0 }} />
+                  Support Moderator
+                </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "System Administrator" ? "rgba(59, 130, 246, 0.05)" : "var(--bg-secondary)" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", border: newRoleSelection === "System Administrator" ? "1.5px solid #7c3aed" : "1px solid var(--bdr)", borderRadius: "8px", cursor: "pointer", background: newRoleSelection === "System Administrator" ? "rgba(129, 99, 247, 0.06)" : "var(--bg-secondary)", transition: "all 0.15s ease" }}>
                 <input type="radio" name="role" value="System Administrator" checked={newRoleSelection === "System Administrator"} onChange={e => setNewRoleSelection(e.target.value)} style={{ width: "16px", height: "16px" }} />
-                <span style={{ fontWeight: 600 }}>🔵 System Administrator</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: 600, color: newRoleSelection === "System Administrator" ? "#7c3aed" : "var(--txt)" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#8b5cf6", flexShrink: 0 }} />
+                  System Administrator
+                </span>
               </label>
             </div>
 
