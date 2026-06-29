@@ -14827,29 +14827,6 @@ a,
 }
 
 /* User Management Desktop Table Polish */
-@media (min-width: 1024px) {
-  .user-management-table thead {
-    z-index: 10;
-  }
-
-  .user-management-table th {
-    position: sticky;
-    top: 64px;
-    z-index: 10;
-    background-color: var(--surface) !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  }
-
-  .user-management-table th::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    border-bottom: 1px solid var(--bdr);
-  }
-}
-
 /* User Management Desktop Enterprise UI Polish */
 @media (min-width: 1024px) {
   /* Page Container constraint */
@@ -14857,7 +14834,7 @@ a,
     max-width: 1440px;
     margin: 0 auto;
     width: 100%;
-    padding: 0 16px;
+    padding: 0 24px;
   }
 
   /* Spacings */
@@ -14876,12 +14853,15 @@ a,
 
   /* 1. Statistics Cards */
   .um-stats-grid {
-    display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
     gap: 16px !important;
   }
 
   .um-stat-card {
+    flex: 1 !important;
+    min-width: 180px !important;
+    max-width: 240px !important;
     display: flex !important;
     align-items: center !important;
     gap: 16px !important;
@@ -14889,13 +14869,14 @@ a,
     padding: 14px 18px !important;
     height: 74px !important;
     box-sizing: border-box !important;
-    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1), border-color 180ms ease !important;
     cursor: default !important;
+    box-shadow: var(--s0) !important;
   }
 
   .um-stat-card:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: var(--s1) !important;
   }
 
   .um-stat-icon-wrapper {
@@ -14906,41 +14887,56 @@ a,
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03) !important;
     background: var(--surface) !important;
   }
 
   .um-stat-card.total-users {
     background: rgba(59, 130, 246, 0.06) !important;
-    border: 1px solid rgba(59, 130, 246, 0.15) !important;
+    border: 1px solid rgba(59, 130, 246, 0.12) !important;
+  }
+  .um-stat-card.total-users:hover {
+    border-color: rgba(59, 130, 246, 0.25) !important;
   }
   .um-stat-card.total-users .um-stat-icon-wrapper { color: #2563eb !important; }
   .um-stat-card.total-users .um-stat-number { color: #2563eb !important; }
 
   .um-stat-card.verified-users {
     background: rgba(16, 185, 129, 0.06) !important;
-    border: 1px solid rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.12) !important;
+  }
+  .um-stat-card.verified-users:hover {
+    border-color: rgba(16, 185, 129, 0.25) !important;
   }
   .um-stat-card.verified-users .um-stat-icon-wrapper { color: #059669 !important; }
   .um-stat-card.verified-users .um-stat-number { color: #059669 !important; }
 
   .um-stat-card.admin-users {
     background: rgba(139, 92, 246, 0.06) !important;
-    border: 1px solid rgba(139, 92, 246, 0.15) !important;
+    border: 1px solid rgba(139, 92, 246, 0.12) !important;
+  }
+  .um-stat-card.admin-users:hover {
+    border-color: rgba(139, 92, 246, 0.25) !important;
   }
   .um-stat-card.admin-users .um-stat-icon-wrapper { color: #7c3aed !important; }
   .um-stat-card.admin-users .um-stat-number { color: #7c3aed !important; }
 
   .um-stat-card.support-users {
     background: rgba(245, 158, 11, 0.06) !important;
-    border: 1px solid rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid rgba(245, 158, 11, 0.12) !important;
+  }
+  .um-stat-card.support-users:hover {
+    border-color: rgba(245, 158, 11, 0.25) !important;
   }
   .um-stat-card.support-users .um-stat-icon-wrapper { color: #d97706 !important; }
   .um-stat-card.support-users .um-stat-number { color: #d97706 !important; }
 
   .um-stat-card.banned-users {
     background: rgba(239, 68, 68, 0.06) !important;
-    border: 1px solid rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.12) !important;
+  }
+  .um-stat-card.banned-users:hover {
+    border-color: rgba(239, 68, 68, 0.25) !important;
   }
   .um-stat-card.banned-users .um-stat-icon-wrapper { color: #dc2626 !important; }
   .um-stat-card.banned-users .um-stat-number { color: #dc2626 !important; }
@@ -14952,17 +14948,18 @@ a,
   }
 
   .um-stat-number {
-    font-size: 20px !important;
+    font-size: 24px !important;
     font-weight: 800 !important;
-    line-height: 1.2 !important;
+    line-height: 1.1 !important;
   }
 
   .um-stat-label {
-    font-size: 11px !important;
+    font-size: 10px !important;
     color: var(--muted) !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.3px !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 1px !important;
   }
 
   /* 2. Search & Filter Toolbar */
@@ -14974,7 +14971,7 @@ a,
 
   .um-search-container {
     position: relative !important;
-    width: 360px !important;
+    width: 320px !important;
     flex-shrink: 0 !important;
   }
 
@@ -15049,48 +15046,47 @@ a,
   }
 
   .um-tab-btn {
-    height: 50px !important;
-    padding: 0 24px !important;
-    border-radius: 999px !important;
-    font-size: 14px !important;
+    height: 38px !important;
+    padding: 0 16px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
     cursor: pointer !important;
     transition: all 180ms ease !important;
     border: 1px solid var(--bdr) !important;
-    background: var(--surface) !important;
+    background: var(--light) !important;
     color: var(--txt-2) !important;
   }
 
   .um-tab-btn:hover {
-    background: var(--bg-secondary) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
-    transform: translateY(-1px) !important;
+    background: var(--surface-hover) !important;
+    border-color: var(--muted-2) !important;
   }
 
   .um-tab-btn.active {
-    background: linear-gradient(135deg, var(--p), var(--ind)) !important;
+    background: var(--p) !important;
     color: white !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     border-color: transparent !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    box-shadow: var(--s1) !important;
   }
 
   .um-tab-btn.active:hover {
     transform: translateY(-1px) !important;
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35) !important;
+    box-shadow: var(--s2) !important;
   }
 
-  /* 4. Table Header */
+  /* 4. Table Header & Sticky Header */
   .user-management-table thead {
     z-index: 10 !important;
   }
 
   .user-management-table th {
-    height: 52px !important;
+    height: 56px !important;
     background-color: #f8fafc !important;
     color: #475569 !important;
     font-size: 11px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.8px !important;
     position: sticky !important;
@@ -15118,13 +15114,13 @@ a,
 
   /* 5. Table Rows */
   .user-management-table tbody tr {
-    height: 72px !important;
+    height: 70px !important;
     transition: background-color 180ms ease !important;
     cursor: pointer !important;
   }
 
   .user-management-table tbody tr:hover td {
-    background-color: rgba(37, 99, 235, 0.035) !important;
+    background-color: rgba(37, 99, 235, 0.04) !important;
   }
 
   .user-management-table tbody td {
@@ -15134,14 +15130,19 @@ a,
     transition: background-color 180ms ease !important;
   }
 
-  /* Selected / Self Highlight */
+  /* Protected Row (Self Highlight) - Professional tint, NO borders around every cell */
   .user-management-table tr.row-self td {
-    border-left: 3px solid var(--p) !important;
-    background-color: rgba(37, 99, 235, 0.015) !important;
+    background-color: rgba(37, 99, 235, 0.03) !important;
+    border-top: 1px solid rgba(37, 99, 235, 0.08) !important;
+    border-bottom: 1px solid rgba(37, 99, 235, 0.08) !important;
+  }
+  .user-management-table tr.row-self td:first-child {
+    border-left: 3.5px solid var(--p) !important;
   }
 
+  /* Selected Row (Open actions menu) - Subtle blue selection overlay */
   .user-management-table tr.row-active-menu td {
-    background-color: rgba(37, 99, 235, 0.03) !important;
+    background-color: rgba(37, 99, 235, 0.08) !important;
   }
 
   /* 6. Status Badges */
@@ -15149,74 +15150,86 @@ a,
     display: inline-flex !important;
     align-items: center !important;
     gap: 6px !important;
-    padding: 6px 12px !important;
-    height: 28px !important;
+    padding: 4px 10px !important;
+    height: 24px !important;
     border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
     box-sizing: border-box !important;
     text-transform: capitalize !important;
   }
 
   .um-status-badge.badge-unverified {
-    background-color: #fef3c7 !important;
+    background-color: #fffbeb !important;
     color: #d97706 !important;
+    border: 1px solid #fef3c7 !important;
   }
   
   .um-status-badge.badge-verified {
-    background-color: #d1fae5 !important;
-    color: #059669 !important;
+    background-color: #f0fdf4 !important;
+    color: #16a34a !important;
+    border: 1px solid #dcfce7 !important;
   }
 
   .um-status-badge.badge-banned {
-    background-color: #fee2e2 !important;
+    background-color: #fef2f2 !important;
     color: #dc2626 !important;
+    border: 1px solid #fee2e2 !important;
   }
 
   [data-theme="dark"] .um-status-badge.badge-unverified {
-    background-color: rgba(217, 119, 6, 0.15) !important;
+    background-color: rgba(217, 119, 6, 0.12) !important;
+    border-color: rgba(217, 119, 6, 0.2) !important;
+    color: #fbbf24 !important;
   }
   [data-theme="dark"] .um-status-badge.badge-verified {
-    background-color: rgba(5, 150, 105, 0.15) !important;
+    background-color: rgba(34, 197, 94, 0.12) !important;
+    border-color: rgba(34, 197, 94, 0.2) !important;
+    color: #4ade80 !important;
   }
   [data-theme="dark"] .um-status-badge.badge-banned {
-    background-color: rgba(220, 38, 38, 0.15) !important;
+    background-color: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
   }
 
   /* 7. Role Badges */
   .um-role-badge {
     display: inline-flex !important;
     align-items: center !important;
-    padding: 6px 12px !important;
-    height: 28px !important;
+    padding: 4px 10px !important;
+    height: 24px !important;
     border-radius: 6px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     box-sizing: border-box !important;
-    border: 1px solid var(--bdr) !important;
-    background: var(--light) !important;
+  }
+
+  .um-role-badge.role-user {
+    background-color: var(--light) !important;
     color: var(--txt-2) !important;
+    border: 1px solid var(--bdr) !important;
   }
 
   .um-role-badge.role-admin {
-    background-color: rgba(37, 99, 235, 0.05) !important;
-    color: #2563eb !important;
-    border-color: rgba(37, 99, 235, 0.25) !important;
+    background-color: var(--p-light) !important;
+    color: var(--p) !important;
+    border: 1px solid rgba(37, 99, 235, 0.15) !important;
   }
 
   .um-role-badge.role-support {
-    background-color: rgba(217, 119, 6, 0.05) !important;
+    background-color: rgba(245, 158, 11, 0.08) !important;
     color: #d97706 !important;
-    border-color: rgba(217, 119, 6, 0.25) !important;
+    border: 1px solid rgba(245, 158, 11, 0.15) !important;
   }
 
   [data-theme="dark"] .um-role-badge.role-admin {
-    background-color: rgba(37, 99, 235, 0.12) !important;
-    border-color: rgba(37, 99, 235, 0.3) !important;
+    background-color: rgba(37, 99, 235, 0.15) !important;
+    border-color: rgba(37, 99, 235, 0.25) !important;
   }
   [data-theme="dark"] .um-role-badge.role-support {
-    background-color: rgba(217, 119, 6, 0.12) !important;
-    border-color: rgba(217, 119, 6, 0.3) !important;
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
   }
 
   /* 8. Avatar */
@@ -15227,19 +15240,20 @@ a,
   }
 
   .um-avatar {
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
-    background: linear-gradient(135deg, var(--p), var(--ind)) !important;
-    color: white !important;
+    background: var(--p-light) !important;
+    color: var(--p) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
     font-weight: 700 !important;
     flex-shrink: 0 !important;
     overflow: hidden !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    border: 1px solid rgba(37, 99, 235, 0.15) !important;
   }
 
   .um-avatar img {
@@ -15256,6 +15270,10 @@ a,
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+  }
+
+  .um-date-cell {
+    white-space: nowrap !important;
   }
 
   /* 9. Action Menu */
