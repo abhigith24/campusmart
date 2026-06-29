@@ -14758,3 +14758,26 @@ a,
   font-size: 13px;
   font-weight: 700;
 }
+/* Desktop Verification Requests UI Polish */
+@media (min-width: 1024px) {
+  .desktop-verifications-table-container {
+    padding: 16px !important;
+  }
+  .desktop-verifications-table-container .report-table th,
+  .desktop-verifications-table-container .report-table td {
+    padding: 20px 24px !important;
+    vertical-align: middle !important;
+  }
+  .desktop-verifications-table-container .report-table th:last-child,
+  .desktop-verifications-table-container .report-table td:last-child {
+    padding-right: 48px !important;
+  }
+  .desktop-verifications-table-container .report-table td[data-label='Action'] > div {
+    justify-content: center !important;
+    margin: 0 auto;
+  }
+  .desktop-verifications-table-container .report-table td[data-label='ID Card'] {
+    vertical-align: middle !important;
+  }
+}
+
