@@ -91,6 +91,9 @@ export default function UserManagementPage({ setPage }) {
 
   const [processingUid, setProcessingUid] = useState(null);
   const [openMenuUid, setOpenMenuUid] = useState(null);
+  const [openMenuUser, setOpenMenuUser] = useState(null);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [copiedUid, setCopiedUid] = useState(false);
 
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [newRoleSelection, setNewRoleSelection] = useState("");
@@ -116,10 +119,135 @@ export default function UserManagementPage({ setPage }) {
 
   // Close menu if clicked outside (simple overlay strategy)
   useEffect(() => {
-    const handleClick = () => setOpenMenuUid(null);
-    if (openMenuUid) window.addEventListener('click', handleClick);
+    const handleClick = () => {
+      setOpenMenuUid(null);
+      setOpenMenuUser(null);
+    };
+    window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
-  }, [openMenuUid]);
+  }, []);
+
+  // Close menus on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (openMenuUid) setOpenMenuUid(null);
+      if (openMenuUser) setOpenMenuUser(null);
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [openMenuUid, openMenuUser]);
+
+  // Helper to construct desktop dropdown items list dynamically
+  const getMenuItems = useCallback((u, currentRole) => {
+    const isAdmin = userProfile?.permissionLevel >= 4 || userProfile?.role === "System Administrator" || userProfile?.role === "admin";
+    const isSelf = userProfile?.uid && u.uid === userProfile.uid;
+    const isSystemAdmin = currentRole === "System Administrator";
+    const isProtected = isSelf || isSystemAdmin;
+
+    const items = [
+      {
+        type: "section",
+        label: "USER"
+      },
+      {
+        type: "action",
+        label: "View Profile",
+        icon: <Icons.User size={14} />,
+        onClick: () => openViewProfile(u)
+      },
+      {
+        type: "action",
+        label: "Change Role",
+        icon: <Icons.Shield size={14} />,
+        onClick: () => openRoleModal(u, currentRole)
+      },
+      {
+        type: "section",
+        label: "ACCOUNT"
+      },
+      {
+        type: "action",
+        label: "Reset Password",
+        icon: <Icons.Key size={14} />,
+        onClick: () => setResetPasswordUser(u)
+      },
+      {
+        type: "action",
+        label: "Export Data",
+        icon: <Icons.Download size={14} />,
+        onClick: () => exportUserCSV(u),
+        disabled: !isAdmin,
+        tooltip: !isAdmin ? "Only System Administrators" : ""
+      }
+    ];
+
+    if (!isProtected) {
+      items.push(
+        {
+          type: "section",
+          label: "DANGER"
+        },
+        {
+          type: "action",
+          label: "Ban User",
+          icon: <Icons.Ban size={14} />,
+          onClick: () => banUser(u.id, u.name, currentRole, u.permissionLevel),
+          danger: true
+        }
+      );
+    } else {
+      items.push(
+        {
+          type: "section",
+          label: "DANGER"
+        },
+        {
+          type: "action",
+          label: "Protected Account",
+          icon: <Icons.ShieldCheck size={14} />,
+          disabled: true,
+          tooltip: "Account is protected"
+        }
+      );
+    }
+
+    return items;
+  }, [userProfile]);
+
+  // Handle keyboard navigation for the action menu
+  useEffect(() => {
+    if (!openMenuUser) {
+      setFocusedIndex(-1);
+      return;
+    }
+    const currentRole = getComputedRole(openMenuUser);
+    const menuItems = getMenuItems(openMenuUser, currentRole);
+    const actionItems = menuItems.filter(item => item.type === "action");
+
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev + 1) % actionItems.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev - 1 + actionItems.length) % actionItems.length);
+      } else if (e.key === "Enter") {
+        if (focusedIndex >= 0 && focusedIndex < actionItems.length) {
+          e.preventDefault();
+          const targetItem = actionItems[focusedIndex];
+          if (!targetItem.disabled) {
+            targetItem.onClick?.();
+            setOpenMenuUser(null);
+          }
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setOpenMenuUser(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [openMenuUser, focusedIndex, getMenuItems]);
 
   // Handle ESC key press for all modals
   useEffect(() => {
@@ -607,45 +735,33 @@ export default function UserManagementPage({ setPage }) {
                                 <Icons.ShieldCheck size={14} /> Protected Account
                               </span>
                             ) : (
-                              <div style={{ position: "relative", display: "inline-block" }}>
-                                {u.banned ? (
-                                   <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
-                                ) : (
-                                   <button 
-                                     type="button" 
-                                     className="btn btn-ghost btn-sm" 
-                                     style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
-                                     onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
-                                   >
-                                     <Icons.MoreVertical size={18} />
-                                   </button>
-                                )}
-                              
-                              {openMenuUid === u.id && !u.banned && (
-                                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openViewProfile(u); }}>
-                                    <Icons.User size={14} /> View Profile
-                                  </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); openRoleModal(u, currentRole); }}>
-                                    <Icons.Shield size={14} /> Change Role
-                                  </button>
-                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); setResetPasswordUser(u); }}>
-                                    <Icons.Key size={14} /> Reset Password
-                                  </button>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--txt)" }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); exportUserCSV(u); }}>
-                                    <Icons.Download size={14} /> Export Data
-                                  </button>
-                                  <div style={{ height: "1px", background: "var(--bdr)", margin: "4px 0" }}></div>
-                                  <button type="button" className="menu-item" style={{ width: "100%", display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--status-rejected-txt)", fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); setOpenMenuUid(null); banUser(u.id, u.name, currentRole, u.permissionLevel); }}>
-                                    <Icons.Ban size={14} /> Ban User
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
+                               <div style={{ position: "relative", display: "inline-block" }}>
+                                 {u.banned ? (
+                                    <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                                 ) : (
+                                    <button 
+                                      type="button" 
+                                      className="btn btn-ghost btn-sm" 
+                                      style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const openUpward = window.innerHeight - rect.bottom < 260;
+                                        setOpenMenuUser(openMenuUser?.id === u.id ? null : {
+                                          ...u,
+                                          menuTop: rect.bottom + 8,
+                                          menuRight: window.innerWidth - rect.right,
+                                          openUpward
+                                        });
+                                      }}
+                                    >
+                                      <Icons.MoreVertical size={18} />
+                                    </button>
+                                 )}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
                     )})}
                   </tbody>
                 </table>
@@ -824,57 +940,249 @@ export default function UserManagementPage({ setPage }) {
       )}
 
       {/* View Profile Modal */}
-      {viewProfileUser && (
-        <div className="modal-overlay" onClick={() => setViewProfileUser(null)} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480, width: "90%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "var(--r-md)", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", maxHeight: "80vh", overflowY: "auto" }} onKeyDown={e => { if (e.key === "Escape") setViewProfileUser(null); }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>User Profile</h3>
-              <button type="button" onClick={() => setViewProfileUser(null)} style={{ border: "none", background: "none", fontSize: 20, color: "var(--muted-2)", cursor: "pointer", fontWeight: "bold", lineHeight: 1, padding: "4px" }} aria-label="Close">✕</button>
-            </div>
-            {viewProfileLoading ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0", gap: "12px" }}>
-                <div className="skeleton" style={{ width: "64px", height: "64px", borderRadius: "50%" }} />
-                <div className="skeleton" style={{ width: "160px", height: "20px", borderRadius: "4px" }} />
-                <div className="skeleton" style={{ width: "200px", height: "16px", borderRadius: "4px" }} />
+      {viewProfileUser && (() => {
+        const currentRole = getComputedRole(viewProfileUser);
+        
+        // Resolve role badge config
+        let roleBadge = { type: "user", text: "User" };
+        if (currentRole === "System Administrator") roleBadge = { type: "admin", text: "System Administrator" };
+        else if (currentRole === "Support Moderator") roleBadge = { type: "support", text: "Support Moderator" };
+
+        // Resolve status badge config
+        let statusBadge = { type: "unverified", text: "Unverified" };
+        if (viewProfileUser.banned) statusBadge = { type: "banned", text: "Banned" };
+        else if (viewProfileUser.isVerified || viewProfileUser.collegeVerified) statusBadge = { type: "verified", text: "Verified" };
+
+        const fullUid = viewProfileUser.uid || viewProfileUser.id || "";
+        const shortenedUid = fullUid.length > 20 ? `${fullUid.slice(0, 12)}...${fullUid.slice(-4)}` : fullUid;
+
+        const joinedDate = viewProfileUser.joinedAt?.toMillis 
+          ? new Date(viewProfileUser.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+          : "Not Available";
+
+        const lastLoginDate = viewProfileUser.lastLoginAt?.toMillis
+          ? new Date(viewProfileUser.lastLoginAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "Never Logged In";
+
+        const handleCopyUid = (uid) => {
+          navigator.clipboard.writeText(uid);
+          setCopiedUid(true);
+          toast("UID copied to clipboard!", "success");
+          setTimeout(() => setCopiedUid(false), 2000);
+        };
+
+        return (
+          <div className="modal-overlay" onClick={() => setViewProfileUser(null)} style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)" }}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 720, width: "95%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "16px", padding: "28px", boxShadow: "0 20px 40px rgba(0,0,0,0.12)", maxHeight: "90vh", overflowY: "auto" }} onKeyDown={e => { if (e.key === "Escape") setViewProfileUser(null); }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 800, display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>👤</span> User Profile
+                  </h3>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--muted)", fontWeight: "500" }}>
+                    View account details and permissions configuration
+                  </p>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setViewProfileUser(null)} 
+                  style={{ 
+                    border: "none", 
+                    background: "none", 
+                    fontSize: "18px", 
+                    color: "var(--muted-2)", 
+                    cursor: "pointer", 
+                    fontWeight: "bold", 
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "background 0.2s, color 0.2s"
+                  }} 
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = "var(--bg-secondary)";
+                    e.currentTarget.style.color = "var(--txt)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = "none";
+                    e.currentTarget.style.color = "var(--muted-2)";
+                  }}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
               </div>
-            ) : (
-              <>
-                {/* Profile Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px", padding: "16px", background: "var(--bg-secondary)", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
-                  <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 800, flexShrink: 0, overflow: "hidden" }}>
-                    {viewProfileUser.photoURL ? <img src={viewProfileUser.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (viewProfileUser.name ? viewProfileUser.name.charAt(0).toUpperCase() : "?")}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: "16px", fontWeight: 800, marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewProfileUser.name || "—"}</div>
-                    <div style={{ fontSize: "13px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewProfileUser.email || "—"}</div>
-                  </div>
+
+              {viewProfileLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0", gap: "12px" }}>
+                  <div className="skeleton" style={{ width: "64px", height: "64px", borderRadius: "50%" }} />
+                  <div className="skeleton" style={{ width: "160px", height: "20px", borderRadius: "4px" }} />
+                  <div className="skeleton" style={{ width: "200px", height: "16px", borderRadius: "4px" }} />
                 </div>
-                {/* Profile Details */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                  {[
-                    { label: "UID", value: viewProfileUser.uid || viewProfileUser.id, mono: true },
-                    { label: "College", value: viewProfileUser.college },
-                    { label: "Branch", value: viewProfileUser.branch },
-                    { label: "Role", value: getComputedRole(viewProfileUser) },
-                    { label: "Verification", value: (viewProfileUser.isVerified || viewProfileUser.collegeVerified) ? "✅ Verified" : "Unverified" },
-                    { label: "Account Status", value: viewProfileUser.banned ? "🚫 Banned" : "Active" },
-                    { label: "Joined", value: viewProfileUser.joinedAt?.toMillis ? new Date(viewProfileUser.joinedAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : null },
-                    { label: "Last Login", value: viewProfileUser.lastLoginAt?.toMillis ? new Date(viewProfileUser.lastLoginAt.toMillis()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null }
-                  ].map((item, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--bdr)", gap: "16px" }}>
-                      <span style={{ fontSize: "13px", color: "var(--muted)", fontWeight: 600, flexShrink: 0 }}>{item.label}</span>
-                      <span style={{ fontSize: "13px", fontWeight: 600, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...(item.mono ? { fontFamily: "monospace", fontSize: "11px" } : {}) }}>{item.value || "—"}</span>
+              ) : (
+                <>
+                  {/* Profile Header Card */}
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "20px", 
+                    marginBottom: "24px", 
+                    padding: "20px", 
+                    background: "var(--bg-secondary)", 
+                    borderRadius: "14px", 
+                    border: "1px solid var(--bdr)" 
+                  }}>
+                    <div style={{ 
+                      width: "72px", 
+                      height: "72px", 
+                      borderRadius: "50%", 
+                      background: "var(--p)", 
+                      color: "white", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center", 
+                      fontSize: "28px", 
+                      fontWeight: 800, 
+                      flexShrink: 0, 
+                      overflow: "hidden",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                    }}>
+                      {viewProfileUser.photoURL ? <img src={viewProfileUser.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (viewProfileUser.name ? viewProfileUser.name.charAt(0).toUpperCase() : "?")}
                     </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-                  <button type="button" className="btn btn-outline" style={{ borderRadius: "8px" }} onClick={() => setViewProfileUser(null)}>Close</button>
-                </div>
-              </>
-            )}
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--txt)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {viewProfileUser.name || "Unnamed Student"}
+                      </div>
+                      <div style={{ fontSize: "14px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+                        {viewProfileUser.email || "No Email Provided"}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span className={`um-badge role-${roleBadge.type}`} style={{ display: "inline-flex" }}>
+                          <span className="badge-dot" />
+                          {roleBadge.text}
+                        </span>
+                        <span className={`um-badge status-${statusBadge.type}`} style={{ display: "inline-flex" }}>
+                          <span className="badge-dot" />
+                          {statusBadge.text}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section Information Container */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                    
+                    {/* Section 1: ACCOUNT INFORMATION */}
+                    <div>
+                      <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--muted)", letterSpacing: "0.8px", textTransform: "uppercase", borderBottom: "1px solid var(--bdr)", paddingBottom: "6px", marginBottom: "8px" }}>
+                        ACCOUNT INFORMATION
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>UID</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontFamily: "monospace", fontSize: "12px" }}>{shortenedUid}</span>
+                            <button 
+                              type="button" 
+                              onClick={() => handleCopyUid(fullUid)}
+                              style={{ 
+                                background: "none", 
+                                border: "none", 
+                                cursor: "pointer", 
+                                color: "var(--muted-2)", 
+                                display: "inline-flex", 
+                                alignItems: "center",
+                                padding: "4px",
+                                borderRadius: "4px",
+                                transition: "background 0.2s"
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-secondary)"}
+                              onMouseLeave={e => e.currentTarget.style.background = "none"}
+                              title="Copy full UID"
+                            >
+                              {copiedUid ? <Icons.Check size={14} style={{ color: "green" }} /> : <Icons.Copy size={14} />}
+                            </button>
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Account Status</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <span className={`um-badge status-${statusBadge.type}`} style={{ display: "inline-flex" }}>
+                              <span className="badge-dot" />
+                              {statusBadge.text}
+                            </span>
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Joined</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600" }}>{joinedDate}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Last Login</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600" }}>{lastLoginDate}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: COLLEGE INFORMATION */}
+                    <div>
+                      <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--muted)", letterSpacing: "0.8px", textTransform: "uppercase", borderBottom: "1px solid var(--bdr)", paddingBottom: "6px", marginBottom: "8px" }}>
+                        COLLEGE INFORMATION
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>College</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600" }}>{viewProfileUser.college || "Not Provided"}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Branch</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600" }}>{viewProfileUser.branch || "Not Provided"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: PERMISSIONS */}
+                    <div>
+                      <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--muted)", letterSpacing: "0.8px", textTransform: "uppercase", borderBottom: "1px solid var(--bdr)", paddingBottom: "6px", marginBottom: "8px" }}>
+                        PERMISSIONS
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Role</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <span className={`um-badge role-${roleBadge.type}`} style={{ display: "inline-flex" }}>
+                              <span className="badge-dot" />
+                              {roleBadge.text}
+                            </span>
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px dashed var(--bdr)", fontSize: "13px" }}>
+                          <span style={{ width: "160px", color: "var(--muted)", fontWeight: "500", flexShrink: 0 }}>Verification</span>
+                          <span style={{ color: "var(--txt)", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <span className={`um-badge status-${statusBadge.type}`} style={{ display: "inline-flex" }}>
+                              <span className="badge-dot" />
+                              {statusBadge.text}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ marginTop: "28px", display: "flex", justifyContent: "flex-end" }}>
+                    <button type="button" className="btn btn-outline" style={{ borderRadius: "8px", padding: "8px 18px", fontWeight: "600", cursor: "pointer" }} onClick={() => setViewProfileUser(null)}>Close</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Reset Password Confirmation Modal */}
       {resetPasswordUser && (
@@ -899,6 +1207,107 @@ export default function UserManagementPage({ setPage }) {
           </div>
         </div>
       )}
+
+      {/* Refined Viewport-positioned Action Menu */}
+      {openMenuUser && (() => {
+        const currentRole = getComputedRole(openMenuUser);
+        const menuItems = getMenuItems(openMenuUser, currentRole);
+        const actionItems = menuItems.filter(item => item.type === "action");
+
+        return (
+          <div 
+            className="um-action-menu"
+            style={{
+              position: "fixed",
+              top: openMenuUser.openUpward ? "auto" : `${openMenuUser.menuTop}px`,
+              bottom: openMenuUser.openUpward ? `${window.innerHeight - openMenuUser.menuTop + 16}px` : "auto",
+              right: `${openMenuUser.menuRight}px`,
+              width: "240px",
+              background: "var(--surface)",
+              border: "1px solid var(--bdr)",
+              borderRadius: "14px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02)",
+              zIndex: 1500,
+              padding: "6px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px"
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {menuItems.map((item, index) => {
+              if (item.type === "section") {
+                return (
+                  <div 
+                    key={`sec-${index}`}
+                    style={{ 
+                      padding: "6px 10px 4px 10px", 
+                      fontSize: "10px", 
+                      fontWeight: "800", 
+                      color: "var(--muted)", 
+                      letterSpacing: "0.5px",
+                      borderTop: index > 0 ? "1px solid var(--bdr)" : "none",
+                      marginTop: index > 0 ? "4px" : "0",
+                      paddingTop: index > 0 ? "8px" : "6px"
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                );
+              }
+
+              const actionIdx = actionItems.indexOf(item);
+              const isFocused = actionIdx === focusedIndex;
+
+              return (
+                <button
+                  key={`act-${index}`}
+                  type="button"
+                  className={`um-menu-item ${item.danger ? "danger" : ""} ${item.disabled ? "disabled" : ""}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: isFocused ? (item.danger ? "rgba(239, 68, 68, 0.08)" : "rgba(59, 130, 246, 0.08)") : "transparent",
+                    color: item.danger ? "var(--status-rejected-txt)" : (item.disabled ? "var(--muted)" : "var(--txt)"),
+                    cursor: item.disabled ? "not-allowed" : "pointer",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    textAlign: "left",
+                    outline: "none",
+                    opacity: item.disabled ? 0.5 : 1,
+                    transition: "all 0.15s ease"
+                  }}
+                  disabled={item.disabled}
+                  title={item.tooltip || ""}
+                  onClick={() => {
+                    item.onClick?.();
+                    setOpenMenuUser(null);
+                  }}
+                  onMouseEnter={() => setFocusedIndex(actionIdx)}
+                >
+                  <span style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    width: "16px", 
+                    height: "16px",
+                    color: item.danger ? "var(--status-rejected-txt)" : (isFocused ? "var(--p)" : "var(--muted-2)"),
+                    transition: "color 0.15s ease"
+                  }}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <ConfirmModal {...modalConfig} onClose={closeModal} />
     </AdminLayout>
