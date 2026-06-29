@@ -14876,6 +14876,103 @@ a,
   .user-management-table tr:first-child td {
     border-top: none !important;
   }
+
+  /* Desktop Column Width distributions */
+  .user-management-table th:nth-child(1) { width: 18%; }
+  .user-management-table th:nth-child(2) { width: 22%; }
+  .user-management-table th:nth-child(3) { width: 25%; }
+  .user-management-table th:nth-child(4) { width: 11%; }
+  .user-management-table th:nth-child(5) { width: 11%; }
+  .user-management-table th:nth-child(6) { width: 11%; }
+  .user-management-table th:nth-child(7) { width: 2%; }
+
+  /* Text Truncation */
+  .user-management-table .user-name-text {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .user-management-table .email-name-text {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* College Column 2-Line Truncation */
+  .user-management-table .college-name-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    max-height: 2.8em;
+    word-break: break-word;
+  }
+
+  /* Standardized Avatar Container */
+  .user-management-table .um-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background-color: var(--p) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .user-management-table .um-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* Refined Protected Badge */
+  .user-management-table .protected-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--bdr) !important;
+    border-radius: 12px !important;
+    height: 28px !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+    max-width: 130px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    vertical-align: middle !important;
+  }
+
+  /* Interactions */
+  .user-management-table tbody tr {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+
+  .user-management-table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.04) !important;
+  }
+
+  .user-management-table tbody tr:focus-within {
+    outline: 2px solid var(--p) !important;
+    outline-offset: -2px;
+  }
 }
 
 

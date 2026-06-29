@@ -467,49 +467,53 @@ export default function UserManagementPage({ setPage }) {
                         const initial = u.name ? u.name.charAt(0).toUpperCase() : "?";
 
                         return (
-                        <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }}>
+                        <tr key={u.id} style={{ background: u.banned ? "rgba(239, 68, 68, 0.04)" : "transparent" }} tabIndex={0}>
                           <td data-label="Name" style={{ padding: "14px 16px", fontWeight: 700 }}>
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
-                              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
-                                {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: "10px" }} title={u.name || ""}>
+                              <div className="um-avatar">
+                                {u.photoURL ? <img src={u.photoURL} alt={initial} /> : initial}
                               </div>
-                              <span style={{ maxWidth: "160px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</span>
+                              <span className="user-name-text">{u.name}</span>
                             </div>
                           </td>
-                        <td data-label="Email" style={{ padding: "14px 16px", fontSize: 13 }}>{u.email}</td>
-                        <td data-label="College" style={{ padding: "14px 16px", fontSize: 13 }}>{u.college || "—"}</td>
-                        <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
-                        <td data-label="Status" style={{ padding: "14px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
-                            {statusBadge.label}
-                          </span>
-                        </td>
-                        <td data-label="Role" style={{ padding: "14px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
-                            {roleBadge.label}
-                          </span>
-                        </td>
-                        <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
-                          {processingUid === u.id ? (
-                            <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
-                          ) : isSelf || isSystemAdmin ? (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: 12, color: "var(--muted)", background: "var(--bg-secondary)", padding: "4px 10px", borderRadius: "16px", border: "1px solid var(--bdr)" }}>
-                              <Icons.ShieldCheck size={14} /> Protected Account
+                          <td data-label="Email" style={{ padding: "14px 16px", fontSize: 13 }} title={u.email || ""}>
+                            <div className="email-name-text">{u.email}</div>
+                          </td>
+                          <td data-label="College" style={{ padding: "14px 16px", fontSize: 13 }} title={u.college || ""}>
+                            <div className="college-name-text">{u.college || "—"}</div>
+                          </td>
+                          <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
+                          <td data-label="Status" style={{ padding: "14px 16px" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
+                              {statusBadge.label}
                             </span>
-                          ) : (
-                            <div style={{ position: "relative", display: "inline-block" }}>
-                              {u.banned ? (
-                                 <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
-                              ) : (
-                                 <button 
-                                   type="button" 
-                                   className="btn btn-ghost btn-sm" 
-                                   style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
-                                   onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
-                                 >
-                                   <Icons.MoreVertical size={18} />
-                                 </button>
-                              )}
+                          </td>
+                          <td data-label="Role" style={{ padding: "14px 16px" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
+                              {roleBadge.label}
+                            </span>
+                          </td>
+                          <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
+                            {processingUid === u.id ? (
+                              <span style={{ fontSize: 12, color: "var(--p)", display: "inline-block", padding: "6px 0" }}>Processing...</span>
+                            ) : isSelf || isSystemAdmin ? (
+                              <span className="protected-badge" title="Protected Account">
+                                <Icons.ShieldCheck size={14} /> Protected Account
+                              </span>
+                            ) : (
+                              <div style={{ position: "relative", display: "inline-block" }}>
+                                {u.banned ? (
+                                   <button type="button" className="btn btn-green btn-sm" style={{ padding: "4px 12px", height: "32px", borderRadius: "6px" }} onClick={() => unbanUser(u.id)}>✅ Unban</button>
+                                ) : (
+                                   <button 
+                                     type="button" 
+                                     className="btn btn-ghost btn-sm" 
+                                     style={{ padding: "4px 8px", height: "32px", borderRadius: "6px" }} 
+                                     onClick={(e) => { e.stopPropagation(); setOpenMenuUid(openMenuUid === u.id ? null : u.id); }}
+                                   >
+                                     <Icons.MoreVertical size={18} />
+                                   </button>
+                                )}
                               
                               {openMenuUid === u.id && !u.banned && (
                                 <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "4px", textAlign: "left" }}>
