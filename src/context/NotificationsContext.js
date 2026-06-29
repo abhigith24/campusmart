@@ -5,6 +5,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
 import { useToast } from "./ToastContext";
+import { NotificationService } from "../services/notificationService";
 
 const NotifContext = createContext();
 export const useNotifications = () => useContext(NotifContext);
@@ -52,7 +53,7 @@ export function NotificationsProvider({ children }) {
 
   const markAsRead = useCallback(async (notifId) => {
     try {
-      await updateDoc(doc(db, "notifications", notifId), { read: true });
+      await NotificationService.markAsRead(notifId);
     } catch (err) {
       console.error("Error marking notification as read:", err);
       toast("Failed to update notification status ❌", "error");

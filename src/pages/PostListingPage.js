@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { ListingService } from "../services/listingService";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -437,13 +438,10 @@ export default function PostListingPage({ setPage, editListing }) {
       }
 
       if (isEdit) {
-        await updateDoc(doc(db, "listings", editListing.id), baseData);
+        await ListingService.updateListing(editListing.id, baseData);
         toast("Listing updated!", "success");
       } else {
-        await addDoc(collection(db, "listings"), {
-          ...baseData,
-          status: "active", createdAt: serverTimestamp(), views: 0,
-        });
+        await ListingService.createListing(baseData);
         toast("Listing posted! 🎉", "success");
         localStorage.removeItem(DRAFT_KEY);
       }

@@ -26,6 +26,8 @@ import { usePurchaseRequest } from "../hooks/usePurchaseRequest";
 import { transactionService } from "../services/transactionService";
 import { LISTING_STATUS } from "../constants/listingStatus";
 import { REQUEST_STATUS } from "../constants/requestStatus";
+import { ListingService } from "../services/listingService";
+import { NotificationService } from "../services/notificationService";
 
 const COND_META = {
   New:  { label: "Brand New",    bg: "var(--cond-new-bg)", color: "var(--cond-new-txt)" },
@@ -199,7 +201,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       }
 
       // Increment view count (ignore errors)
-      updateDoc(doc(db, "listings", listing.id), { views: increment(1) }).catch(() => {});
+      ListingService.incrementViews(listing.id).catch(() => {});
 
       // Track listing view in GA4
       trackListingView(listing);
@@ -261,14 +263,12 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
         });
 
         // Notify the seller that a new chat started
-        await setDoc(doc(collection(db, "notifications")), {
+        await NotificationService.createNotification({
           type: "NEW_CHAT",
           sellerId: listing.sellerId,
           buyerId: currentUser.uid,
           listingId: listing.id,
-          listingTitle: listing.title,
-          read: false,
-          createdAt: serverTimestamp()
+          listingTitle: listing.title
         });
       }
       setChatWith({ chatId, listing, seller: sellerData });
@@ -302,7 +302,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
   async function handleDelete() {
     if (!window.confirm("Delete this listing? This cannot be undone.")) return;
     try {
-      await updateDoc(doc(db, "listings", listing.id), { status: "deleted" });
+      await ListingService.updateListing(listing.id, { status: "deleted" });
       toast("Listing deleted", "success");
       setPage("home");
     } catch (err) {
@@ -315,7 +315,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
     if (!window.confirm("Mark this listing as sold? You will no longer be able to edit it.")) return;
     try {
       // 1. Mark listing as sold
-      await updateDoc(doc(db, "listings", listing.id), { status: "sold" });
+      await ListingService.updateListing(listing.id, { status: "sold" });
 
       // 2. Increment successfulSales on user profile
       const userRef = doc(db, "users", currentUser.uid);
@@ -332,7 +332,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       const snap = await getDocs(q);
       const newSalesCount = (userProfile?.successfulSales || 0) + 1;
       for (const d of snap.docs) {
-        await updateDoc(doc(db, "listings", d.id), {
+        await ListingService.updateListing(d.id, {
           sellerSuccessfulSales: newSalesCount
         });
       }
@@ -370,7 +370,7 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
 
   const handleConfirmRemoval = async (reason, note) => {
     try {
-      await updateDoc(doc(db, "listings", listing.id), {
+      await ListingService.updateListing(listing.id, {
         status: "deleted",
         moderationReason: reason,
         moderationNote: note,

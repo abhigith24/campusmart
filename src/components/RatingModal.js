@@ -6,7 +6,8 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { trustService } from "../services/trustService";
+import { RatingService } from "../services/ratingService";
+import { NotificationService } from "../services/notificationService";
 
 const STAR_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
@@ -89,52 +90,23 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
     if (rating === 0) { toast("Please select a star rating", "error"); return; }
     setLoading(true);
     try {
-      // Write the rating document with composite ID
-      const ratingRef = doc(db, "ratings", `${currentUser.uid}_${listingId}`);
-      await setDoc(ratingRef, {
+      await RatingService.submitRating({
         listingId,
         sellerId,
-        buyerId:   currentUser.uid,
+        buyerId: currentUser.uid,
         buyerName: currentUser.displayName || "Student",
-        stars:     rating,
-        review:    review.trim(),
-        tags:      selectedTags,
-        createdAt: serverTimestamp()
+        rating,
+        review,
+        tags: selectedTags
       });
-
-      // Recalculate seller's average rating
-      const allQ    = query(collection(db, "ratings"), where("sellerId", "==", sellerId));
-      const allSnap = await getDocs(allQ);
-      const allStars = allSnap.docs.map(d => d.data().stars).filter(Boolean);
-      
-      // Prevent race condition if newly added rating hasn't propagated to query snapshot yet
-      const containsNew = allSnap.docs.some(d => d.data().listingId === listingId && d.data().buyerId === currentUser.uid);
-      if (!containsNew) {
-        allStars.push(rating);
-      }
-
-      const avg      = allStars.length > 0
-        ? allStars.reduce((s, n) => s + n, 0) / allStars.length
-        : rating;
-
-      // Update seller user doc
-      await updateDoc(doc(db, "users", sellerId), {
-        rating:       parseFloat(avg.toFixed(2)),
-        totalRatings: allStars.length,
-      });
-
-      // Recalculate dynamic trust score
-      await trustService.recalculateTrustScore(sellerId);
 
       // Create notification for seller
-      await addDoc(collection(db, "notifications"), {
+      await NotificationService.createNotification({
         type: "REVIEW_RECEIVED",
         sellerId,
         buyerId: currentUser.uid,
         listingId,
-        listingTitle,
-        read: false,
-        createdAt: serverTimestamp()
+        listingTitle
       });
 
       toast("⭐ Rating submitted! Thank you.", "success");

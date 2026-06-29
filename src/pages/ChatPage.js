@@ -9,6 +9,7 @@ import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import { detectFraudRisk } from "../services/ai/aiService";
 import { usePurchaseRequest } from "../hooks/usePurchaseRequest";
+import { NotificationService } from "../services/notificationService";
 
 export default function ChatPage({ initialChatWith, setPage }) {
   const { currentUser, userProfile } = useAuth();
@@ -290,14 +291,12 @@ export default function ChatPage({ initialChatWith, setPage }) {
 
       if (otherId) {
         const isSeller = currentUser.uid === activeChat.sellerId;
-        await addDoc(collection(db, "notifications"), {
+        await NotificationService.createNotification({
           type: "NEW_MESSAGE",
           sellerId: isSeller ? currentUser.uid : otherId,
           buyerId: isSeller ? otherId : currentUser.uid,
           listingId: activeChat.listingId,
-          listingTitle: activeChat.listingTitle || "an item",
-          read: false,
-          createdAt: serverTimestamp()
+          listingTitle: activeChat.listingTitle || "an item"
         });
       }
     } catch (err) {

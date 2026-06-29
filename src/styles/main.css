@@ -10153,12 +10153,6 @@ button {
   right: 24px;
   z-index: 9999;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Snapping transition: only active when not dragging */
-.martgeni-container:not(.dragging) {
-  transition: top 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, transform 0.2s ease, right 0.2s ease;
 }
 
 .martgeni-fab {
@@ -10172,44 +10166,14 @@ button {
   border: none;
   font-size: 14px;
   font-weight: 700;
-  cursor: grab;
+  cursor: pointer;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
   transition: all 0.3s var(--spring);
 }
 
-.martgeni-fab:hover:not(:active) {
+.martgeni-fab:hover {
   transform: scale(1.05) translateY(-2px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
-}
-
-/* Grabbing state */
-.martgeni-container.dragging .martgeni-fab {
-  cursor: grabbing !important;
-  transform: scale(1.08) !important;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5) !important;
-}
-
-/* Scrolling state opacity reduction */
-.martgeni-container.scrolling {
-  opacity: 0.65;
-}
-
-/* Collapsed compact layout after inactivity */
-.martgeni-container.collapsed .martgeni-fab {
-  padding: 12px !important;
-  width: 44px;
-  height: 44px;
-  justify-content: center;
-  border-radius: 50%;
-}
-.martgeni-container.collapsed .martgeni-fab-text {
-  display: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .martgeni-container, .martgeni-container:not(.dragging) {
-    transition: none !important;
-  }
 }
 
 .martgeni-fab-icon {
