@@ -14959,6 +14959,80 @@ a,
     vertical-align: middle !important;
   }
 
+  /* Shared Badge System */
+  .user-management-table .um-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    height: 26px !important;
+    padding: 0 10px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    border: none !important;
+  }
+
+  .user-management-table .um-badge .badge-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+    transform: translateY(0.2px) !important;
+  }
+
+  /* Badge Color Palette Mapping */
+  .user-management-table .status-unverified {
+    background-color: var(--light) !important;
+    color: var(--txt-2) !important;
+  }
+  .user-management-table .status-unverified .badge-dot {
+    background-color: var(--txt-2) !important;
+  }
+
+  .user-management-table .status-banned {
+    background-color: var(--status-rejected-bg) !important;
+    color: var(--status-rejected-txt) !important;
+  }
+  .user-management-table .status-banned .badge-dot {
+    background-color: var(--status-rejected-txt) !important;
+  }
+
+  .user-management-table .status-verified {
+    background-color: var(--status-accepted-bg) !important;
+    color: var(--status-accepted-txt) !important;
+  }
+  .user-management-table .status-verified .badge-dot {
+    background-color: var(--status-accepted-txt) !important;
+  }
+
+  .user-management-table .role-user {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+    color: var(--txt-2) !important;
+  }
+  .user-management-table .role-user .badge-dot {
+    background-color: var(--txt-2) !important;
+  }
+
+  .user-management-table .role-admin {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #2563eb !important;
+  }
+  .user-management-table .role-admin .badge-dot {
+    background-color: #2563eb !important;
+  }
+
+  .user-management-table .role-support {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    color: #d97706 !important;
+  }
+  .user-management-table .role-support .badge-dot {
+    background-color: #d97706 !important;
+  }
+
   /* Interactions */
   .user-management-table tbody tr {
     transition: background-color 0.2s ease, box-shadow 0.2s ease;

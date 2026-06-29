@@ -448,19 +448,19 @@ export default function UserManagementPage({ setPage }) {
                         }
 
                         // Status Badge
-                        let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                        let statusBadge = { type: "unverified", text: "Unverified" };
                         if (u.banned) {
-                          statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
+                          statusBadge = { type: "banned", text: "Banned" };
                         } else if (u.isVerified || u.collegeVerified) {
-                          statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
+                          statusBadge = { type: "verified", text: "Verified" };
                         }
 
                         // Role Badge
-                        let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
+                        let roleBadge = { type: "user", text: "User" };
                         if (currentRole === "System Administrator") {
-                          roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
+                          roleBadge = { type: "admin", text: "System Administrator" };
                         } else if (currentRole === "Support Moderator") {
-                          roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
+                          roleBadge = { type: "support", text: "Support Moderator" };
                         }
 
                         // Avatar
@@ -484,13 +484,15 @@ export default function UserManagementPage({ setPage }) {
                           </td>
                           <td data-label="Joined" style={{ padding: "14px 16px", fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" }}>{joinedDate}</td>
                           <td data-label="Status" style={{ padding: "14px 16px" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadge.bg, color: statusBadge.color }}>
-                              {statusBadge.label}
+                            <span className={`um-badge status-${statusBadge.type}`}>
+                              <span className="badge-dot" />
+                              {statusBadge.text}
                             </span>
                           </td>
                           <td data-label="Role" style={{ padding: "14px 16px" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
-                              {roleBadge.label}
+                            <span className={`um-badge role-${roleBadge.type}`}>
+                              <span className="badge-dot" />
+                              {roleBadge.text}
                             </span>
                           </td>
                           <td data-label="Actions" style={{ padding: "14px 16px", textAlign: "right" }}>
