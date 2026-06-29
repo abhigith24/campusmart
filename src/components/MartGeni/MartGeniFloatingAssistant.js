@@ -43,7 +43,9 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [yPos, setYPos] = useState(() => {
     const saved = localStorage.getItem("martgeni-y");
-    return saved ? parseFloat(saved) : null;
+    if (!saved || saved === "undefined" || saved === "null") return null;
+    const parsed = parseFloat(saved);
+    return (isNaN(parsed) || !isFinite(parsed)) ? null : parsed;
   });
 
   const containerRef = useRef(null);
@@ -159,7 +161,7 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   // Update inline top style on container when Y position changes
   useEffect(() => {
     if (containerRef.current) {
-      if (yPos !== null) {
+      if (yPos !== null && !isNaN(yPos) && isFinite(yPos)) {
         containerRef.current.style.top = `${yPos}px`;
         containerRef.current.style.bottom = "auto";
       } else {
@@ -172,9 +174,11 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   // Constrain position to safe boundaries dynamically (resize, footer entering screen)
   useEffect(() => {
     const handleResize = () => {
-      if (yPos !== null) {
+      if (yPos !== null && !isNaN(yPos)) {
         const { topLimit, bottomLimit } = getBounds();
+        if (isNaN(topLimit) || isNaN(bottomLimit)) return;
         const constrained = Math.min(Math.max(yPos, topLimit), bottomLimit);
+        if (isNaN(constrained)) return;
         if (constrained !== yPos) {
           setYPos(constrained);
           localStorage.setItem("martgeni-y", constrained);
@@ -269,10 +273,14 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
     rafRef.current = requestAnimationFrame(() => {
       if (containerRef.current) {
         const { topLimit, bottomLimit } = getBounds();
+        if (isNaN(topLimit) || isNaN(bottomLimit)) return;
         const rawY = dragStartPosRef.current + deltaY;
+        if (isNaN(rawY)) return;
         const constrainedY = Math.min(Math.max(rawY, topLimit), bottomLimit);
-        containerRef.current.style.top = `${constrainedY}px`;
-        containerRef.current.style.bottom = "auto";
+        if (!isNaN(constrainedY)) {
+          containerRef.current.style.top = `${constrainedY}px`;
+          containerRef.current.style.bottom = "auto";
+        }
       }
     });
   };
@@ -311,9 +319,12 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
     if (containerRef.current) {
       const finalY = containerRef.current.getBoundingClientRect().top;
       const { topLimit, bottomLimit } = getBounds();
+      if (isNaN(topLimit) || isNaN(bottomLimit)) return;
       const constrainedY = Math.min(Math.max(finalY, topLimit), bottomLimit);
-      setYPos(constrainedY);
-      localStorage.setItem("martgeni-y", constrainedY);
+      if (!isNaN(constrainedY)) {
+        setYPos(constrainedY);
+        localStorage.setItem("martgeni-y", constrainedY);
+      }
     }
   };
 
