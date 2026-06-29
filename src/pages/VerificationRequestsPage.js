@@ -353,7 +353,7 @@ export default function VerificationRequestsPage({ setPage }) {
           ) : (
             <>
               <div className="desktop-only table-wrapper" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)" }}>
-                <table className="report-table verification-requests-table">
+                <table className="admin-data-table verification-requests-table">
                   <thead>
                     <tr>
                       <th>User Name</th>
@@ -370,24 +370,27 @@ export default function VerificationRequestsPage({ setPage }) {
                       const submittedAt = u.verificationSubmittedAt?.toDate
                         ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                         : "—";
-                      
-                      let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                             let statusBadgeClass = "admin-badge admin-badge-neutral";
+                      let statusLabel = "● Unverified";
                       if (u.collegeVerified && u.verificationStatus === "approved") {
-                        statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
+                        statusBadgeClass = "admin-badge admin-badge-success";
+                        statusLabel = "● Approved";
                       } else if (u.verificationStatus === "pending") {
-                        statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
+                        statusBadgeClass = "admin-badge admin-badge-warning";
+                        statusLabel = "● Pending";
                       } else if (u.verificationStatus === "rejected") {
-                        statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
+                        statusBadgeClass = "admin-badge admin-badge-danger";
+                        statusLabel = "● Rejected";
                       }
 
                       return (
                         <tr key={u.id}>
                           <td data-label="User Name" className="font-bold">{u.name}</td>
                           <td data-label="Email" className="email-cell">{u.email}</td>
-                          <td data-label="College">{u.college || "—"}</td>
+                          <td data-label="College">{u.college || "-"}</td>
                           <td data-label="Status">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
-                              {statusBadgeColor.label}
+                            <span className={statusBadgeClass}>
+                              {statusLabel}
                             </span>
                           </td>
                           <td data-label="Date" className="date-cell">{submittedAt}</td>
@@ -424,13 +427,17 @@ export default function VerificationRequestsPage({ setPage }) {
                     ? new Date(u.verificationSubmittedAt.toDate()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                     : "—";
                   
-                  let statusBadgeColor = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                  let statusBadgeClass = "admin-badge admin-badge-neutral";
+                  let statusLabel = "● Unverified";
                   if (u.collegeVerified && u.verificationStatus === "approved") {
-                    statusBadgeColor = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Approved" };
+                    statusBadgeClass = "admin-badge admin-badge-success";
+                    statusLabel = "● Approved";
                   } else if (u.verificationStatus === "pending") {
-                    statusBadgeColor = { bg: "var(--status-pending-bg)", color: "var(--status-pending-txt)", label: "● Pending" };
+                    statusBadgeClass = "admin-badge admin-badge-warning";
+                    statusLabel = "● Pending";
                   } else if (u.verificationStatus === "rejected") {
-                    statusBadgeColor = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Rejected" };
+                    statusBadgeClass = "admin-badge admin-badge-danger";
+                    statusLabel = "● Rejected";
                   }
 
                   return (

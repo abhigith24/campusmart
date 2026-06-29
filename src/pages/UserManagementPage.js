@@ -418,7 +418,7 @@ export default function UserManagementPage({ setPage }) {
             <>
               {/* DESKTOP TABLE */}
               <div className="desktop-only" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)" }}>
-                <table className="report-table user-management-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                <table className="admin-data-table user-management-table">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -442,19 +442,25 @@ export default function UserManagementPage({ setPage }) {
                       }
 
                       // Status Badge
-                      let statusBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● Unverified" };
+                      let statusBadgeClass = "admin-badge admin-badge-neutral";
+                      let statusLabel = "● Unverified";
                       if (u.banned) {
-                        statusBadge = { bg: "var(--status-rejected-bg)", color: "var(--status-rejected-txt)", label: "● Banned" };
+                        statusBadgeClass = "admin-badge admin-badge-danger";
+                        statusLabel = "● Banned";
                       } else if (u.isVerified || u.collegeVerified) {
-                        statusBadge = { bg: "var(--status-accepted-bg)", color: "var(--status-accepted-txt)", label: "● Verified" };
+                        statusBadgeClass = "admin-badge admin-badge-success";
+                        statusLabel = "● Verified";
                       }
 
                       // Role Badge
-                      let roleBadge = { bg: "var(--light)", color: "var(--txt-2)", label: "● User" };
+                      let roleBadgeClass = "admin-badge admin-badge-neutral";
+                      let roleLabel = "● User";
                       if (currentRole === "System Administrator") {
-                        roleBadge = { bg: "rgba(59, 130, 246, 0.1)", color: "#2563eb", label: "● System Administrator" };
+                        roleBadgeClass = "admin-badge admin-badge-primary";
+                        roleLabel = "● System Administrator";
                       } else if (currentRole === "Support Moderator") {
-                        roleBadge = { bg: "rgba(245, 158, 11, 0.1)", color: "#d97706", label: "● Support Moderator" };
+                        roleBadgeClass = "admin-badge admin-badge-warning";
+                        roleLabel = "● Support Moderator";
                       }
 
                       // Avatar
@@ -467,20 +473,20 @@ export default function UserManagementPage({ setPage }) {
                             <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--p)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0, overflow: "hidden" }}>
                               {u.photoURL ? <img src={u.photoURL} alt={initial} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
                             </div>
-                            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{u.name}</span>
+                            <span title={u.name} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{u.name}</span>
                           </div>
                         </td>
                         <td data-label="Email" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.email}</td>
                         <td data-label="College" style={{ fontSize: 13, color: "var(--txt-2)" }}>{u.college || "—"}</td>
                         <td data-label="Joined" style={{ fontSize: 13, color: "var(--muted)" }}>{joinedDate}</td>
                         <td data-label="Status">
-                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "26px", padding: "0 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: statusBadge.bg, color: statusBadge.color, whiteSpace: "nowrap" }}>
-                            {statusBadge.label}
+                          <span className={statusBadgeClass}>
+                            {statusLabel}
                           </span>
                         </td>
                         <td data-label="Role">
-                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "26px", padding: "0 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: roleBadge.bg, color: roleBadge.color, whiteSpace: "nowrap" }}>
-                            {roleBadge.label}
+                          <span className={roleBadgeClass}>
+                            {roleLabel}
                           </span>
                         </td>
                         <td data-label="Actions">

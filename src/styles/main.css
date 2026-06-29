@@ -14367,6 +14367,137 @@ a,
   .request-timeline-step { font-size: 10px !important; padding: 2px 6px !important; border-radius: 8px !important; }
 }
 
+/* ==========================================================================
+   Admin Console Shared Components
+   ========================================================================== */
+
+/* Shared Admin Data Table (Desktop) */
+@media (min-width: 1024px) {
+  .admin-data-table {
+    table-layout: auto;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .admin-data-table thead {
+    z-index: 10;
+  }
+
+  .admin-data-table th {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background-color: var(--surface) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .admin-data-table th,
+  .admin-data-table td {
+    padding: 18px 24px !important;
+    vertical-align: middle !important;
+  }
+
+  .admin-data-table th::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--bdr);
+  }
+
+  /* Shared First Column Extra Padding */
+  .admin-data-table th:first-child,
+  .admin-data-table td:first-child {
+    padding-left: 32px !important;
+  }
+
+  /* Row Hover State */
+  .admin-data-table tbody tr {
+    transition: background-color 0.2s ease;
+  }
+  .admin-data-table tbody tr:hover {
+    background-color: var(--p-light) !important;
+  }
+}
+
+/* Shared Admin Badges */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-badge-success { background: var(--status-accepted-bg); color: var(--status-accepted-txt); }
+.admin-badge-danger { background: var(--status-rejected-bg); color: var(--status-rejected-txt); }
+.admin-badge-neutral { background: var(--light); color: var(--txt-2); }
+.admin-badge-primary { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+.admin-badge-warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+
+/* ==========================================================================
+   Page-Specific Admin Table Overrides
+   ========================================================================== */
+
+/* Verification Requests Specific */
+@media (min-width: 1024px) {
+  .verification-requests-table th:nth-child(6),
+  .verification-requests-table td:nth-child(6),
+  .verification-requests-table th:nth-child(7),
+  .verification-requests-table td:nth-child(7) {
+    width: 1%;
+    white-space: nowrap !important;
+    text-align: center;
+  }
+  
+  .verification-requests-table th:nth-child(7),
+  .verification-requests-table td:nth-child(7) {
+    padding-right: 32px !important;
+  }
+
+  .verification-requests-table th:nth-child(1) { width: 18%; }
+  .verification-requests-table th:nth-child(2) { width: 22%; }
+  .verification-requests-table th:nth-child(3) { width: 18%; }
+  .verification-requests-table th:nth-child(4) { width: 12%; }
+  .verification-requests-table th:nth-child(5) { width: 10%; }
+
+  .verification-requests-table .action-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+/* User Management Specific */
+@media (min-width: 1024px) {
+  .user-management-table th:nth-child(1) { width: 25%; }
+  .user-management-table th:nth-child(2) { width: 30%; }
+  .user-management-table th:nth-child(3) { width: 15%; }
+  
+  .user-management-table th:nth-child(4),
+  .user-management-table td:nth-child(4),
+  .user-management-table th:nth-child(5),
+  .user-management-table td:nth-child(5),
+  .user-management-table th:nth-child(6),
+  .user-management-table td:nth-child(6) {
+    width: 10%;
+    white-space: nowrap !important;
+  }
+
+  .user-management-table th:nth-child(7),
+  .user-management-table td:nth-child(7) {
+    width: 1%;
+    white-space: nowrap !important;
+    padding-right: 32px !important;
+  }
+}
+
 /* ════════════════════════════════════════════════════
    SUPPORT REQUESTS DASHBOARD UX POLISH
 ════════════════════════════════════════════════════ */
