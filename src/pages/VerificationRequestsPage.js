@@ -207,7 +207,7 @@ export default function VerificationRequestsPage({ setPage }) {
   };
 
   const renderVerificationActions = (u) => (
-    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", width: "100%" }}>
+    <>
       {u.verificationStatus === "pending" && (
         <>
           <button 
@@ -252,7 +252,7 @@ export default function VerificationRequestsPage({ setPage }) {
           Approve Anyway
         </button>
       )}
-    </div>
+    </>
   );
 
   return (
@@ -352,17 +352,17 @@ export default function VerificationRequestsPage({ setPage }) {
             </div>
           ) : (
             <>
-              <div className="desktop-only desktop-verifications-table-container" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
-                <table className="report-table">
-                  <thead style={{ fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", fontSize: "12px", color: "var(--muted)", position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div className="desktop-only table-wrapper" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+                <table className="report-table verification-requests-table">
+                  <thead style={{ position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
                     <tr>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>User Name</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Email</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>College</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Status</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Date</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>ID Card</th>
-                      <th style={{ padding: "14px 16px", borderBottom: "1px solid var(--bdr)" }}>Action</th>
+                      <th>User Name</th>
+                      <th>Email</th>
+                      <th>College</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th>ID Card</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -382,20 +382,20 @@ export default function VerificationRequestsPage({ setPage }) {
 
                       return (
                         <tr key={u.id}>
-                          <td data-label="User Name" style={{ fontWeight: 700, padding: "14px 16px" }}>{u.name}</td>
-                          <td data-label="Email" style={{ fontSize: 13, padding: "14px 16px", wordBreak: "break-all" }}>{u.email}</td>
-                          <td data-label="College" style={{ padding: "14px 16px" }}>{u.college || "—"}</td>
-                          <td data-label="Status" style={{ padding: "14px 16px" }}>
+                          <td data-label="User Name" className="font-bold">{u.name}</td>
+                          <td data-label="Email" className="email-cell">{u.email}</td>
+                          <td data-label="College">{u.college || "—"}</td>
+                          <td data-label="Status">
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "24px", fontSize: "12px", fontWeight: "700", background: statusBadgeColor.bg, color: statusBadgeColor.color }}>
                               {statusBadgeColor.label}
                             </span>
                           </td>
-                          <td data-label="Date" style={{ fontSize: 12, color: "var(--muted)", padding: "14px 16px", whiteSpace: "nowrap" }}>{submittedAt}</td>
-                          <td data-label="ID Card" style={{ padding: "14px 16px" }}>
+                          <td data-label="Date" className="date-cell">{submittedAt}</td>
+                          <td data-label="ID Card">
                             {u.collegeIdCardUrl ? (
                               <button 
                                 type="button"
-                                className="btn btn-outline"
+                                className="btn btn-outline center-content"
                                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "32px", padding: "0 12px", borderRadius: "8px", fontSize: "13px" }}
                                 onClick={() => setActiveIdCardUrl(u.collegeIdCardUrl)}
                               >
@@ -405,8 +405,8 @@ export default function VerificationRequestsPage({ setPage }) {
                               <span style={{ fontSize: 12, color: "var(--muted-2)" }}>No ID Uploaded</span>
                             )}
                           </td>
-                          <td data-label="Action" style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", maxWidth: "240px" }}>
+                          <td data-label="Action">
+                            <div className="action-wrapper">
                               {renderVerificationActions(u)}
                             </div>
                           </td>
