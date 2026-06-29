@@ -8454,29 +8454,30 @@ button {
     display: none;
   }
 
-  .nav-mobile-search-toggle {
-    display: flex !important;
-    margin-left: auto;
-  }
-
-  .nav-mobile-icons {
+  .nav-mobile-actions {
     display: flex;
     align-items: center;
-    gap: 2px;
-    margin-left: 2px;
+    margin-left: auto;
+    gap: 6px;
   }
 
-  .nav-mobile-icons .mobile-icon-btn {
+  .nav-mobile-actions .mobile-action-btn {
     display: flex !important;
     width: 38px;
     height: 38px;
-    margin-right: 0;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--txt);
   }
 
-  .nav-hamburger {
-    display: inline-flex;
-    margin-left: 2px;
-    flex-shrink: 0;
+  .nav-mobile-actions .nav-icon-btn.mobile-action-btn {
+    color: var(--txt-2);
   }
 
   .navbar .nav-search {

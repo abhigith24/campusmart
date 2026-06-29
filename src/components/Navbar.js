@@ -340,50 +340,52 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
             )}
           </div>
 
-          {/* Mobile search toggle button */}
-          <button 
-            className="nav-mobile-search-toggle" 
-            onClick={() => setShowMobileSearchOverlay(o => !o)}
-            aria-label="Toggle search"
-            type="button"
-          >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-          </button>
+          <div className="nav-mobile-actions">
+            {/* Mobile search toggle button */}
+            <button 
+              className="nav-mobile-search-toggle mobile-action-btn" 
+              onClick={() => setShowMobileSearchOverlay(o => !o)}
+              aria-label="Toggle search"
+              type="button"
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
 
-          {currentUser && (
-            <div className="nav-mobile-icons">
-              <button 
-                className="nav-icon-btn mobile-icon-btn" 
-                onClick={() => setPage("notifications")} 
-                aria-label="Notifications" 
-                type="button"
-              >
-                <LucideIcons.Bell size={18} strokeWidth={2.5} />
-                {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-              </button>
-              
-              {!isStaff && hasFeature("showChat") && (
-                <button className="nav-icon-btn mobile-icon-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
+            {currentUser && (
+              <>
+                <button 
+                  className="nav-icon-btn mobile-action-btn" 
+                  onClick={() => setPage("notifications")} 
+                  aria-label="Notifications" 
+                  type="button"
+                >
+                  <LucideIcons.Bell size={18} strokeWidth={2.5} />
+                  {unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
-              )}
-            </div>
-          )}
+                
+                {!isStaff && hasFeature("showChat") && (
+                  <button className="nav-icon-btn mobile-action-btn" onClick={() => setPage("chat")} aria-label="Messages" type="button">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
 
-          <button
-            className="nav-hamburger"
-            onClick={() => setDrawerOpen(o => !o)}
-            aria-label={drawerOpen ? "Close menu" : "Open menu"}
-            type="button"
-          >
-            {drawerOpen
-              ? <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              : <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>}
-          </button>
+            <button
+              className="nav-hamburger mobile-action-btn"
+              onClick={() => setDrawerOpen(o => !o)}
+              aria-label={drawerOpen ? "Close menu" : "Open menu"}
+              type="button"
+            >
+              {drawerOpen
+                ? <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                : <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>}
+            </button>
+          </div>
         </div>
       </nav>
 
