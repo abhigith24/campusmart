@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MARTGENI_CONFIG } from "../../config/martgeniConfig";
 import { generateChatResponse } from "../../services/ai/aiService";
 
@@ -37,11 +37,285 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   const [loading,   setLoading]   = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Smart movement, persistence, and collapsed states
+  const [isDragging, setIsDragging] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [yPos, setYPos] = useState(() => {
+    const saved = localStorage.getItem("martgeni-y");
+    return saved ? parseFloat(saved) : null;
+  });
+
+  const containerRef = useRef(null);
+  const fabRef = useRef(null);
+  const clickStartRef = useRef({ x: 0, y: 0, time: 0 });
+  const dragStartYRef = useRef(0);
+  const dragStartPosRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const rafRef = useRef(null);
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const getBounds = useCallback(() => {
+    const isMobile = window.innerWidth <= 768;
+
+    // Use the actual widget height instead of hardcoding it
+    const fabHeight =
+      fabRef.current?.offsetHeight || (isMobile ? 44 : 56);
+
+    const SAFE_MARGIN = 24;
+
+    // -----------------------------
+    // TOP LIMIT
+    // -----------------------------
+
+    let topLimit = SAFE_MARGIN;
+
+    // Find every fixed or sticky element near the top
+    const topElements = [...document.querySelectorAll("*")].filter((el) => {
+      const style = window.getComputedStyle(el);
+
+      if (
+        style.position !== "fixed" &&
+        style.position !== "sticky"
+      ) {
+        return false;
+      }
+
+      const rect = el.getBoundingClientRect();
+
+      return (
+        rect.height > 0 &&
+        rect.top <= 0 &&
+        rect.bottom > 0
+      );
+    });
+
+    if (topElements.length) {
+      topLimit =
+        Math.max(...topElements.map((el) => el.getBoundingClientRect().bottom)) +
+        SAFE_MARGIN;
+    }
+
+    // -----------------------------
+    // BOTTOM LIMIT
+    // -----------------------------
+
+    let bottomLimit =
+      window.innerHeight -
+      fabHeight -
+      SAFE_MARGIN;
+
+    // Mobile Bottom Navigation
+    const bottomNav = document.querySelector(
+      ".mobile-bottom-nav, .mobile-nav, .mobile-nav-bar"
+    );
+
+    if (isMobile && bottomNav) {
+      const rect = bottomNav.getBoundingClientRect();
+
+      bottomLimit =
+        rect.top -
+        fabHeight -
+        SAFE_MARGIN;
+    }
+
+    // Footer
+    const footer =
+      document.querySelector("footer") ||
+      document.querySelector(".footer") ||
+      document.querySelector(".admin-footer");
+
+    if (footer) {
+      const rect = footer.getBoundingClientRect();
+
+      // Footer entering viewport
+      if (rect.top < window.innerHeight) {
+        bottomLimit = Math.min(
+          bottomLimit,
+          rect.top - fabHeight - SAFE_MARGIN
+        );
+      }
+    }
+
+    // -----------------------------
+    // Prevent Invalid Bounds
+    // -----------------------------
+
+    if (bottomLimit <= topLimit) {
+      bottomLimit = topLimit + fabHeight;
+    }
+
+    return {
+      topLimit,
+      bottomLimit,
+    };
+  }, []);
+
+  // Update inline top style on container when Y position changes
+  useEffect(() => {
+    if (containerRef.current) {
+      if (yPos !== null) {
+        containerRef.current.style.top = `${yPos}px`;
+        containerRef.current.style.bottom = "auto";
+      } else {
+        containerRef.current.style.top = "auto";
+        containerRef.current.style.bottom = "24px";
+      }
+    }
+  }, [yPos]);
+
+  // Constrain position to safe boundaries dynamically (resize, footer entering screen)
+  useEffect(() => {
+    const handleResize = () => {
+      if (yPos !== null) {
+        const { topLimit, bottomLimit } = getBounds();
+        const constrained = Math.min(Math.max(yPos, topLimit), bottomLimit);
+        if (constrained !== yPos) {
+          setYPos(constrained);
+          localStorage.setItem("martgeni-y", constrained);
+        }
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    const interval = setInterval(handleResize, 1000); // Check footer/layout shifts
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearInterval(interval);
+    };
+  }, [yPos, getBounds]);
+
+  // Scroll opacity reduction listener
+  useEffect(() => {
+    let scrollTimeout;
+    const handleScroll = () => {
+      setIsScrolling(true);
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        setIsScrolling(false);
+      }, 200);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
+
+  // Inactivity collapse timer (collapses after 5s if idle and closed)
+  useEffect(() => {
+    if (isOpen || isDragging) {
+      setIsCollapsed(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setIsCollapsed(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, isDragging, inputVal]);
+
+  const handleUserActivity = () => {
+    setIsCollapsed(false);
+  };
+
+  const handleDragStart = (e) => {
+    if (isOpen) return; // Do not drag if window is already open
+
+    const isTouchEvent = e.type.startsWith("touch");
+    const clientY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+    const clientX = isTouchEvent ? e.touches[0].clientX : e.clientX;
+
+    clickStartRef.current = { x: clientX, y: clientY, time: Date.now() };
+    dragStartYRef.current = clientY;
+
+    let currentY = 0;
+    if (containerRef.current) {
+      currentY = containerRef.current.getBoundingClientRect().top;
+    }
+    dragStartPosRef.current = currentY;
+
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    if (isTouchEvent) {
+      window.addEventListener("touchmove", handleDragMove, { passive: false });
+      window.addEventListener("touchend", handleDragEnd);
+    } else {
+      window.addEventListener("mousemove", handleDragMove);
+      window.addEventListener("mouseup", handleDragEnd);
+    }
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDraggingRef.current) return;
+
+    const isTouchEvent = e.type.startsWith("touch");
+    if (isTouchEvent) {
+      e.preventDefault(); // prevent touch scrolling
+    }
+
+    const clientY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - dragStartYRef.current;
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      if (containerRef.current) {
+        const { topLimit, bottomLimit } = getBounds();
+        const rawY = dragStartPosRef.current + deltaY;
+        const constrainedY = Math.min(Math.max(rawY, topLimit), bottomLimit);
+        containerRef.current.style.top = `${constrainedY}px`;
+        containerRef.current.style.bottom = "auto";
+      }
+    });
+  };
+
+  const handleDragEnd = (e) => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    window.removeEventListener("mousemove", handleDragMove);
+    window.removeEventListener("mouseup", handleDragEnd);
+    window.removeEventListener("touchmove", handleDragMove);
+    window.removeEventListener("touchend", handleDragEnd);
+
+    const isTouchEvent = e.type.startsWith("touch");
+    const endEvent = isTouchEvent ? (e.changedTouches?.[0] || e.touches?.[0]) : e;
+    
+    // Fallback coordinates if touch end is empty
+    const clientX = endEvent ? endEvent.clientX : clickStartRef.current.x;
+    const clientY = endEvent ? endEvent.clientY : clickStartRef.current.y;
+
+    const deltaX = Math.abs(clientX - clickStartRef.current.x);
+    const deltaY = Math.abs(clientY - clickStartRef.current.y);
+    const deltaTime = Date.now() - clickStartRef.current.time;
+
+    // Toggle open state on short click
+    if (deltaX < 5 && deltaY < 5 && deltaTime < 300) {
+      setIsOpen(prev => !prev);
+      return;
+    }
+
+    // Snap and save Y position
+    if (containerRef.current) {
+      const finalY = containerRef.current.getBoundingClientRect().top;
+      const { topLimit, bottomLimit } = getBounds();
+      const constrainedY = Math.min(Math.max(finalY, topLimit), bottomLimit);
+      setYPos(constrainedY);
+      localStorage.setItem("martgeni-y", constrainedY);
+    }
+  };
 
   const sendMessage = async (text) => {
     const trimmed = text.trim();
@@ -146,14 +420,22 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   };
 
   return (
-    <div className="martgeni-container">
+    <div 
+      ref={containerRef} 
+      className={`martgeni-container ${isDragging ? "dragging" : ""} ${isScrolling ? "scrolling" : ""} ${isCollapsed ? "collapsed" : ""}`}
+      onMouseEnter={handleUserActivity}
+    >
       {/* Floating Action Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={fabRef}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
         className={`martgeni-fab ${isOpen ? "open" : ""}`}
         title={`Toggle ${MARTGENI_CONFIG.aiName}`}
         aria-label={`Toggle ${MARTGENI_CONFIG.aiName} Assistant`}
+        aria-grabbed={isDragging}
         type="button"
+        style={{ cursor: isDragging ? "grabbing" : "grab" }}
       >
         <span className="martgeni-fab-icon">✨</span>
         <span className="martgeni-fab-text">MartGeni</span>
