@@ -14770,6 +14770,29 @@ a,
     vertical-align: middle !important;
   }
 
+  /* Reliable sticky header implementation */
+  .verification-requests-table thead {
+    z-index: 10;
+  }
+
+  .verification-requests-table th {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background-color: var(--surface) !important; /* Ensure opaque background */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Header shadow */
+  }
+
+  .verification-requests-table th::after {
+    /* To prevent border-collapse glitches with sticky th, we use a pseudo element for bottom border if needed, but box-shadow handles it nicely */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--bdr);
+  }
+
   .verification-requests-table th:nth-child(6),
   .verification-requests-table td:nth-child(6),
   .verification-requests-table th:nth-child(7),

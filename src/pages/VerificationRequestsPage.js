@@ -352,9 +352,9 @@ export default function VerificationRequestsPage({ setPage }) {
             </div>
           ) : (
             <>
-              <div className="desktop-only table-wrapper" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)", overflowX: "auto" }}>
+              <div className="desktop-only table-wrapper" style={{ background: "var(--surface)", borderRadius: "var(--r-md)", border: "2px solid var(--bdr)" }}>
                 <table className="report-table verification-requests-table">
-                  <thead style={{ position: "sticky", top: "64px", zIndex: 10, background: "var(--surface)", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                  <thead>
                     <tr>
                       <th>User Name</th>
                       <th>Email</th>
