@@ -54,6 +54,7 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   const dragStartYRef = useRef(0);
   const dragStartPosRef = useRef(0);
   const isDraggingRef = useRef(false);
+  const draggedRef = useRef(false);
   const rafRef = useRef(null);
 
   useEffect(() => {
@@ -230,6 +231,8 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
   const handleDragStart = (e) => {
     if (isOpen) return; // Do not drag if window is already open
 
+    draggedRef.current = false; // Reset flag
+
     const isTouchEvent = e.type.startsWith("touch");
     const clientY = isTouchEvent ? e.touches[0].clientY : e.clientY;
     const clientX = isTouchEvent ? e.touches[0].clientX : e.clientX;
@@ -266,6 +269,10 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
     const clientY = isTouchEvent ? e.touches[0].clientY : e.clientY;
     const deltaY = clientY - dragStartYRef.current;
 
+    if (Math.abs(deltaY) > 5) {
+      draggedRef.current = true;
+    }
+
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
     }
@@ -285,7 +292,7 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
     });
   };
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = () => {
     isDraggingRef.current = false;
     setIsDragging(false);
 
@@ -298,32 +305,17 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
     window.removeEventListener("touchmove", handleDragMove);
     window.removeEventListener("touchend", handleDragEnd);
 
-    const isTouchEvent = e.type.startsWith("touch");
-    const endEvent = isTouchEvent ? (e.changedTouches?.[0] || e.touches?.[0]) : e;
-    
-    // Fallback coordinates if touch end is empty
-    const clientX = endEvent ? endEvent.clientX : clickStartRef.current.x;
-    const clientY = endEvent ? endEvent.clientY : clickStartRef.current.y;
-
-    const deltaX = Math.abs(clientX - clickStartRef.current.x);
-    const deltaY = Math.abs(clientY - clickStartRef.current.y);
-    const deltaTime = Date.now() - clickStartRef.current.time;
-
-    // Toggle open state on short click
-    if (deltaX < 5 && deltaY < 5 && deltaTime < 300) {
-      setIsOpen(prev => !prev);
-      return;
-    }
-
-    // Snap and save Y position
-    if (containerRef.current) {
-      const finalY = containerRef.current.getBoundingClientRect().top;
-      const { topLimit, bottomLimit } = getBounds();
-      if (isNaN(topLimit) || isNaN(bottomLimit)) return;
-      const constrainedY = Math.min(Math.max(finalY, topLimit), bottomLimit);
-      if (!isNaN(constrainedY)) {
-        setYPos(constrainedY);
-        localStorage.setItem("martgeni-y", constrainedY);
+    // Only snap and save Y position if the user actually dragged it
+    if (draggedRef.current) {
+      if (containerRef.current) {
+        const finalY = containerRef.current.getBoundingClientRect().top;
+        const { topLimit, bottomLimit } = getBounds();
+        if (isNaN(topLimit) || isNaN(bottomLimit)) return;
+        const constrainedY = Math.min(Math.max(finalY, topLimit), bottomLimit);
+        if (!isNaN(constrainedY)) {
+          setYPos(constrainedY);
+          localStorage.setItem("martgeni-y", constrainedY);
+        }
       }
     }
   };
@@ -441,6 +433,13 @@ export default function MartGeniFloatingAssistant({ listings = [] }) {
         ref={fabRef}
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!draggedRef.current) {
+            setIsOpen(prev => !prev);
+          }
+          draggedRef.current = false; // Reset
+        }}
         className={`martgeni-fab ${isOpen ? "open" : ""}`}
         title={`Toggle ${MARTGENI_CONFIG.aiName}`}
         aria-label={`Toggle ${MARTGENI_CONFIG.aiName} Assistant`}
