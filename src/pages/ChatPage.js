@@ -8,7 +8,6 @@ import { useAuth } from "../context/AuthContext";
 import VerifiedStudentBadge from "../components/VerifiedStudentBadge";
 import TrustedSellerBadge from "../components/TrustedSellerBadge";
 import { detectFraudRisk } from "../services/ai/aiService";
-import { usePurchaseRequest } from "../hooks/usePurchaseRequest";
 import { NotificationService } from "../services/notificationService";
 
 export default function ChatPage({ initialChatWith, setPage }) {
@@ -23,14 +22,7 @@ export default function ChatPage({ initialChatWith, setPage }) {
   const [otherProfile,   setOtherProfile]   = useState(null);
   const [fraudWarning,   setFraudWarning]   = useState(null); // { riskLevel, safetyTip, flaggedPhrases }
 
-  const { request: purchaseRequest } = usePurchaseRequest(activeChat?.buyerId, activeChat?.listingId);
 
-  const isMessagingAllowed = () => {
-    if (!activeChat) return false;
-    if (!activeChat.listingId || !activeChat.buyerId) return true;
-    if (purchaseRequest?.status === "ACCEPTED" || purchaseRequest?.status === "EXCHANGED") return true;
-    return false;
-  };
 
   useEffect(() => {
     if (!activeChat || !currentUser) {
@@ -572,31 +564,24 @@ export default function ChatPage({ initialChatWith, setPage }) {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
-            {!isMessagingAllowed() ? (
-              <div className="chat-input-bar" style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "var(--card-bg)", color: "var(--muted)", padding: "16px", fontSize: "13px", borderTop: "1px solid var(--bdr)", textAlign: "center" }}>
-                Chat becomes available after seller accepts your request.
-              </div>
-            ) : (
-              <div className="chat-input-bar">
-                <textarea
-                  ref={inputRef}
-                  className="chat-input"
-                  rows={1}
-                  placeholder="Type a message..."
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <button
-                  className={`chat-send-btn ${input.trim() ? "active" : ""}`}
-                  onClick={sendMessage}
-                  disabled={!input.trim() || sending}
-                >
-                  {sending ? "..." : "↑"}
-                </button>
-              </div>
-            )}
+            <div className="chat-input-bar">
+              <textarea
+                ref={inputRef}
+                className="chat-input"
+                rows={1}
+                placeholder="Type a message..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                className={`chat-send-btn ${input.trim() ? "active" : ""}`}
+                onClick={sendMessage}
+                disabled={!input.trim() || sending}
+              >
+                {sending ? "..." : "↑"}
+              </button>
+            </div>
           </>
         )}
       </div>
