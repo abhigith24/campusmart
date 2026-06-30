@@ -89,16 +89,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
 
   const handleCancelAcceptance = async (req) => {
     try {
-      const batch = writeBatch(db);
-      batch.update(doc(db, "purchaseRequests", req.id), {
-        status: REQUEST_STATUS.CANCELLED,
-        updatedAt: serverTimestamp()
-      });
-      batch.update(doc(db, "listings", req.listingId), {
-        status: "active",
-        updatedAt: serverTimestamp()
-      });
-      await batch.commit();
+      await transactionService.cancelPurchaseRequestAcceptance(currentUser.uid, req);
       toast("Acceptance cancelled. Listing is active again! 🔄", "success");
     } catch (err) {
       console.error(err);
