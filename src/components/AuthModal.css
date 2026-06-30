@@ -642,3 +642,117 @@ select.am-input-field {
   0% { margin-left: -40%; }
   100% { margin-left: 100%; }
 }
+
+/* Unverified Email Warning Card Styling */
+.am-unverified-card {
+  padding: 24px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 16px;
+  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.05);
+  animation: am-fade-in 0.25s ease-out;
+}
+
+.am-unverified-icon {
+  margin-bottom: 12px;
+  color: #d97706;
+}
+
+.am-unverified-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #78350f;
+  margin-bottom: 8px;
+}
+
+.am-unverified-text {
+  font-size: 14px;
+  color: #92400e;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Alert Boxes within Warning Card and Signup Success */
+.am-alert-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.am-alert-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+/* Gmail redirection and standard layout */
+.am-gmail-btn {
+  background: #ea4335 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.am-gmail-btn:hover {
+  background: #d63022 !important;
+}
+
+.am-text-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.2s;
+  text-decoration: underline;
+}
+
+.am-text-btn:hover {
+  color: #0f172a;
+}
+
+.am-text-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.am-signup-success-screen {
+  animation: am-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.am-success-email {
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+}
+
+/* Pulse animation helper for important action buttons */
+.animate-pulse {
+  animation: amPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes amPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .7; }
+}

@@ -21,32 +21,43 @@ export function useAuth() {
 }
 
 const logger = {
-  info: (msg, meta = {}) => console.info(`[AuthContext] INFO: ${msg}`, meta),
-  warn: (msg, meta = {}) => console.warn(`[AuthContext] WARN: ${msg}`, meta),
-  error: (msg, meta = {}) => console.error(`[AuthContext] ERROR: ${msg}`, meta)
+  log: (level, msg, meta = {}) => {
+    const cleanMeta = {};
+    if (meta.uid) cleanMeta.uid = meta.uid;
+    if (meta.email) cleanMeta.email = meta.email;
+    if (meta.event) cleanMeta.event = meta.event;
+    console[level](`[AuthContext] ${level.toUpperCase()}: ${msg}`, cleanMeta);
+  },
+  info: (msg, meta = {}) => logger.log("info", msg, meta),
+  warn: (msg, meta = {}) => logger.log("warn", msg, meta),
+  error: (msg, meta = {}) => logger.log("error", msg, meta)
 };
 
 const mapAuthError = (err) => {
-  logger.error("Authentication error occurred", { error: err });
-  switch (err.code) {
-    case "auth/invalid-email":
-      return new Error("The email address is invalid.");
-    case "auth/user-disabled":
-      return new Error("This user account has been disabled.");
+  logger.error("Authentication error occurred", { event: "auth_error", email: err?.email });
+  switch (err?.code) {
+    case "auth/email-not-verified":
+      return new Error("Please verify your email before logging in.");
+    case "auth/email-already-in-use":
+      return new Error("This email is already registered. Please sign in instead.");
     case "auth/user-not-found":
       return new Error("No account found with this email.");
     case "auth/wrong-password":
       return new Error("Incorrect password.");
-    case "auth/email-already-in-use":
-      return new Error("An account already exists with this email address.");
-    case "auth/weak-password":
-      return new Error("The password is too weak. Choose at least 6 characters.");
+    case "auth/invalid-credential":
+      return new Error("Incorrect email or password.");
     case "auth/too-many-requests":
-      return new Error("Too many login attempts. Please try again later.");
+      return new Error("Too many attempts. Please try again later.");
     case "auth/network-request-failed":
-      return new Error("Network error. Please check your internet connection.");
+      return new Error("Network error. Check your internet connection.");
+    case "auth/weak-password":
+      return new Error("Password must contain at least six characters.");
+    case "auth/invalid-email":
+      return new Error("Please enter a valid email address.");
+    case "auth/user-disabled":
+      return new Error("This user account has been disabled.");
     default:
-      return new Error(err.message || "Authentication failed.");
+      return new Error("Authentication failed. Please try again.");
   }
 };
 
@@ -67,9 +78,14 @@ export function AuthProvider({ children }) {
       const user = result.user;
 
       // Phase 2: Validate Google credentials exists
-      if (!user.uid || !user.email || !user.emailVerified) {
+      if (!user.uid || !user.email) {
         await signOut(auth);
         throw new Error("auth/invalid-google-account");
+      }
+
+      if (!user.emailVerified) {
+        await signOut(auth);
+        throw new Error("auth/google-email-not-verified");
       }
 
       const isNew = result._tokenResponse?.isNewUser;
@@ -77,15 +93,18 @@ export function AuthProvider({ children }) {
 
       if (isNew) {
         trackSignUp("google");
-        logger.info("Google signup success", { uid: user.uid });
+        logger.info("Google signup success", { uid: user.uid, email: user.email, event: "google_signup" });
       } else {
         trackLogin("google");
-        logger.info("Google login success", { uid: user.uid });
+        logger.info("Google login success", { uid: user.uid, email: user.email, event: "google_login" });
       }
       return result;
     } catch (err) {
+      if (err.message === "auth/google-email-not-verified") {
+        throw new Error("Your Google account email is not verified. Please verify your Google account first.");
+      }
       if (err.message === "auth/invalid-google-account") {
-        throw new Error("Your Google account is incomplete or has an unverified email address.");
+        throw new Error("Your Google account is incomplete.");
       }
       throw mapAuthError(err);
     }
@@ -109,10 +128,10 @@ export function AuthProvider({ children }) {
       setUserProfile(null);
 
       trackSignUp("email");
-      logger.info("Signup success. Verification email sent.", { uid: user.uid });
+      logger.info("Signup success. Verification email sent.", { uid: user.uid, email: user.email, event: "signup_success" });
       return result;
     } catch (err) {
-      logger.warn("Signup failure", { error: err.message });
+      logger.warn("Signup failure", { event: "signup_failure" });
       throw mapAuthError(err);
     }
   }
@@ -132,12 +151,12 @@ export function AuthProvider({ children }) {
       }
 
       trackLogin("email");
-      logger.info("Login success", { uid: user.uid });
+      logger.info("Login success", { uid: user.uid, email: user.email, event: "login_success" });
       return result;
     } catch (err) {
-      logger.warn("Login failure", { error: err.message });
+      logger.warn("Login failure", { event: "login_failure" });
       if (err.message === "auth/email-not-verified") {
-        throw new Error("Please verify your email address before logging in.");
+        throw new Error("Please verify your email before logging in.");
       }
       throw mapAuthError(err);
     }
@@ -147,19 +166,31 @@ export function AuthProvider({ children }) {
     validateStringInput(email, "email");
     try {
       await sendPasswordResetEmail(auth, email);
-      logger.info("Password reset email sent", { email });
+      logger.info("Password reset email sent", { email, event: "password_reset_sent" });
     } catch (err) {
       throw mapAuthError(err);
     }
   }
 
-  async function resendVerification() {
+  async function resendVerification(email = null, password = null) {
     try {
-      const user = auth.currentUser;
+      let user = auth.currentUser;
+      let tempSignIn = false;
+      if (!user && email && password) {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        user = result.user;
+        tempSignIn = true;
+      }
       if (user && !user.emailVerified) {
         await sendEmailVerification(user);
-        logger.info("Email verification sent", { uid: user.uid });
+        logger.info("Email verification sent", { uid: user.uid, email: user.email, event: "email_verification_sent" });
+        if (tempSignIn) {
+          await signOut(auth);
+        }
       } else {
+        if (tempSignIn) {
+          await signOut(auth);
+        }
         throw new Error("No unverified user is currently logged in.");
       }
     } catch (err) {
@@ -171,7 +202,7 @@ export function AuthProvider({ children }) {
     try {
       await signOut(auth);
       setUserProfile(null);
-      logger.info("Logout success");
+      logger.info("Logout success", { event: "logout_success" });
     } catch (err) {
       throw mapAuthError(err);
     }
@@ -188,7 +219,7 @@ export function AuthProvider({ children }) {
         return data;
       }
     } catch (err) {
-      logger.error("Error fetching user profile", { uid, error: err });
+      logger.error("Error fetching user profile", { uid, event: "fetch_profile_error" });
     }
   }
 
@@ -220,7 +251,7 @@ export function AuthProvider({ children }) {
       };
 
       await setDoc(ref, cleanProfile);
-      logger.info("User profile created", { uid: user.uid });
+      logger.info("User profile created", { uid: user.uid, email: user.email, event: "profile_created" });
     }
   }
 
@@ -249,12 +280,12 @@ export function AuthProvider({ children }) {
             // Phase 4: Removed RBAC Client-Side Migration updates. Only read database values.
             setUserProfile(docSnap.data());
           } else {
-            logger.warn("Profile document does not exist for authenticated user", { uid: user.uid });
+            logger.warn("Profile document does not exist for authenticated user", { uid: user.uid, event: "profile_not_found" });
             setUserProfile(null);
           }
           setLoading(false);
         }, (err) => {
-          logger.error("Error loading user profile via listener", { error: err });
+          logger.error("Error loading user profile via listener", { event: "profile_listener_error" });
           setUserProfile(null);
           setLoading(false);
         });

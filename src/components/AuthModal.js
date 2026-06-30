@@ -31,6 +31,12 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   const [isSignupSuccess, setIsSignupSuccess] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
 
+  // Email verification warning and resend states
+  const [unverifiedEmailError, setUnverifiedEmailError] = useState(false);
+  const [loadingResend, setLoadingResend] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState("");
+
   // Redirect welcome flow states
   const [loginResolved, setLoginResolved] = useState(false);
   const [fadeOutSuccess, setFadeOutSuccess] = useState(false);
@@ -73,7 +79,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   // Keyboard navigation highlight indexes
   const [colHighlight, setColHighlight] = useState(0);
 
-  const { signInWithGoogle, signUpWithEmail, loginWithEmail, resetPassword, logout, userProfile, currentUser } = useAuth();
+  const { signInWithGoogle, signUpWithEmail, loginWithEmail, resetPassword, resendVerification, logout, userProfile, currentUser } = useAuth();
   const toast = useToast();
   
   const modalRef = useRef(null);
@@ -268,6 +274,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
 
   // Authentication logic
   async function handleGoogle() {
+    if (loading || loadingResend) return;
     setError("");
     setLoading(true);
     authStartTimeRef.current = Date.now();
@@ -281,6 +288,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
   }
 
   async function handleLoginSubmit(e) {
+    if (loading || loadingResend) return;
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -293,13 +301,20 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
         localStorage.removeItem("rememberedEmail");
       }
       setLoginResolved(true);
-    } catch {
-      setError("Incorrect email or password");
+    } catch (err) {
+      if (err.message === "Please verify your email before logging in.") {
+        setUnverifiedEmailError(true);
+        setResendSuccess(false);
+        setResendError("");
+      } else {
+        setError(err.message);
+      }
       setLoading(false);
     }
   }
 
   async function handleSignupSubmit(e) {
+    if (loading || loadingResend) return;
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -309,25 +324,47 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
       await signUpWithEmail(email, password, name, college, finalBranch, year);
       setLoading(false);
       setIsSignupSuccess(true);
+      setResendSuccess(false);
+      setResendError("");
     } catch (e) {
-      setError(e.code === "auth/email-already-in-use" ? "Email already registered" : e.message);
+      setError(e.message);
       setLoading(false);
     }
   }
 
   async function handleReset(e) {
+    if (loading || loadingResend) return;
     e.preventDefault();
     setError("");
     setSuccessMsg("");
     setLoading(true);
     try {
       await resetPassword(resetEmail);
-      setSuccessMsg("Password reset email sent!");
-      toast("Password reset email sent!", "success");
+      const successText = "Password reset email sent successfully. Check your inbox and spam folder.";
+      setSuccessMsg(successText);
+      toast(successText, "success");
     } catch (e) {
-      setError("Failed to send reset email.");
+      setError(e.message);
     }
     setLoading(false);
+  }
+
+  async function handleResendVerification() {
+    if (loading || loadingResend) return;
+    const targetEmail = isSignupSuccess ? email : loginEmail;
+    const targetPassword = isSignupSuccess ? password : loginPass;
+
+    setLoadingResend(true);
+    setResendSuccess(false);
+    setResendError("");
+    try {
+      await resendVerification(targetEmail, targetPassword);
+      setResendSuccess(true);
+    } catch (err) {
+      setResendError(err.message);
+    } finally {
+      setLoadingResend(false);
+    }
   }
 
   const isEmailValid = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
@@ -575,25 +612,74 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
               </div>
             );
           })() : isSignupSuccess ? (
-            <div style={{ textAlign: "center", marginTop: 40 }}>
-              <div style={{ color: "#10b981", marginBottom: 16, display: "flex", justifyContent: "center" }}>
-                <CheckCircle2 size={48} />
+            <div className="am-signup-success-screen" style={{ textAlign: "center", marginTop: 24, padding: "20px 8px" }}>
+              <div className="am-success-icon" style={{ color: "#10b981", marginBottom: 20, display: "flex", justifyContent: "center" }}>
+                <CheckCircle2 size={56} />
               </div>
-              <h2 className="am-title">Account Created Successfully</h2>
-              <p className="am-subtitle">Verification email sent to <strong>{email}</strong></p>
-              <p className="am-subtitle" style={{ marginBottom: 32 }}>Please verify your email before logging in.</p>
-              <button
-                type="button"
-                className="am-submit-btn"
-                onClick={async () => {
-                  await logout();
-                  setIsSignupSuccess(false);
-                  setTab("login");
-                  setSignupStep(1);
-                }}
-              >
-                Go to Login
-              </button>
+              <h2 className="am-title" style={{ fontSize: "22px", fontWeight: "800", marginBottom: 12 }}>Account Created Successfully</h2>
+              <p className="am-subtitle" style={{ fontSize: "14px", color: "var(--muted)", marginBottom: 4 }}>
+                A verification email has been sent to:
+              </p>
+              <p className="am-success-email" style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", marginBottom: 16 }}>
+                {email}
+              </p>
+              <p className="am-subtitle" style={{ fontSize: "14px", color: "var(--muted)", marginBottom: 24 }}>
+                Please verify your email before logging in.
+              </p>
+
+              {resendSuccess && (
+                <div className="am-alert-success" role="alert" style={{ marginBottom: 16, fontSize: "13px", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                  <CheckCircle2 size={16} /> <span>Verification email sent successfully.</span>
+                </div>
+              )}
+              {resendError && (
+                <div className="am-alert-danger" role="alert" style={{ marginBottom: 16, fontSize: "13px", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                  <AlertTriangle size={16} /> <span>{resendError}</span>
+                </div>
+              )}
+
+              <div className="am-success-actions" style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+                <a
+                  href="https://mail.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="am-submit-btn"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", width: "100%", height: "48px" }}
+                  aria-label="Open Gmail"
+                >
+                  Open Email
+                </a>
+
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button
+                    type="button"
+                    className="am-outline-btn"
+                    style={{ flex: 1 }}
+                    onClick={async () => {
+                      setIsSignupSuccess(false);
+                      setTab("login");
+                      setSignupStep(1);
+                      setError("");
+                      setResendSuccess(false);
+                      setResendError("");
+                    }}
+                    aria-label="Go to login page"
+                  >
+                    Go to Login
+                  </button>
+
+                  <button
+                    type="button"
+                    className="am-outline-btn"
+                    style={{ flex: 1 }}
+                    onClick={handleResendVerification}
+                    disabled={loadingResend || loading}
+                    aria-label="Resend verification email"
+                  >
+                    {loadingResend ? <Loader2 className="spinner" size={16} /> : "Resend Verification"}
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <form 
@@ -621,71 +707,137 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                   
                   {tab === "login" && (
                     <>
-                      <button type="button" className="am-google-btn" onClick={handleGoogle} disabled={loading}>
-                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                        Continue with Google
-                      </button>
+                      {unverifiedEmailError ? (
+                        <div className="am-unverified-card" role="alert">
+                          <div className="am-unverified-icon" style={{ color: "#f59e0b", marginBottom: "16px", display: "flex", justifyContent: "center" }}>
+                            <AlertTriangle size={48} />
+                          </div>
+                          <h3 className="am-unverified-title" style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", marginBottom: "8px", textAlign: "center" }}>Your email address is not verified.</h3>
+                          <p className="am-unverified-text" style={{ fontSize: "14px", color: "#64748b", marginBottom: "20px", textAlign: "center" }}>Please verify your email before logging in.</p>
 
-                      <div className="am-divider">
-                        <span>OR</span>
-                      </div>
+                          {resendSuccess && (
+                            <div className="am-alert-success" role="alert" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#10b981", fontSize: "13px", marginTop: "8px", justifyContent: "center" }}>
+                              <CheckCircle2 size={16} /> <span>Verification email sent successfully.</span>
+                            </div>
+                          )}
+                          {resendError && (
+                            <div className="am-alert-danger" role="alert" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ef4444", fontSize: "13px", marginTop: "8px", justifyContent: "center" }}>
+                              <AlertTriangle size={16} /> <span>{resendError}</span>
+                            </div>
+                          )}
 
-                      <div className="am-input-group">
-                        <div className="am-input-wrapper">
-                          <div className="am-input-icon"><Mail size={20} /></div>
-                          <div className="am-input-content">
-                            <label className="am-input-label">College Email</label>
-                            <input 
-                              type="email"
-                              className="am-input-field"
-                              placeholder="you@yourcollege.edu"
-                              value={loginEmail}
-                              onChange={e => setLoginEmail(e.target.value)}
-                              required
-                            />
+                          <div className="am-unverified-actions" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
+                            <button
+                              type="button"
+                              className="am-submit-btn"
+                              onClick={handleResendVerification}
+                              disabled={loadingResend || loading}
+                              aria-label="Resend verification email"
+                            >
+                              {loadingResend ? <Loader2 className="spinner" size={16} /> : "Resend Verification Email"}
+                            </button>
+
+                            <a
+                              href="https://mail.google.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="am-outline-btn"
+                              style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", width: "100%", height: "48px" }}
+                              aria-label="Open Gmail"
+                            >
+                              Open Gmail
+                            </a>
+
+                            <button
+                              type="button"
+                              className="am-text-btn"
+                              style={{ background: "none", border: "none", color: "#64748b", fontWeight: "600", fontSize: "14px", cursor: "pointer", marginTop: "8px" }}
+                              onClick={() => {
+                                setUnverifiedEmailError(false);
+                                setError("");
+                                setResendSuccess(false);
+                                setResendError("");
+                              }}
+                              disabled={loadingResend || loading}
+                              aria-label="Go back to the sign in page"
+                            >
+                              Back to Sign In
+                            </button>
                           </div>
                         </div>
+                      ) : (
+                        <>
+                          <button type="button" className="am-google-btn" onClick={handleGoogle} disabled={loading || loadingResend} aria-label="Continue with Google">
+                            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Continue with Google
+                          </button>
 
-                        <div className="am-input-wrapper">
-                          <div className="am-input-icon"><Lock size={20} /></div>
-                          <div className="am-input-content">
-                            <label className="am-input-label">Password</label>
-                            <input 
-                              type={showPass ? "text" : "password"}
-                              className="am-input-field"
-                              placeholder="Enter your password"
-                              value={loginPass}
-                              onChange={e => setLoginPass(e.target.value)}
-                              required
-                            />
+                          <div className="am-divider">
+                            <span>OR</span>
                           </div>
-                          <div className="am-input-right-icon" onClick={() => setShowPass(!showPass)}>
-                            {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+
+                          <div className="am-input-group">
+                            <div className="am-input-wrapper">
+                              <div className="am-input-icon"><Mail size={20} /></div>
+                              <div className="am-input-content">
+                                <label className="am-input-label">College Email</label>
+                                <input 
+                                  type="email"
+                                  className="am-input-field"
+                                  placeholder="you@yourcollege.edu"
+                                  value={loginEmail}
+                                  onChange={e => setLoginEmail(e.target.value)}
+                                  autoComplete="email"
+                                  disabled={loading || loadingResend}
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="am-input-wrapper">
+                              <div className="am-input-icon"><Lock size={20} /></div>
+                              <div className="am-input-content">
+                                <label className="am-input-label">Password</label>
+                                <input 
+                                  type={showPass ? "text" : "password"}
+                                  className="am-input-field"
+                                  placeholder="Enter your password"
+                                  value={loginPass}
+                                  onChange={e => setLoginPass(e.target.value)}
+                                  autoComplete="current-password"
+                                  disabled={loading || loadingResend}
+                                  required
+                                />
+                              </div>
+                              <div className="am-input-right-icon" onClick={() => !loading && !loadingResend && setShowPass(!showPass)}>
+                                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      {capsLock && <div style={{ color: "#f59e0b", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> Caps lock is on</div>}
-                      {error && <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
+                          
+                          {capsLock && <div role="alert" style={{ color: "#f59e0b", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> Caps lock is on</div>}
+                          {error && <div role="alert" style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
 
-                      <div className="am-remember-row">
-                        <label className="am-checkbox-label">
-                          <div className={`am-checkbox ${rememberMe ? '' : 'unchecked'}`}>
-                            {rememberMe && <Check size={14} strokeWidth={3} />}
+                          <div className="am-remember-row">
+                            <label className="am-checkbox-label">
+                              <div className={`am-checkbox ${rememberMe ? '' : 'unchecked'}`}>
+                                {rememberMe && <Check size={14} strokeWidth={3} />}
+                              </div>
+                              <input type="checkbox" style={{ display: 'none' }} checked={rememberMe} onChange={() => !loading && !loadingResend && setRememberMe(!rememberMe)} disabled={loading || loadingResend} />
+                              Remember Me
+                            </label>
+                            <button type="button" className="am-forgot-link" onClick={() => { setTab("forgot"); setError(""); }} disabled={loading || loadingResend} aria-label="Forgot password? Reset password">Forgot password?</button>
                           </div>
-                          <input type="checkbox" style={{ display: 'none' }} checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} />
-                          Remember Me
-                        </label>
-                        <button type="button" className="am-forgot-link" onClick={() => { setTab("forgot"); setError(""); }}>Forgot password?</button>
-                      </div>
 
-                      <button type="submit" className="am-submit-btn" disabled={loading}>
-                        {loading ? <Loader2 className="spinner" size={20} /> : "Sign In"}
-                      </button>
+                          <button type="submit" className="am-submit-btn" disabled={loading || loadingResend} aria-label="Sign in with email and password">
+                            {loading ? <Loader2 className="spinner" size={20} /> : "Sign In"}
+                          </button>
 
-                      <p className="am-footer-text">
-                        By continuing, you agree to our <button type="button" onClick={() => { setPage("terms"); onClose(); }}>Terms of Service</button> and <button type="button" onClick={() => { setPage("privacy"); onClose(); }}>Privacy Policy</button>
-                      </p>
+                          <p className="am-footer-text">
+                            By continuing, you agree to our <button type="button" onClick={() => { setPage("terms"); onClose(); }} disabled={loading || loadingResend}>Terms of Service</button> and <button type="button" onClick={() => { setPage("privacy"); onClose(); }} disabled={loading || loadingResend}>Privacy Policy</button>
+                          </p>
+                        </>
+                      )}
                     </>
                   )}
 
@@ -721,7 +873,15 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><User size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">Full Name</label>
-                                <input className="am-input-field" placeholder="Enter your full name" value={name} onChange={e => setName(e.target.value)} required />
+                                <input 
+                                  className="am-input-field" 
+                                  placeholder="Enter your full name" 
+                                  value={name} 
+                                  onChange={e => setName(e.target.value)} 
+                                  autoComplete="name"
+                                  disabled={loading || loadingResend}
+                                  required 
+                                />
                               </div>
                             </div>
                             
@@ -729,7 +889,16 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><Mail size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">College Email</label>
-                                <input type="email" className="am-input-field" placeholder="you@yourcollege.edu" value={email} onChange={e => setEmail(e.target.value)} required />
+                                <input 
+                                  type="email" 
+                                  className="am-input-field" 
+                                  placeholder="you@yourcollege.edu" 
+                                  value={email} 
+                                  onChange={e => setEmail(e.target.value)} 
+                                  autoComplete="email"
+                                  disabled={loading || loadingResend}
+                                  required 
+                                />
                               </div>
                             </div>
 
@@ -737,9 +906,18 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><Lock size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">Password</label>
-                                <input type={showPass ? "text" : "password"} className="am-input-field" placeholder="Create a strong password" value={password} onChange={e => setPassword(e.target.value)} required />
+                                <input 
+                                  type={showPass ? "text" : "password"} 
+                                  className="am-input-field" 
+                                  placeholder="Create a strong password" 
+                                  value={password} 
+                                  onChange={e => setPassword(e.target.value)} 
+                                  autoComplete="new-password"
+                                  disabled={loading || loadingResend}
+                                  required 
+                                />
                               </div>
-                              <div className="am-input-right-icon" onClick={() => setShowPass(!showPass)}>
+                              <div className="am-input-right-icon" onClick={() => !loading && !loadingResend && setShowPass(!showPass)}>
                                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                               </div>
                             </div>
@@ -748,9 +926,18 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><Lock size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">Confirm Password</label>
-                                <input type={showConfirmPass ? "text" : "password"} className="am-input-field" placeholder="Confirm your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+                                <input 
+                                  type={showConfirmPass ? "text" : "password"} 
+                                  className="am-input-field" 
+                                  placeholder="Confirm your password" 
+                                  value={confirmPassword} 
+                                  onChange={e => setConfirmPassword(e.target.value)} 
+                                  autoComplete="new-password"
+                                  disabled={loading || loadingResend}
+                                  required 
+                                />
                               </div>
-                              <div className="am-input-right-icon" onClick={() => setShowConfirmPass(!showConfirmPass)}>
+                              <div className="am-input-right-icon" onClick={() => !loading && !loadingResend && setShowConfirmPass(!showConfirmPass)}>
                                 {showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
                               </div>
                             </div>
@@ -770,9 +957,9 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                             </div>
                           </div>
 
-                          {error && <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
+                          {error && <div role="alert" style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
 
-                          <button type="button" className="am-submit-btn" onClick={handleStep1Continue} style={{ marginTop: 24 }}>
+                          <button type="button" className="am-submit-btn" onClick={handleStep1Continue} style={{ marginTop: 24 }} aria-label="Continue to academic details">
                             Continue <ArrowRight size={18} />
                           </button>
                         </>
@@ -793,12 +980,13 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                                     setCollege(e.target.value);
                                     setCollegeSearchOpen(true);
                                   }}
-                                  onFocus={() => setCollegeSearchOpen(true)}
+                                  onFocus={() => !loading && !loadingResend && setCollegeSearchOpen(true)}
                                   onBlur={() => setTimeout(() => setCollegeSearchOpen(false), 200)}
+                                  disabled={loading || loadingResend}
                                   required 
                                 />
                               </div>
-                              <div className="am-input-right-icon" onClick={() => setCollegeSearchOpen(!collegeSearchOpen)} style={{ cursor: 'pointer' }}>
+                              <div className="am-input-right-icon" onClick={() => !loading && !loadingResend && setCollegeSearchOpen(!collegeSearchOpen)} style={{ cursor: 'pointer' }}>
                                 <ChevronDown size={18} style={{ transform: collegeSearchOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                               </div>
                               
@@ -826,7 +1014,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><GraduationCap size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">Branch</label>
-                                <select className="am-input-field" value={branch} onChange={e => { setBranch(e.target.value); if(e.target.value !== 'Other') setCustomBranch(""); }} required>
+                                <select className="am-input-field" value={branch} onChange={e => { setBranch(e.target.value); if(e.target.value !== 'Other') setCustomBranch(""); }} disabled={loading || loadingResend} required>
                                   <option value="" disabled hidden>Select your branch</option>
                                   {branchesList.map(b => <option key={b} value={b}>{b}</option>)}
                                 </select>
@@ -839,7 +1027,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                                 <div className="am-input-icon"><GraduationCap size={20} /></div>
                                 <div className="am-input-content">
                                   <label className="am-input-label">Your Branch Name</label>
-                                  <input className="am-input-field" placeholder="Enter branch name" value={customBranch} onChange={e => { setCustomBranch(e.target.value); setCustomBranchTouched(true); }} required />
+                                  <input className="am-input-field" placeholder="Enter branch name" value={customBranch} onChange={e => { setCustomBranch(e.target.value); setCustomBranchTouched(true); }} disabled={loading || loadingResend} required />
                                 </div>
                               </div>
                             )}
@@ -848,7 +1036,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                               <div className="am-input-icon"><Calendar size={20} /></div>
                               <div className="am-input-content">
                                 <label className="am-input-label">Year</label>
-                                <select className="am-input-field" value={year} onChange={e => setYear(e.target.value)} required>
+                                <select className="am-input-field" value={year} onChange={e => setYear(e.target.value)} disabled={loading || loadingResend} required>
                                   <option value="" disabled hidden>Select year</option>
                                   {yearsList.map(y => <option key={y} value={y}>{y}</option>)}
                                 </select>
@@ -857,13 +1045,13 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                             </div>
                           </div>
 
-                          {error && <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
+                          {error && <div role="alert" style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
 
                           <div className="am-action-row">
-                            <button type="button" className="am-outline-btn" onClick={() => { setSignupStep(1); setError(""); }}>
+                            <button type="button" className="am-outline-btn" onClick={() => { setSignupStep(1); setError(""); }} disabled={loading || loadingResend} aria-label="Go back to account details">
                               <ArrowLeft size={18} /> Back
                             </button>
-                            <button type="button" className="am-submit-btn" onClick={handleStep2Continue}>
+                            <button type="button" className="am-submit-btn" onClick={handleStep2Continue} disabled={loading || loadingResend} aria-label="Review account and academic details">
                               Review <ArrowRight size={18} />
                             </button>
                           </div>
@@ -878,7 +1066,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                                 <div className="am-review-icon"><User size={20} /></div>
                                 <span className="am-review-title">Account Details</span>
                               </div>
-                              <button type="button" className="am-review-edit" onClick={() => setSignupStep(1)}>
+                              <button type="button" className="am-review-edit" onClick={() => !loading && !loadingResend && setSignupStep(1)} disabled={loading || loadingResend} aria-label="Edit account details">
                                 Edit
                               </button>
                             </div>
@@ -900,7 +1088,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                                 <div className="am-review-icon"><GraduationCap size={20} /></div>
                                 <span className="am-review-title">Academic Details</span>
                               </div>
-                              <button type="button" className="am-review-edit" onClick={() => setSignupStep(2)}>
+                              <button type="button" className="am-review-edit" onClick={() => !loading && !loadingResend && setSignupStep(2)} disabled={loading || loadingResend} aria-label="Edit academic details">
                                 Edit
                               </button>
                             </div>
@@ -916,13 +1104,13 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                             </div>
                           </div>
 
-                          {error && <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
+                          {error && <div role="alert" style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
 
                           <div className="am-action-row">
-                            <button type="button" className="am-outline-btn" onClick={() => setSignupStep(2)}>
+                            <button type="button" className="am-outline-btn" onClick={() => setSignupStep(2)} disabled={loading || loadingResend} aria-label="Go back to academic details">
                               <ArrowLeft size={18} /> Back
                             </button>
-                            <button type="submit" className="am-submit-btn" disabled={loading}>
+                            <button type="submit" className="am-submit-btn" disabled={loading || loadingResend} aria-label="Create CampusMart account">
                               {loading ? <Loader2 className="spinner" size={20} /> : "Create Account"}
                             </button>
                           </div>
@@ -931,7 +1119,7 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                       
                       {signupStep < 3 && (
                         <p className="am-footer-text" style={{ marginTop: 24 }}>
-                          By continuing, you agree to our <button type="button" onClick={() => { setPage("terms"); onClose(); }}>Terms of Service</button> and <button type="button" onClick={() => { setPage("privacy"); onClose(); }}>Privacy Policy</button>
+                          By continuing, you agree to our <button type="button" onClick={() => { setPage("terms"); onClose(); }} disabled={loading || loadingResend}>Terms of Service</button> and <button type="button" onClick={() => { setPage("privacy"); onClose(); }} disabled={loading || loadingResend}>Privacy Policy</button>
                         </p>
                       )}
                     </>
@@ -953,16 +1141,18 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                           placeholder="you@yourcollege.edu"
                           value={resetEmail}
                           onChange={e => setResetEmail(e.target.value)}
+                          autoComplete="email"
+                          disabled={loading || loadingResend}
                           required
                         />
                       </div>
                     </div>
                   </div>
 
-                  {error && <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
-                  {successMsg && <div style={{ color: "#10b981", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} /> {successMsg}</div>}
+                  {error && <div role="alert" style={{ color: "#ef4444", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><AlertTriangle size={14} /> {error}</div>}
+                  {successMsg && <div role="alert" style={{ color: "#10b981", fontSize: 13, marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}><CheckCircle2 size={14} /> {successMsg}</div>}
                   
-                  <button type="submit" className="am-submit-btn" disabled={loading}>
+                  <button type="submit" className="am-submit-btn" disabled={loading || loadingResend} aria-label="Send password reset link">
                     {loading ? <Loader2 className="spinner" size={20} /> : "Send Reset Link"}
                   </button>
 
@@ -971,6 +1161,8 @@ export default function AuthModal({ onClose, onSuccess, setPage }) {
                     className="am-outline-btn"
                     onClick={() => { setTab("login"); setError(""); setSuccessMsg(""); }}
                     style={{ width: "100%", marginTop: 12 }}
+                    disabled={loading || loadingResend}
+                    aria-label="Go back to sign in page"
                   >
                     Back to Sign In
                   </button>
