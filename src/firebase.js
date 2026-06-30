@@ -25,14 +25,14 @@ const getEnvVar = (name) => {
 
 // Phase 1: Validate required environment variables before startup
 const REQUIRED_ENV_VARS = [
-  "REACT_APP_FIREBASE_API_KEY",
-  "REACT_APP_FIREBASE_AUTH_DOMAIN",
-  "REACT_APP_FIREBASE_PROJECT_ID",
-  "REACT_APP_FIREBASE_STORAGE_BUCKET",
-  "REACT_APP_FIREBASE_MESSAGING_SENDER_ID",
-  "REACT_APP_FIREBASE_APP_ID",
-  "REACT_APP_FIREBASE_DATABASE_URL"
-];
+ "VITE_FIREBASE_API_KEY",
+ "VITE_FIREBASE_AUTH_DOMAIN",
+ "VITE_FIREBASE_DATABASE_URL",
+ "VITE_FIREBASE_PROJECT_ID",
+ "VITE_FIREBASE_STORAGE_BUCKET",
+ "VITE_FIREBASE_MESSAGING_SENDER_ID",
+ "VITE_FIREBASE_APP_ID"
+]
 
 for (const name of REQUIRED_ENV_VARS) {
   const value = getEnvVar(name);
@@ -42,13 +42,13 @@ for (const name of REQUIRED_ENV_VARS) {
 }
 
 const firebaseConfig = {
-  apiKey: getEnvVar("REACT_APP_FIREBASE_API_KEY"),
-  authDomain: getEnvVar("REACT_APP_FIREBASE_AUTH_DOMAIN"),
-  projectId: getEnvVar("REACT_APP_FIREBASE_PROJECT_ID"),
-  storageBucket: getEnvVar("REACT_APP_FIREBASE_STORAGE_BUCKET"),
-  messagingSenderId: getEnvVar("REACT_APP_FIREBASE_MESSAGING_SENDER_ID"),
-  appId: getEnvVar("REACT_APP_FIREBASE_APP_ID"),
-  databaseURL: getEnvVar("REACT_APP_FIREBASE_DATABASE_URL")
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Phase 2: Ensure Firebase app initializes only once
