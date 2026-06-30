@@ -79,19 +79,19 @@ try {
 // Initialize Realtime Database
 const rtdbInstance = getDatabase(app);
 
-// Phase 6: Integrate Firebase App Check (reCAPTCHA v3 Site Key Check)
-const siteKey = getEnvVar("REACT_APP_RECAPTCHA_SITE_KEY");
-if (siteKey && typeof window !== "undefined") {
-  try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
-      isTokenAutoRefreshEnabled: true
-    });
-    console.info("Firebase App Check initialized successfully.");
-  } catch (err) {
-    console.warn("Failed to initialize Firebase App Check:", err.message);
-  }
-}
+//* Phase 6: Integrate Firebase App Check (reCAPTCHA v3 Site Key Check)
+//const siteKey = getEnvVar("REACT_APP_RECAPTCHA_SITE_KEY");
+//if (siteKey && typeof window !== "undefined") {
+  //try {
+    //initializeAppCheck(app, {
+      //provider: new ReCaptchaV3Provider(siteKey),
+      //isTokenAutoRefreshEnabled: true
+    //});
+    //console.info("Firebase App Check initialized successfully.");
+  //} catch (err) {
+    //console.warn("Failed to initialize Firebase App Check:", err.message);
+  //}
+//}
 
 // Clean Exports Structure (Phase 9)
 export const auth = authInstance;
