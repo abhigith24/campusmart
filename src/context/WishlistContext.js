@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   collection, query, where, onSnapshot,
-  addDoc, deleteDoc, doc, serverTimestamp
+  setDoc, deleteDoc, doc, serverTimestamp
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
@@ -126,7 +126,7 @@ export function WishlistProvider({ children }) {
         }
       } else {
         // Add
-        await addDoc(collection(db, "wishlists"), {
+        await setDoc(doc(db, "wishlists", `${currentUser.uid}_${listingId}`), {
           userId: currentUser.uid,
           listingId,
           createdAt: serverTimestamp()

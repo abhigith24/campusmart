@@ -64,6 +64,7 @@ export function AuthProvider({ children }) {
       await setDoc(ref, {
         uid: user.uid,
         name: user.displayName || extra.name || "Student",
+        displayName: user.displayName || extra.name || "Student",
         email: user.email,
         photoURL: user.photoURL || "",
         college: extra.college || "",
@@ -72,6 +73,7 @@ export function AuthProvider({ children }) {
         rating: 0,
         totalRatings: 0,
         joinedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
         role: "user"
       });
     }

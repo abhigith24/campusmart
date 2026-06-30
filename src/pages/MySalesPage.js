@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { PurchaseService } from "../services/purchaseService";
 import { useToast } from "../context/ToastContext";
 import { 
   CheckCircle, DollarSign, Tag, Clock, TrendingUp, Search, 
@@ -42,8 +43,10 @@ export default function MySalesPage({ setPage }) {
       collection(db, "purchaseRequests"),
       where("sellerId", "==", currentUser.uid)
     );
-    const unsubRequests = onSnapshot(requestsQuery, snap => {
-      setRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const unsubRequests = onSnapshot(requestsQuery, async snap => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const enriched = await PurchaseService.enrichRequests(docs);
+      setRequests(enriched);
     });
 
     return () => {

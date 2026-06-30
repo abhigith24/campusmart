@@ -38,9 +38,12 @@ export async function trackShareClick(listingId, source = "generic", refId = nul
     await addDoc(collection(db, "shareClicksLog"), {
       listingId,
       source: cleanSource,
+      platform: cleanSource,
       referrerId: refId || null,
       visitorId: visitorId || null,
-      timestamp: serverTimestamp()
+      userId: visitorId || null,
+      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp()
     });
 
   } catch (error) {
@@ -75,8 +78,11 @@ export async function trackShareAction(listingId, platform, sharerId = null) {
     await addDoc(collection(db, "shareActionsLog"), {
       listingId,
       platform: cleanPlatform,
+      action: cleanPlatform,
       sharerId: sharerId || null,
-      timestamp: serverTimestamp()
+      userId: sharerId || null,
+      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp()
     });
 
   } catch (error) {

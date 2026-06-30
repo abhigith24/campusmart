@@ -60,7 +60,8 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
     if (isStaff) {
       const marketplaceTypes = [
         'purchase_request', 'request_accepted', 'request_rejected', 'item_sold', 'request_declined', 'listing_exchanged',
-        'PURCHASE_REQUEST', 'REQUEST_ACCEPTED', 'REQUEST_DECLINED', 'LISTING_EXCHANGED', 'REVIEW_RECEIVED', 'SELLER_REPORTED'
+        'PURCHASE_REQUEST', 'REQUEST_ACCEPTED', 'REQUEST_DECLINED', 'LISTING_EXCHANGED', 'REVIEW_RECEIVED', 'SELLER_REPORTED',
+        'CHAT', 'SYSTEM'
       ];
       return !marketplaceTypes.includes(n.type);
     }
@@ -68,11 +69,24 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
     const isSeller = currentUser?.uid === n.sellerId;
     const isBuyer = currentUser?.uid === n.buyerId;
 
-    if (n.type === "PURCHASE_REQUEST" || n.type === "purchase_request") return isSeller;
+    if (n.type === "PURCHASE_REQUEST" || n.type === "purchase_request") return isSeller || isBuyer;
     if (n.type === "REQUEST_SENT") return isBuyer;
     if (n.type === "REQUEST_ACCEPTED" || n.type === "request_accepted") return isBuyer;
     if (n.type === "REQUEST_DECLINED" || n.type === "request_rejected" || n.type === "request_declined") return isBuyer;
     if (n.type === "LISTING_EXCHANGED" || n.type === "listing_exchanged" || n.type === "item_sold") return isBuyer || isSeller;
+    
+    if (n.type === "SYSTEM" || n.type === "system") {
+      if (n.title === "REVIEW_RECEIVED" || n.title === "REVIEW_REMINDER") {
+        return n.title === "REVIEW_RECEIVED" ? isSeller : isBuyer;
+      }
+      return true;
+    }
+    if (n.type === "CHAT" || n.type === "chat") {
+      if (n.title === "NEW_CHAT") return isBuyer;
+      if (n.title === "NEW_MESSAGE") return isSeller || isBuyer;
+      return true;
+    }
+
     if (n.type === "REVIEW_RECEIVED" || n.type === "SELLER_REPORTED") return isSeller;
     if (n.type === "REVIEW_REMINDER") return isBuyer;
     if (n.type === "NEW_CHAT") return isBuyer;
@@ -129,6 +143,7 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {displayNotifications.map(n => {
             const meta = TYPE_META[n.type] || { icon: "📬", label: n.type };
+            const isSeller = currentUser?.uid === n.sellerId;
             return (
               <div
                 key={n.id}
@@ -140,7 +155,11 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
                   <div className="notif-label">{meta.label}</div>
                   <div className="notif-text">
                     { (n.type === "purchase_request" || n.type === "PURCHASE_REQUEST") && (
-                      <><strong>{n.buyerName}</strong> wants to buy <strong>{n.listingTitle}</strong></>
+                      isSeller ? (
+                        <><strong>{n.buyerName}</strong> wants to buy <strong>{n.listingTitle}</strong></>
+                      ) : (
+                        <>You sent a purchase request for <strong>{n.listingTitle}</strong>.</>
+                      )
                     )}
                     { n.type === "REQUEST_SENT" && (
                       <>You sent a purchase request for <strong>{n.listingTitle}</strong>.</>
@@ -154,19 +173,19 @@ export default function NotificationsPage({ setPage, setSelectedListing }) {
                     { (n.type === "item_sold" || n.type === "LISTING_EXCHANGED") && (
                       <>Transaction marked as completed for <strong>{n.listingTitle}</strong>.</>
                     )}
-                    { n.type === "REVIEW_RECEIVED" && (
+                    { (n.type === "REVIEW_RECEIVED" || (n.type === "SYSTEM" && n.title === "REVIEW_RECEIVED")) && (
                       <>You received a new review for <strong>{n.listingTitle}</strong>.</>
                     )}
-                    { n.type === "REVIEW_REMINDER" && (
+                    { (n.type === "REVIEW_REMINDER" || (n.type === "SYSTEM" && n.title === "REVIEW_REMINDER")) && (
                       <>Don't forget to rate your experience for <strong>{n.listingTitle}</strong>!</>
                     )}
                     { n.type === "SELLER_REPORTED" && (
                       <>Your report regarding <strong>{n.listingTitle}</strong> has been received and is under review.</>
                     )}
-                    { n.type === "NEW_CHAT" && (
+                    { (n.type === "NEW_CHAT" || (n.type === "CHAT" && n.title === "NEW_CHAT")) && (
                       <>You can now chat regarding <strong>{n.listingTitle}</strong>.</>
                     )}
-                    { n.type === "NEW_MESSAGE" && (
+                    { (n.type === "NEW_MESSAGE" || (n.type === "CHAT" && n.title === "NEW_MESSAGE")) && (
                       <>You have a new message about <strong>{n.listingTitle}</strong>.</>
                     )}
                   </div>

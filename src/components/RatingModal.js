@@ -90,6 +90,15 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
     if (rating === 0) { toast("Please select a star rating", "error"); return; }
     setLoading(true);
     try {
+      const ratingRef = doc(db, "ratings", `${currentUser.uid}_${listingId}`);
+      const dupSnap = await getDoc(ratingRef);
+      if (dupSnap.exists()) {
+        toast("You have already rated this transaction. ❌", "error");
+        onClose();
+        setLoading(false);
+        return;
+      }
+
       await RatingService.submitRating({
         listingId,
         sellerId,
@@ -100,21 +109,12 @@ export default function RatingModal({ sellerId, sellerName, listingId, onClose }
         tags: selectedTags
       });
 
-      // Create notification for seller
-      await NotificationService.createNotification({
-        type: "REVIEW_RECEIVED",
-        sellerId,
-        buyerId: currentUser.uid,
-        listingId,
-        listingTitle
-      });
-
       toast("⭐ Rating submitted! Thank you.", "success");
       onClose();
     } catch (err) {
       console.error("Rating submit error:", err.code, err.message);
       if (err.code === "permission-denied") {
-        toast("Permission denied. Make sure you are logged in and eligible.", "error");
+        toast("Failed to submit rating. You have already rated this transaction or are not eligible. ❌", "error");
       } else {
         toast(`Failed to submit: ${err.message}`, "error");
       }

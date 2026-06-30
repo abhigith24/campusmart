@@ -42,6 +42,7 @@ export async function trackAIEvent(action, userId = null, meta = {}) {
   try {
     const payload = {
       action,
+      event: action,
       meta,
       createdAt: serverTimestamp(),
     };

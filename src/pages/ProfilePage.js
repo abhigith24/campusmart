@@ -4,6 +4,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { PurchaseService } from "../services/purchaseService";
 import { useToast } from "../context/ToastContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useNotifications } from "../context/NotificationsContext";
@@ -222,13 +223,15 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
       setTransactions(merged);
     };
 
-    const unsub1 = onSnapshot(q1, snap => {
-      list1 = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const unsub1 = onSnapshot(q1, async snap => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list1 = await PurchaseService.enrichRequests(docs);
       handleMerge();
     });
 
-    const unsub2 = onSnapshot(q2, snap => {
-      list2 = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const unsub2 = onSnapshot(q2, async snap => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list2 = await PurchaseService.enrichRequests(docs);
       handleMerge();
     });
 
@@ -280,7 +283,10 @@ export default function ProfilePage({ setPage, setSelectedListing, setChatWith, 
   }
 
   async function saveEdit() {
-    const payload = { name: editName };
+    const payload = { 
+      name: editName,
+      displayName: editName
+    };
     if (!isStaffProfile) {
       payload.college = editCollege;
       payload.branch = editBranch;

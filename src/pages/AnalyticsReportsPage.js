@@ -150,7 +150,7 @@ export default function AnalyticsReportsPage({ setPage }) {
         pendingReqs:   rdata.filter(r => r.status === "pending").length,
         acceptedReqs,
         totalRatings:  ratdata.length,
-        avgRating:     ratdata.length ? (ratdata.reduce((s, r) => s + r.stars, 0) / ratdata.length).toFixed(1) : "—",
+        avgRating:     ratdata.length ? (ratdata.reduce((s, r) => s + (r.rating !== undefined ? r.rating : r.stars || 0), 0) / ratdata.length).toFixed(1) : "—",
         totalChats:    cdata.length,
         activeSellers,
         requestsCount: rdata.length,

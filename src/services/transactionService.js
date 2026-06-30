@@ -1,4 +1,4 @@
-import { doc, writeBatch, serverTimestamp, getDoc, collection, arrayUnion, increment } from "firebase/firestore";
+import { doc, writeBatch, serverTimestamp, getDoc, collection, increment, runTransaction } from "firebase/firestore";
 import { db } from "../firebase";
 import { REQUEST_STATUS } from "../constants/requestStatus";
 import { LISTING_STATUS } from "../constants/listingStatus";
@@ -25,54 +25,37 @@ export const transactionService = {
       }
     }
 
-    const buyerSnap = await getDoc(doc(db, "users", buyerId));
-    const buyerData = buyerSnap.exists() ? buyerSnap.data() : {};
-
     const batch = writeBatch(db);
 
     const newRequestData = {
       buyerId,
-      buyerName,
-      buyerCollege: buyerData.college || "",
-      buyerPhoto: buyerData.photoURL || "",
       sellerId: listing.sellerId,
-      sellerName: listing.sellerName || "Seller",
       listingId: listing.id,
-      listingTitle: listing.title,
-      price: listing.price || 0,
-      isFree: listing.isFree || false,
-      listingImage: listing.images?.[0] || "",
-      sellerCollege: listing.sellerCollege || "",
       status: REQUEST_STATUS.PENDING,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      timeline: [generateTimelineEvent("REQUEST_CREATED", buyerId)]
+      updatedAt: serverTimestamp()
     };
 
     batch.set(requestRef, newRequestData);
 
     const notifRef = doc(collection(db, "notifications"));
     batch.set(notifRef, {
-      type: NOTIFICATION_TYPES.PURCHASE_REQUEST,
+      type: "PURCHASE_REQUEST",
       sellerId: listing.sellerId,
       buyerId,
-      buyerName,
       listingId: listing.id,
-      listingTitle: listing.title,
-      requestId,
+      purchaseRequestId: requestId,
       read: false,
       createdAt: serverTimestamp()
     });
 
     const notifBuyerRef = doc(collection(db, "notifications"));
     batch.set(notifBuyerRef, {
-      type: NOTIFICATION_TYPES.REQUEST_SENT,
+      type: "PURCHASE_REQUEST",
       sellerId: listing.sellerId,
       buyerId,
-      buyerName,
       listingId: listing.id,
-      listingTitle: listing.title,
-      requestId,
+      purchaseRequestId: requestId,
       read: false,
       createdAt: serverTimestamp()
     });
@@ -83,35 +66,39 @@ export const transactionService = {
   },
 
   acceptPurchaseRequest: async (sellerId, request) => {
-    const batch = writeBatch(db);
     const requestRef = doc(db, "purchaseRequests", request.id);
     const listingRef = doc(db, "listings", request.listingId);
 
-    batch.update(requestRef, {
-      status: REQUEST_STATUS.ACCEPTED,
-      updatedAt: serverTimestamp(),
-      timeline: arrayUnion(generateTimelineEvent("REQUEST_ACCEPTED", sellerId))
+    await runTransaction(db, async (transaction) => {
+      const listingSnap = await transaction.get(listingRef);
+      if (!listingSnap.exists()) {
+        throw new Error("Listing does not exist.");
+      }
+      const listingData = listingSnap.data();
+      if (listingData.status !== LISTING_STATUS.AVAILABLE) {
+        throw new Error("Listing is no longer available.");
+      }
+
+      const requestSnap = await transaction.get(requestRef);
+      if (!requestSnap.exists()) {
+        throw new Error("Purchase request does not exist.");
+      }
+      const requestData = requestSnap.data();
+      if (requestData.status !== REQUEST_STATUS.PENDING) {
+        throw new Error("Purchase request is no longer pending.");
+      }
+
+      transaction.update(requestRef, {
+        status: REQUEST_STATUS.ACCEPTED,
+        updatedAt: serverTimestamp()
+      });
+
+      transaction.update(listingRef, {
+        status: LISTING_STATUS.RESERVED,
+        updatedAt: serverTimestamp()
+      });
     });
 
-    batch.update(listingRef, {
-      status: LISTING_STATUS.RESERVED,
-      updatedAt: serverTimestamp()
-    });
-
-    const notifRef = doc(collection(db, "notifications"));
-    batch.set(notifRef, {
-      type: NOTIFICATION_TYPES.REQUEST_ACCEPTED,
-      sellerId,
-      buyerId: request.buyerId,
-      buyerName: request.buyerName,
-      listingId: request.listingId,
-      listingTitle: request.listingTitle,
-      requestId: request.id,
-      read: false,
-      createdAt: serverTimestamp()
-    });
-
-    await batch.commit();
     activityLogService.logRequestAccepted(sellerId, request.buyerId, request.listingId, request.id);
   },
 
@@ -121,21 +108,7 @@ export const transactionService = {
 
     batch.update(requestRef, {
       status: REQUEST_STATUS.DECLINED,
-      updatedAt: serverTimestamp(),
-      timeline: arrayUnion(generateTimelineEvent("REQUEST_DECLINED", sellerId))
-    });
-
-    const notifRef = doc(collection(db, "notifications"));
-    batch.set(notifRef, {
-      type: NOTIFICATION_TYPES.REQUEST_DECLINED,
-      sellerId,
-      buyerId: request.buyerId,
-      buyerName: request.buyerName,
-      listingId: request.listingId,
-      listingTitle: request.listingTitle,
-      requestId: request.id,
-      read: false,
-      createdAt: serverTimestamp()
+      updatedAt: serverTimestamp()
     });
 
     await batch.commit();
@@ -150,8 +123,7 @@ export const transactionService = {
 
     batch.update(requestRef, {
       status: REQUEST_STATUS.EXCHANGED,
-      updatedAt: serverTimestamp(),
-      timeline: arrayUnion(generateTimelineEvent("LISTING_EXCHANGED", sellerId))
+      updatedAt: serverTimestamp()
     });
 
     batch.update(listingRef, {
@@ -159,39 +131,9 @@ export const transactionService = {
       updatedAt: serverTimestamp()
     });
 
-    batch.update(sellerRef, {
-      successfulSales: increment(1)
-    });
-
-    const notifRef = doc(collection(db, "notifications"));
-    batch.set(notifRef, {
-      type: NOTIFICATION_TYPES.LISTING_EXCHANGED,
-      sellerId,
-      buyerId: request.buyerId,
-      buyerName: request.buyerName,
-      listingId: request.listingId,
-      listingTitle: request.listingTitle,
-      requestId: request.id,
-      read: false,
-      createdAt: serverTimestamp()
-    });
-
-    const reminderNotifRef = doc(collection(db, "notifications"));
-    batch.set(reminderNotifRef, {
-      type: NOTIFICATION_TYPES.REVIEW_REMINDER,
-      sellerId,
-      buyerId: request.buyerId,
-      buyerName: request.buyerName,
-      listingId: request.listingId,
-      listingTitle: request.listingTitle,
-      requestId: request.id,
-      read: false,
-      createdAt: serverTimestamp()
-    });
-
     await batch.commit();
     activityLogService.logListingExchanged(sellerId, request.buyerId, request.listingId, request.id);
-    await trustService.recalculateTrustScore(sellerId);
+
   },
 
   reportSeller: async (buyerId, buyerName, sellerId, sellerName, listingId, listingTitle, reason, description = "") => {
@@ -218,6 +160,5 @@ export const transactionService = {
 
     await batch.commit();
     activityLogService.logSellerReported(buyerId, sellerId, listingId, reason);
-    await trustService.recalculateTrustScore(sellerId);
   }
 };

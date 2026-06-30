@@ -58,6 +58,7 @@ export const ACCESS_CONFIG = {
     ],
     navigation: [
       { id: "profile", label: "Profile", icon: "User", section: "account" },
+      { id: "college-verification", label: "College Verification", icon: "ShieldCheck", section: "account", route: "college-verification" },
       { id: "settings", label: "Settings", icon: "Settings", section: "account" },
       { id: "my-listings", label: "Seller Workspace", icon: "Package", section: "marketplace" },
       { id: "wishlist", label: "Wishlist", icon: "Heart", section: "marketplace" },

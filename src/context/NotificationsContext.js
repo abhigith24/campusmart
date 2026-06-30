@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import {
-  collection, query, where, onSnapshot, doc, updateDoc, writeBatch
+  collection, query, where, onSnapshot, doc, updateDoc, writeBatch, getDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
@@ -30,7 +30,54 @@ export function NotificationsProvider({ children }) {
     );
 
     const results = {};
-    function merge(key, docs) {
+    const listingsCache = {};
+    const usersCache = {};
+
+    async function enrichNotifications(notificationsList) {
+      return await Promise.all(notificationsList.map(async (n) => {
+        let buyerData = {};
+        if (n.buyerId) {
+          if (usersCache[n.buyerId]) {
+            buyerData = usersCache[n.buyerId];
+          } else {
+            try {
+              const snap = await getDoc(doc(db, "users", n.buyerId));
+              if (snap.exists()) {
+                buyerData = snap.data();
+                usersCache[n.buyerId] = buyerData;
+              }
+            } catch (err) {
+              console.error("enrichNotifications buyer fetch error:", err);
+            }
+          }
+        }
+
+        let listingData = {};
+        if (n.listingId) {
+          if (listingsCache[n.listingId]) {
+            listingData = listingsCache[n.listingId];
+          } else {
+            try {
+              const snap = await getDoc(doc(db, "listings", n.listingId));
+              if (snap.exists()) {
+                listingData = snap.data();
+                listingsCache[n.listingId] = listingData;
+              }
+            } catch (err) {
+              console.error("enrichNotifications listing fetch error:", err);
+            }
+          }
+        }
+
+        return {
+          ...n,
+          buyerName: buyerData.name || "Unknown Student",
+          listingTitle: listingData.title || "Unknown Item",
+        };
+      }));
+    }
+
+    async function merge(key, docs) {
       results[key] = docs;
       const all = [...(results.seller || []), ...(results.buyer || [])];
       const unique = [];
@@ -41,13 +88,20 @@ export function NotificationsProvider({ children }) {
           unique.push(item);
         }
       }
-      unique.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setNotifications(unique);
+      const enriched = await enrichNotifications(unique);
+      enriched.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setNotifications(enriched);
       setLoading(false);
     }
 
-    const u1 = onSnapshot(q, s => merge("seller", s.docs.map(d => ({ id: d.id, ...d.data() }))));
-    const u2 = onSnapshot(q2, s => merge("buyer", s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const u1 = onSnapshot(q, s => merge("seller", s.docs.map(d => ({ id: d.id, ...d.data() }))), err => {
+      console.error("Notifications seller snapshot error:", err);
+      merge("seller", []);
+    });
+    const u2 = onSnapshot(q2, s => merge("buyer", s.docs.map(d => ({ id: d.id, ...d.data() }))), err => {
+      console.error("Notifications buyer snapshot error:", err);
+      merge("buyer", []);
+    });
     return () => { u1(); u2(); };
   }, [currentUser]);
 

@@ -13,7 +13,11 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return getUserData().role;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             ('role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role is string
+             ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+             : 'user';
     }
 
     function isAdmin() {
@@ -32,20 +36,42 @@ service cloud.firestore {
     // ── USERS COLLECTION ───────────────────────────────────────────────────
     
     function validateUserSchema(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.email is string && data.email.size() > 0 && data.email.size() <= 100 &&
-             data.role is string && (data.role == 'user' || data.role == 'support' || data.role == 'admin') &&
-             (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
-             (!('college' in data) || (data.college is string && data.college.size() <= 200)) &&
-             (!('branch' in data) || (data.branch is string && data.branch.size() <= 100)) &&
+      return data.keys().hasAll(['uid', 'email']) &&
+             (data.keys().hasAll(['displayName']) || data.keys().hasAll(['name'])) &&
+             (data.keys().hasAll(['createdAt']) || data.keys().hasAll(['joinedAt'])) &&
+             data.keys().hasOnly(['uid', 'displayName', 'name', 'email', 'role', 'createdAt', 'joinedAt', 'photoURL', 'bio', 'phone', 'phoneNumber', 'branch', 'semester', 'year', 'college', 'rating', 'totalRatings', 'successfulSales', 'collegeVerified', 'banned', 'lastLoginAt', 'trustScore', 'status', 'notificationSettings', 'privacySettings', 'marketplacePreferences', 'aiPreferences', 'banReason', 'collegeVerificationStatus', 'collegeVerificationNotes', 'collegeVerificationDoc', 'permissionLevel', 'department', 'accountType', 'verificationStatus', 'verificationMethod', 'collegeIdCardUrl', 'verificationSubmittedAt', 'verifiedAt', 'isAdmin']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.email is string && data.email.size() > 0 &&
+             (!('role' in data) || (data.role is string && (data.role == 'user' || data.role == 'support' || data.role == 'admin'))) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 100)) &&
+             (!('name' in data) || (data.name is string && data.name.size() >= 2 && data.name.size() <= 100)) &&
+             (!('createdAt' in data) || data.createdAt is timestamp) &&
+             (!('joinedAt' in data) || data.joinedAt is timestamp) &&
              (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 1000)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 20)) &&
+             (!('branch' in data) || (data.branch is string && data.branch.size() <= 100)) &&
+             (!('semester' in data) || (data.semester is string && data.semester.size() <= 20)) &&
+             (!('year' in data) || (data.year is string && data.year.size() <= 20)) &&
+             (!('college' in data) || (data.college is string && data.college.size() <= 200)) &&
              (!('rating' in data) || (data.rating is int || data.rating is float)) &&
              (!('totalRatings' in data) || data.totalRatings is int) &&
-             (!('joinedAt' in data) || data.joinedAt is timestamp) &&
-             (!('lastLoginAt' in data) || data.lastLoginAt is timestamp) &&
+             (!('successfulSales' in data) || data.successfulSales is int) &&
              (!('collegeVerified' in data) || data.collegeVerified is bool) &&
              (!('banned' in data) || data.banned is bool) &&
-             (!('successfulSales' in data) || data.successfulSales is int);
+             (!('lastLoginAt' in data) || data.lastLoginAt is timestamp) &&
+             (!('trustScore' in data) || data.trustScore is int) &&
+             (!('status' in data) || (data.status is string && (data.status == 'active' || data.status == 'suspended' || data.status == 'deactivated' || data.status == 'deleted'))) &&
+             (!('permissionLevel' in data) || data.permissionLevel is int) &&
+             (!('department' in data) || data.department is string) &&
+             (!('accountType' in data) || data.accountType is string) &&
+             (!('verificationStatus' in data) || (data.verificationStatus is string && (data.verificationStatus == 'approved' || data.verificationStatus == 'rejected' || data.verificationStatus == 'pending' || data.verificationStatus == 'none'))) &&
+             (!('verificationMethod' in data) || data.verificationMethod is string) &&
+             (!('collegeIdCardUrl' in data) || data.collegeIdCardUrl is string) &&
+             (!('verificationSubmittedAt' in data) || data.verificationSubmittedAt is timestamp) &&
+             (!('verifiedAt' in data) || data.verifiedAt is timestamp) &&
+             (!('isAdmin' in data) || data.isAdmin is bool);
     }
 
     match /users/{userId} {
@@ -68,14 +94,15 @@ service cloud.firestore {
           isUnchanged('joinedAt') &&
           isUnchanged('banned') &&
           isUnchanged('rating') &&
-          isUnchanged('totalRatings')
-        ) ||
-        // External buyer updates seller's rating fields (rating system only)
-        (
-          request.auth.uid != userId &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'totalRatings']) &&
-          (request.resource.data.rating is int || request.resource.data.rating is float) &&
-          request.resource.data.totalRatings is int
+          isUnchanged('totalRatings') &&
+          isUnchanged('trustScore') &&
+          isUnchanged('successfulSales') &&
+          (isUnchanged('collegeVerified') || request.resource.data.collegeVerified == false) &&
+          (isUnchanged('verificationStatus') || request.resource.data.verificationStatus == 'pending' || request.resource.data.verificationStatus == 'none') &&
+          isUnchanged('isAdmin') &&
+          isUnchanged('permissionLevel') &&
+          isUnchanged('department') &&
+          isUnchanged('accountType')
         )
       );
       
@@ -83,33 +110,107 @@ service cloud.firestore {
     }
 
     // ── LISTINGS ───────────────────────────────────────────────────────────
-    
+
+    function isSellerActive() {
+      return isAuthenticated() &&
+             (!('banned' in getUserData()) || getUserData().banned == false) &&
+             (!('status' in getUserData()) || getUserData().status != 'suspended');
+    }
+
+    function isValidListingStatusTransition(currentStatus, newStatus) {
+      return currentStatus == newStatus ||
+             (currentStatus == 'active' && (newStatus == 'reserved' || newStatus == 'sold' || newStatus == 'exchanged' || newStatus == 'removed' || newStatus == 'inactive')) ||
+             (currentStatus == 'reserved' && (newStatus == 'active' || newStatus == 'sold' || newStatus == 'exchanged' || newStatus == 'removed')) ||
+             (currentStatus == 'inactive' && (newStatus == 'active' || newStatus == 'removed'));
+    }
+
     function validateListingSchema(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
-             (data.price is int || data.price is float) && data.price >= 0 &&
-             data.sellerId is string &&
-             data.images is list && data.images.size() > 0 && data.images.size() <= 10 &&
-             data.status is string && (data.status == 'active' || data.status == 'reserved' || data.status == 'sold' || data.status == 'exchanged' || data.status == 'removed' || data.status == 'inactive') &&
+      return data.keys().hasAll(['sellerId', 'title', 'description', 'category', 'condition', 'listingType', 'status', 'price', 'images', 'createdAt']) &&
+             data.keys().hasOnly(['sellerId', 'title', 'description', 'category', 'condition', 'listingType', 'status', 'price', 'images', 'createdAt', 'updatedAt', 'rentPerDay', 'views', 'tags', 'location', 'negotiable', 'isFree', 'meetupSpot', 'sellerName', 'sellerCollege', 'sellerRating', 'collegeVerified', 'isVerified', 'sellerSuccessfulSales', 'rentMinDays', 'rentMaxDays', 'rentDeposit', 'flagged', 'flagReason', 'flaggedAt', 'flaggedBy', 'sharesCount', 'platformShares', 'clicksCount', 'platformClicks', 'referralStats', 'id']) &&
+             data.sellerId is string && data.sellerId.size() > 0 && data.sellerId.size() <= 128 &&
+             data.title is string && data.title.size() >= 3 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.category is string && (
+               data.category == 'Books' || data.category == 'Textbooks' || data.category == 'Notes' || data.category == 'Electronics' ||
+               data.category == 'Lab Equipment' || data.category == 'Stationery' || data.category == 'Fashion' ||
+               data.category == 'Hostel' || data.category == 'Sports' || data.category == 'Gaming' ||
+               data.category == 'Musical Instruments' || data.category == 'Photography' || data.category == 'Misc' || data.category == 'Other'
+             ) &&
+             data.condition is string && (
+               data.condition == 'New' || data.condition == 'Good' || data.condition == 'Fair' || data.condition == 'Old'
+             ) &&
+             data.listingType is string && (
+               data.listingType == 'sell' || data.listingType == 'rent' || data.listingType == 'share' || data.listingType == 'donate' || data.listingType == 'free'
+             ) &&
+             data.status is string && (
+               data.status == 'active' || data.status == 'reserved' || data.status == 'sold' || data.status == 'exchanged' || data.status == 'removed' || data.status == 'inactive'
+             ) &&
+             (data.price is int || data.price is float) && data.price >= 0 && data.price <= 10000000 &&
+             (!('rentPerDay' in data) || data.rentPerDay == 0 || data.listingType == 'rent') &&
+             (!('rentPerDay' in data) || ((data.rentPerDay is int || data.rentPerDay is float) && data.rentPerDay >= 0 && data.rentPerDay <= 100000)) &&
+             data.images is list && data.images.size() >= 0 && data.images.size() <= 10 &&
+             (!('id' in data) || (data.id is string && data.id.size() > 0 && data.id.size() <= 128)) &&
+             (data.images.size() == 0 || (
+               data.images[0] is string && data.images[0].size() <= 1000 &&
+               (data.images.size() < 2 || (data.images[1] is string && data.images[1].size() <= 1000)) &&
+               (data.images.size() < 3 || (data.images[2] is string && data.images[2].size() <= 1000)) &&
+               (data.images.size() < 4 || (data.images[3] is string && data.images[3].size() <= 1000)) &&
+               (data.images.size() < 5 || (data.images[4] is string && data.images[4].size() <= 1000)) &&
+               (data.images.size() < 6 || (data.images[5] is string && data.images[5].size() <= 1000)) &&
+               (data.images.size() < 7 || (data.images[6] is string && data.images[6].size() <= 1000)) &&
+               (data.images.size() < 8 || (data.images[7] is string && data.images[7].size() <= 1000)) &&
+               (data.images.size() < 9 || (data.images[8] is string && data.images[8].size() <= 1000)) &&
+               (data.images.size() < 10 || (data.images[9] is string && data.images[9].size() <= 1000))
+             )) &&
              data.createdAt is timestamp &&
-             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
-             (!('category' in data) || data.category is string) &&
-             (!('condition' in data) || data.condition is string) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
              (!('views' in data) || data.views is int) &&
-             (!('listingType' in data) || (data.listingType == 'sell' || data.listingType == 'rent' || data.listingType == 'share' || data.listingType == 'donate')) &&
-             (!('rentPerDay' in data) || (data.rentPerDay is int || data.rentPerDay is float));
+             (!('tags' in data) || data.tags is list) &&
+             (!('location' in data) || (data.location is string && data.location.size() <= 200)) &&
+             (!('negotiable' in data) || data.negotiable is bool) &&
+             (!('isFree' in data) || data.isFree is bool) &&
+             (!('meetupSpot' in data) || (data.meetupSpot is string && data.meetupSpot.size() <= 200)) &&
+             (!('sellerName' in data) || data.sellerName is string) &&
+             (!('sellerCollege' in data) || data.sellerCollege is string) &&
+             (!('sellerRating' in data) || (data.sellerRating is int || data.sellerRating is float)) &&
+             (!('collegeVerified' in data) || data.collegeVerified is bool) &&
+             (!('isVerified' in data) || data.isVerified is bool) &&
+             (!('sellerSuccessfulSales' in data) || data.sellerSuccessfulSales is int) &&
+             (!('rentMinDays' in data) || data.rentMinDays is int) &&
+             (!('rentMaxDays' in data) || data.rentMaxDays is int) &&
+             (!('rentDeposit' in data) || (data.rentDeposit is int || data.rentDeposit is float)) &&
+             (!('flagged' in data) || data.flagged is bool) &&
+             (!('flagReason' in data) || data.flagReason is string) &&
+             (!('flaggedAt' in data) || data.flaggedAt is timestamp) &&
+             (!('flaggedBy' in data) || data.flaggedBy is string) &&
+             (!('sharesCount' in data) || data.sharesCount is int) &&
+             (!('platformShares' in data) || data.platformShares is map) &&
+             (!('clicksCount' in data) || data.clicksCount is int) &&
+             (!('platformClicks' in data) || data.platformClicks is map) &&
+             (!('referralStats' in data) || data.referralStats is map);
     }
 
     match /listings/{listingId} {
       allow read: if true;
       
-      allow create: if isAuthenticated() 
-        && request.resource.data.sellerId == request.auth.uid
-        && validateListingSchema(request.resource.data);
+      allow create: if isAuthenticated() &&
+        request.resource.data.sellerId == request.auth.uid &&
+        validateListingSchema(request.resource.data) &&
+        isSellerActive() &&
+        (!('sellerRating' in request.resource.data) || request.resource.data.sellerRating == 0) &&
+        (!('sellerSuccessfulSales' in request.resource.data) || request.resource.data.sellerSuccessfulSales == 0) &&
+        (!('collegeVerified' in request.resource.data) || request.resource.data.collegeVerified == false) &&
+        (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false) &&
+        (!('flagged' in request.resource.data) || request.resource.data.flagged == false);
         
       allow update: if (
-        // Increment views (anyone)
+        // Increment views safely by exactly 1 (anyone)
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
-        request.resource.data.views is int
+        request.resource.data.views is int &&
+        (
+          (!('views' in resource.data) && request.resource.data.views == 1) ||
+          ('views' in resource.data && request.resource.data.views == resource.data.views + 1)
+        )
       ) || (
         isAuthenticated() && (
           // Admin override
@@ -119,7 +220,17 @@ service cloud.firestore {
             resource.data.sellerId == request.auth.uid &&
             validateListingSchema(request.resource.data) &&
             isUnchanged('sellerId') &&
-            isUnchanged('createdAt')
+            isUnchanged('createdAt') &&
+            isSellerActive() &&
+            isValidListingStatusTransition(resource.data.status, request.resource.data.status) &&
+            isUnchanged('sellerRating') &&
+            isUnchanged('sellerSuccessfulSales') &&
+            isUnchanged('collegeVerified') &&
+            isUnchanged('isVerified') &&
+            isUnchanged('flagged') &&
+            isUnchanged('flagReason') &&
+            isUnchanged('flaggedAt') &&
+            isUnchanged('flaggedBy')
           )
         )
       );
@@ -129,8 +240,22 @@ service cloud.firestore {
 
     // ── CHATS ──────────────────────────────────────────────────────────────
     
+    function validateMessageSchema(data) {
+      return data.keys().hasAll(['senderId', 'createdAt']) &&
+             (data.keys().hasAll(['message']) || data.keys().hasAll(['text'])) &&
+             data.keys().hasOnly(['senderId', 'message', 'text', 'type', 'createdAt', 'attachments', 'senderName']) &&
+             data.senderId is string && data.senderId.size() > 0 && data.senderId.size() <= 128 &&
+             (!('message' in data) || (data.message is string && data.message.size() <= 2000)) &&
+             (!('text' in data) || (data.text is string && data.text.size() <= 2000)) &&
+             (!('type' in data) || (data.type is string && (data.type == 'text' || data.type == 'image' || data.type == 'file' || data.type == 'system'))) &&
+             data.createdAt is timestamp &&
+             (!('attachments' in data) || (data.attachments is list && data.attachments.size() <= 5)) &&
+             (!('senderName' in data) || data.senderName is string);
+    }
+
     match /chats/{chatId} {
       allow read: if isAuthenticated() && (
+        resource == null ||
         request.auth.uid in resource.data.participants || isAdmin()
       );
       
@@ -154,6 +279,7 @@ service cloud.firestore {
         
         allow create: if isAuthenticated() 
           && request.resource.data.senderId == request.auth.uid
+          && validateMessageSchema(request.resource.data)
           && (
             request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants ||
             chatId.split('_')[0] == request.auth.uid ||
@@ -166,9 +292,21 @@ service cloud.firestore {
 
     // ── WISHLISTS ──────────────────────────────────────────────────────────
     
+    function validateWishlistSchema(data) {
+      return data.keys().hasAll(['userId', 'listingId', 'createdAt']) &&
+             data.keys().hasOnly(['userId', 'listingId', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.listingId is string && data.listingId.size() > 0 && data.listingId.size() <= 128 &&
+             data.createdAt is timestamp;
+    }
+
     match /wishlists/{wishlistId} {
       allow create: if isAuthenticated() &&
-        request.auth.uid == request.resource.data.userId;
+        wishlistId == request.resource.data.userId + '_' + request.resource.data.listingId &&
+        validateWishlistSchema(request.resource.data) &&
+        request.auth.uid == request.resource.data.userId &&
+        exists(/databases/$(database)/documents/listings/$(request.resource.data.listingId)) &&
+        get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.status == 'active';
         
       allow read: if isAuthenticated() && (
         resource == null ||
@@ -181,28 +319,61 @@ service cloud.firestore {
 
     // ── NOTIFICATIONS ──────────────────────────────────────────────────────
     
+    function validateNotificationSchema(data) {
+      return data.keys().hasAll(['type', 'buyerId', 'sellerId', 'createdAt', 'read']) &&
+             data.keys().hasOnly(['type', 'buyerId', 'sellerId', 'createdAt', 'read', 'listingId', 'purchaseRequestId', 'title', 'message', 'actionUrl', 'readAt']) &&
+             data.type is string && (
+               data.type == 'PURCHASE_REQUEST' || data.type == 'REQUEST_ACCEPTED' || data.type == 'REQUEST_DECLINED' || data.type == 'REQUEST_CANCELLED' ||
+               data.type == 'CHAT' || data.type == 'SYSTEM' || data.type == 'REPORT' || data.type == 'ACCOUNT' || data.type == 'VERIFICATION' ||
+               data.type == 'LISTING_EXCHANGED' || data.type == 'REVIEW_RECEIVED' || data.type == 'SELLER_REPORTED' || data.type == 'NEW_MESSAGE' ||
+               data.type == 'NEW_CHAT' || data.type == 'REVIEW_REMINDER'
+             ) &&
+             data.buyerId is string && data.buyerId.size() > 0 && data.buyerId.size() <= 128 &&
+             data.sellerId is string && data.sellerId.size() > 0 && data.sellerId.size() <= 128 &&
+             data.createdAt is timestamp &&
+             data.read is bool &&
+             (!('listingId' in data) || (data.listingId is string && data.listingId.size() > 0 && data.listingId.size() <= 128)) &&
+             (!('purchaseRequestId' in data) || (data.purchaseRequestId is string && data.purchaseRequestId.size() > 0 && data.purchaseRequestId.size() <= 128)) &&
+             (!('title' in data) || (data.title is string && data.title.size() >= 3 && data.title.size() <= 100)) &&
+             (!('message' in data) || (data.message is string && data.message.size() >= 5 && data.message.size() <= 1000)) &&
+             (!('actionUrl' in data) || (data.actionUrl is string && data.actionUrl.size() <= 2083)) &&
+             (!('readAt' in data) || data.readAt is timestamp);
+    }
+
     match /notifications/{notifId} {
       allow read: if isAuthenticated() && (
-        resource == null ||
-        request.auth.uid == resource.data.sellerId ||
-        request.auth.uid == resource.data.buyerId ||
+        ( 'sellerId' in resource.data && request.auth.uid == resource.data.sellerId ) ||
+        ( 'buyerId' in resource.data && request.auth.uid == resource.data.buyerId ) ||
         isAdmin()
       );
       
-      allow create: if isAuthenticated() && (
-        request.resource.data.buyerId == request.auth.uid ||
-        request.resource.data.sellerId == request.auth.uid ||
-        isAdmin()
-      );
-      
-      allow update: if isAuthenticated() && (
-        // Only recipient (either buyer or seller) may mark notifications as read
+      allow create: if isAuthenticated() &&
+        validateNotificationSchema(request.resource.data) &&
+        (request.auth.uid == request.resource.data.buyerId || request.auth.uid == request.resource.data.sellerId) &&
         (
-          (request.auth.uid == resource.data.sellerId || request.auth.uid == resource.data.buyerId) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
-          request.resource.data.read is bool
-        ) ||
-        isAdmin()
+          request.resource.data.type == 'PURCHASE_REQUEST' ||
+          request.resource.data.type == 'CHAT' ||
+          request.resource.data.type == 'NEW_CHAT' ||
+          request.resource.data.type == 'NEW_MESSAGE' ||
+          request.resource.data.type == 'REQUEST_CANCELLED' ||
+          isAdmin()
+        ) &&
+        (!('listingId' in request.resource.data) || exists(/databases/$(database)/documents/listings/$(request.resource.data.listingId))) &&
+        (!('purchaseRequestId' in request.resource.data) || (
+          exists(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)) &&
+          request.resource.data.buyerId == get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.buyerId &&
+          request.resource.data.sellerId == get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.sellerId &&
+          request.resource.data.listingId == get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.listingId
+        ));
+        
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          ( ( 'sellerId' in resource.data && request.auth.uid == resource.data.sellerId ) || ( 'buyerId' in resource.data && request.auth.uid == resource.data.buyerId ) ) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']) &&
+          request.resource.data.read is bool &&
+          (!('readAt' in request.resource.data) || request.resource.data.readAt is timestamp)
+        )
       );
       
       allow delete: if isAdmin();
@@ -216,6 +387,23 @@ service cloud.firestore {
              (currentStatus == 'ACCEPTED' && (newStatus == 'EXCHANGED' || newStatus == 'CANCELLED'));
     }
 
+    function validatePurchaseRequestSchema(data) {
+      return data.keys().hasAll(['buyerId', 'sellerId', 'listingId', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['buyerId', 'sellerId', 'listingId', 'status', 'createdAt', 'updatedAt', 'message', 'negotiatedPrice']) &&
+             data.buyerId is string && data.buyerId.size() > 0 && data.buyerId.size() <= 128 &&
+             data.sellerId is string && data.sellerId.size() > 0 && data.sellerId.size() <= 128 &&
+             data.listingId is string && data.listingId.size() > 0 && data.listingId.size() <= 128 &&
+             data.status is string && (data.status == 'PENDING' || data.status == 'ACCEPTED' || data.status == 'DECLINED' || data.status == 'CANCELLED' || data.status == 'EXCHANGED') &&
+             data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('message' in data) || (data.message is string && data.message.size() >= 0 && data.message.size() <= 1000)) &&
+             (!('negotiatedPrice' in data) || (
+               (data.negotiatedPrice is int || data.negotiatedPrice is float) &&
+               data.negotiatedPrice >= 0 &&
+               data.negotiatedPrice <= 1000000
+             ));
+    }
+
     match /purchaseRequests/{requestId} {
       allow read: if isAuthenticated() && (
         resource == null ||
@@ -225,20 +413,35 @@ service cloud.firestore {
       );
       
       allow create: if isAuthenticated() &&
+        validatePurchaseRequestSchema(request.resource.data) &&
         request.resource.data.buyerId == request.auth.uid &&
-        request.resource.data.status == 'PENDING';
+        request.resource.data.status == 'PENDING' &&
+        exists(/databases/$(database)/documents/listings/$(request.resource.data.listingId)) &&
+        request.resource.data.sellerId == get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.sellerId &&
+        request.resource.data.buyerId != request.resource.data.sellerId &&
+        get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.status != 'sold' &&
+        get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.status != 'inactive' &&
+        get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.status != 'removed';
         
       allow update: if isAuthenticated() && (
-        // Allow transition changes
+        isAdmin() ||
         (
-          (request.auth.uid == resource.data.sellerId || request.auth.uid == resource.data.buyerId) &&
+          validatePurchaseRequestSchema(request.resource.data) &&
           isValidPurchaseRequestTransition(resource.data.status, request.resource.data.status) &&
           isUnchanged('buyerId') &&
           isUnchanged('sellerId') &&
           isUnchanged('listingId') &&
-          isUnchanged('createdAt')
-        ) ||
-        isAdmin()
+          isUnchanged('createdAt') &&
+          (
+            (request.auth.uid == resource.data.buyerId && request.resource.data.status == 'CANCELLED') ||
+            (request.auth.uid == resource.data.sellerId && (
+              request.resource.data.status == 'ACCEPTED' ||
+              request.resource.data.status == 'DECLINED' ||
+              request.resource.data.status == 'EXCHANGED' ||
+              request.resource.data.status == 'CANCELLED'
+            ))
+          )
+        )
       );
       
       allow delete: if isAdmin();
@@ -246,16 +449,33 @@ service cloud.firestore {
 
     // ── RATINGS ────────────────────────────────────────────────────────────
     
+    function validateRatingSchema(data) {
+      return data.keys().hasAll(['buyerId', 'sellerId', 'listingId', 'purchaseRequestId', 'rating', 'review', 'createdAt']) &&
+             data.keys().hasOnly(['buyerId', 'sellerId', 'listingId', 'purchaseRequestId', 'rating', 'review', 'createdAt', 'updatedAt']) &&
+             data.buyerId is string && data.buyerId.size() > 0 && data.buyerId.size() <= 128 &&
+             data.sellerId is string && data.sellerId.size() > 0 && data.sellerId.size() <= 128 &&
+             data.listingId is string && data.listingId.size() > 0 && data.listingId.size() <= 128 &&
+             data.purchaseRequestId is string && data.purchaseRequestId.size() > 0 && data.purchaseRequestId.size() <= 128 &&
+             data.rating is int && data.rating >= 1 && data.rating <= 5 &&
+             data.review is string && data.review.size() >= 5 && data.review.size() <= 1000 &&
+             data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
     match /ratings/{ratingId} {
       allow read: if isAuthenticated();
       
       allow create: if isAuthenticated() &&
-        request.auth.uid == request.resource.data.buyerId &&
-        request.resource.data.rating is int &&
-        request.resource.data.rating >= 1 &&
-        request.resource.data.rating <= 5 &&
-        request.resource.data.review is string &&
-        request.resource.data.review.size() <= 500;
+        ratingId == request.resource.data.purchaseRequestId &&
+        !exists(/databases/$(database)/documents/ratings/$(ratingId)) &&
+        validateRatingSchema(request.resource.data) &&
+        request.resource.data.buyerId == request.auth.uid &&
+        request.resource.data.buyerId != request.resource.data.sellerId &&
+        exists(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)) &&
+        get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.buyerId == request.resource.data.buyerId &&
+        get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.sellerId == request.resource.data.sellerId &&
+        get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.listingId == request.resource.data.listingId &&
+        get(/databases/$(database)/documents/purchaseRequests/$(request.resource.data.purchaseRequestId)).data.status == 'EXCHANGED';
         
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -263,75 +483,417 @@ service cloud.firestore {
 
     // ── REPORTS ────────────────────────────────────────────────────────────
     
+    function validateReportSchema(data) {
+      return data.keys().hasAll(['reporterId', 'targetId', 'targetType', 'reason', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['reporterId', 'targetId', 'targetType', 'reason', 'status', 'createdAt', 'description', 'evidenceUrls', 'moderatorNotes', 'resolvedAt', 'updatedAt']) &&
+             data.reporterId is string && data.reporterId.size() > 0 && data.reporterId.size() <= 128 &&
+             data.targetId is string && data.targetId.size() > 0 && data.targetId.size() <= 128 &&
+             data.targetType is string && (data.targetType == 'listing' || data.targetType == 'seller' || data.targetType == 'user' || data.targetType == 'purchaseRequest' || data.targetType == 'chat') &&
+             data.reason is string && data.reason.size() > 0 && data.reason.size() <= 200 &&
+             (data.reason == 'Spam' || data.reason == 'Fraud' || data.reason == 'Fake Listing' || data.reason == 'Harassment' || data.reason == 'Copyright' || data.reason == 'Other') &&
+             data.status is string && (data.status == 'OPEN' || data.status == 'UNDER_REVIEW' || data.status == 'RESOLVED' || data.status == 'REJECTED') &&
+             data.createdAt is timestamp &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             (!('moderatorNotes' in data) || (data.moderatorNotes is string && data.moderatorNotes.size() <= 5000)) &&
+             (!('resolvedAt' in data) || data.resolvedAt is timestamp) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('evidenceUrls' in data) || (
+               data.evidenceUrls is list &&
+               data.evidenceUrls.size() <= 10 &&
+               (data.evidenceUrls.size() == 0 || (
+                 data.evidenceUrls[0] is string && data.evidenceUrls[0].size() <= 1000 &&
+                 (data.evidenceUrls.size() < 2 || (data.evidenceUrls[1] is string && data.evidenceUrls[1].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 3 || (data.evidenceUrls[2] is string && data.evidenceUrls[2].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 4 || (data.evidenceUrls[3] is string && data.evidenceUrls[3].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 5 || (data.evidenceUrls[4] is string && data.evidenceUrls[4].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 6 || (data.evidenceUrls[5] is string && data.evidenceUrls[5].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 7 || (data.evidenceUrls[6] is string && data.evidenceUrls[6].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 8 || (data.evidenceUrls[7] is string && data.evidenceUrls[7].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 9 || (data.evidenceUrls[8] is string && data.evidenceUrls[8].size() <= 1000)) &&
+                 (data.evidenceUrls.size() < 10 || (data.evidenceUrls[9] is string && data.evidenceUrls[9].size() <= 1000))
+               ))
+             ));
+    }
+
+    function validateSellerReportSchema(data) {
+      return data.keys().hasAll(['reportId', 'reporterId', 'reporterName', 'sellerId', 'sellerName', 'listingId', 'productId', 'productTitle', 'reason', 'description', 'status', 'createdAt', 'updatedAt', 'reviewedBy', 'moderatorNotes']) &&
+             data.keys().hasOnly(['reportId', 'reporterId', 'reporterName', 'sellerId', 'sellerName', 'listingId', 'productId', 'productTitle', 'reason', 'description', 'status', 'createdAt', 'updatedAt', 'reviewedBy', 'moderatorNotes']) &&
+             data.reportId is string &&
+             data.reporterId is string && data.reporterId.size() > 0 &&
+             data.reporterName is string &&
+             data.sellerId is string && data.sellerId.size() > 0 &&
+             data.sellerName is string &&
+             data.listingId is string &&
+             data.productId is string &&
+             data.productTitle is string &&
+             data.reason is string && data.reason.size() <= 200 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.status is string && (data.status == 'Pending' || data.status == 'Action Taken' || data.status == 'Under Review' || data.status == 'Resolved' || data.status == 'Rejected') &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.reviewedBy == null || data.reviewedBy is string) &&
+             data.moderatorNotes is list;
+    }
+
+    function isValidReportTarget(targetId, targetType) {
+      return (targetType == 'listing' && exists(/databases/$(database)/documents/listings/$(targetId))) ||
+             ((targetType == 'seller' || targetType == 'user') && exists(/databases/$(database)/documents/users/$(targetId))) ||
+             (targetType == 'purchaseRequest' && exists(/databases/$(database)/documents/purchaseRequests/$(targetId))) ||
+             (targetType == 'chat' && exists(/databases/$(database)/documents/chats/$(targetId)));
+    }
+
     match /reports/{reportId} {
-      allow create: if isAuthenticated();
-      allow read, update, delete: if isAdmin();
+      allow create: if isAuthenticated() &&
+        validateReportSchema(request.resource.data) &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == 'OPEN' &&
+        isValidReportTarget(request.resource.data.targetId, request.resource.data.targetType);
+        
+      allow read: if isSupportOrAdmin();
+      
+      allow update: if isSupportOrAdmin() &&
+        validateReportSchema(request.resource.data) &&
+        isUnchanged('reporterId') &&
+        isUnchanged('targetId') &&
+        isUnchanged('targetType') &&
+        isUnchanged('reason') &&
+        isUnchanged('createdAt');
+        
+      allow delete: if isAdmin();
     }
     
     match /sellerReports/{reportId} {
-      allow create: if isAuthenticated();
-      allow read, update: if isSupportOrAdmin();
+      allow create: if isAuthenticated() &&
+        validateSellerReportSchema(request.resource.data) &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == 'Pending' &&
+        exists(/databases/$(database)/documents/listings/$(request.resource.data.listingId)) &&
+        exists(/databases/$(database)/documents/users/$(request.resource.data.sellerId)) &&
+        request.resource.data.reporterId != request.resource.data.sellerId;
+        
+      allow read: if isSupportOrAdmin();
+      
+      allow update: if isSupportOrAdmin() &&
+        validateSellerReportSchema(request.resource.data) &&
+        isUnchanged('reportId') &&
+        isUnchanged('reporterId') &&
+        isUnchanged('reporterName') &&
+        isUnchanged('sellerId') &&
+        isUnchanged('sellerName') &&
+        isUnchanged('listingId') &&
+        isUnchanged('productId') &&
+        isUnchanged('productTitle') &&
+        isUnchanged('reason') &&
+        isUnchanged('description') &&
+        isUnchanged('createdAt');
+        
       allow delete: if isAdmin();
     }
 
     // ── ACTIVITY LOGS ──────────────────────────────────────────────────────
     
+    function validateActivityLogSchema(data) {
+      return data.keys().hasAll(['action', 'createdAt']) &&
+             (data.keys().hasAll(['userId']) || data.keys().hasAll(['actorId'])) &&
+             data.keys().hasOnly(['action', 'actorId', 'userId', 'targetUserId', 'listingId', 'requestId', 'metadata', 'createdAt']) &&
+             data.action is string && data.action.size() > 0 && data.action.size() <= 100 &&
+             (!('actorId' in data) || (data.actorId is string && data.actorId.size() > 0 && data.actorId.size() <= 128)) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128)) &&
+             (!('targetUserId' in data) || data.targetUserId == null || (data.targetUserId is string && data.targetUserId.size() <= 128)) &&
+             (!('listingId' in data) || data.listingId == null || (data.listingId is string && data.listingId.size() <= 128)) &&
+             (!('requestId' in data) || data.requestId == null || (data.requestId is string && data.requestId.size() <= 128)) &&
+             (!('metadata' in data) || data.metadata is map) &&
+             data.createdAt is timestamp;
+    }
+
     match /activityLogs/{logId} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        validateActivityLogSchema(request.resource.data) &&
+        (
+          ('actorId' in request.resource.data && request.resource.data.actorId == request.auth.uid) ||
+          ('userId' in request.resource.data && request.resource.data.userId == request.auth.uid)
+        );
       allow read: if isAdmin();
       allow update, delete: if false;
     }
 
-    // ── SUPPORT TICKETS ────────────────────────────────────────────────────
-    
+    // ── SUPPORT SYSTEM ─────────────────────────────────────────────────────
+
+    function isValidSupportTicketTransition(currentStatus, newStatus) {
+      return currentStatus == newStatus ||
+             (currentStatus == 'OPEN' && newStatus == 'IN_PROGRESS') ||
+             (currentStatus == 'IN_PROGRESS' && newStatus == 'WAITING_FOR_USER') ||
+             (currentStatus == 'WAITING_FOR_USER' && newStatus == 'RESOLVED') ||
+             (currentStatus == 'RESOLVED' && newStatus == 'CLOSED');
+    }
+
+    function validateSupportTicketSchema(data) {
+      return data.keys().hasAll(['userId', 'subject', 'category', 'message', 'status', 'priority', 'createdAt']) &&
+             data.keys().hasOnly(['userId', 'subject', 'category', 'message', 'status', 'priority', 'createdAt', 'assignedTo', 'resolution', 'internalNotes', 'updatedAt', 'resolvedAt', 'screenshots', 'ticketType', 'updatedBy', 'action']) &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.subject is string && data.subject.size() >= 5 && data.subject.size() <= 200 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 100 &&
+             data.message is string && data.message.size() >= 10 && data.message.size() <= 5000 &&
+             data.status is string && (data.status == 'OPEN' || data.status == 'IN_PROGRESS' || data.status == 'WAITING_FOR_USER' || data.status == 'RESOLVED' || data.status == 'CLOSED') &&
+             data.priority is string && (data.priority == 'LOW' || data.priority == 'MEDIUM' || data.priority == 'HIGH' || data.priority == 'URGENT') &&
+             data.createdAt is timestamp &&
+             (!('assignedTo' in data) || (data.assignedTo is string && data.assignedTo.size() <= 128)) &&
+             (!('resolution' in data) || (data.resolution is string && data.resolution.size() <= 5000)) &&
+             (!('internalNotes' in data) || (data.internalNotes is string && data.internalNotes.size() <= 5000)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('resolvedAt' in data) || data.resolvedAt is timestamp) &&
+             (!('ticketType' in data) || (data.ticketType is string && data.ticketType.size() <= 100)) &&
+             (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 128)) &&
+             (!('action' in data) || (data.action is string && data.action.size() <= 200)) &&
+             (!('screenshots' in data) || (
+               data.screenshots is list &&
+               data.screenshots.size() <= 5 &&
+               (data.screenshots.size() == 0 || (
+                 data.screenshots[0] is string && data.screenshots[0].size() <= 1000 &&
+                 (data.screenshots.size() < 2 || (data.screenshots[1] is string && data.screenshots[1].size() <= 1000)) &&
+                 (data.screenshots.size() < 3 || (data.screenshots[2] is string && data.screenshots[2].size() <= 1000)) &&
+                 (data.screenshots.size() < 4 || (data.screenshots[3] is string && data.screenshots[3].size() <= 1000)) &&
+                 (data.screenshots.size() < 5 || (data.screenshots[4] is string && data.screenshots[4].size() <= 1000))
+               ))
+             ));
+    }
+
+    function validateSupportRequestSchema(data) {
+      return data.keys().hasAll(['name', 'email', 'subject', 'message', 'createdAt']) &&
+             data.keys().hasOnly(['name', 'email', 'subject', 'message', 'createdAt', 'ticketId', 'college', 'attachmentName', 'status', 'userId', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+             data.subject is string && data.subject.size() >= 5 && data.subject.size() <= 200 &&
+             data.message is string && data.message.size() >= 10 && data.message.size() <= 5000 &&
+             data.createdAt is timestamp &&
+             (!('ticketId' in data) || (data.ticketId is string && data.ticketId.size() <= 100)) &&
+             (!('college' in data) || (data.college is string && data.college.size() <= 200)) &&
+             (!('attachmentName' in data) || (data.attachmentName == null || (data.attachmentName is string && data.attachmentName.size() <= 200))) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function validateBugReportSchema(data) {
+      return data.keys().hasAll(['title', 'description', 'createdAt']) &&
+             data.keys().hasOnly(['title', 'description', 'createdAt', 'screenshot', 'device', 'browser', 'steps', 'status', 'userId', 'updatedAt']) &&
+             data.title is string && data.title.size() >= 5 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() >= 10 && data.description.size() <= 5000 &&
+             data.createdAt is timestamp &&
+             (!('screenshot' in data) || (data.screenshot == null || (data.screenshot is string && data.screenshot.size() <= 1000))) &&
+             (!('device' in data) || (data.device is string && data.device.size() <= 200)) &&
+             (!('browser' in data) || (data.browser is string && data.browser.size() <= 200)) &&
+             (!('steps' in data) || (data.steps is string && data.steps.size() <= 5000)) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function validateFeatureRequestSchema(data) {
+      return data.keys().hasAll(['title', 'description', 'createdAt']) &&
+             data.keys().hasOnly(['title', 'description', 'createdAt', 'whyUseful', 'status', 'userId', 'updatedAt']) &&
+             data.title is string && data.title.size() >= 5 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() >= 10 && data.description.size() <= 5000 &&
+             data.createdAt is timestamp &&
+             (!('whyUseful' in data) || (data.whyUseful is string && data.whyUseful.size() <= 5000)) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
     match /supportTickets/{ticketId} {
-      allow create: if isAuthenticated();
-      allow read, update: if isSupportOrAdmin();
+      allow create: if isAuthenticated() &&
+        validateSupportTicketSchema(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'OPEN';
+        
+      allow read: if isAuthenticated() && (
+        isSupportOrAdmin() ||
+        request.auth.uid == resource.data.userId
+      );
+      
+      allow update: if isAuthenticated() && (
+        (
+          isSupportOrAdmin() &&
+          validateSupportTicketSchema(request.resource.data) &&
+          isValidSupportTicketTransition(resource.data.status, request.resource.data.status) &&
+          isUnchanged('userId') &&
+          isUnchanged('createdAt') &&
+          isUnchanged('ticketType') &&
+          isUnchanged('category')
+        ) ||
+        (
+          request.auth.uid == resource.data.userId &&
+          validateSupportTicketSchema(request.resource.data) &&
+          isUnchanged('userId') &&
+          isUnchanged('createdAt') &&
+          isUnchanged('ticketType') &&
+          isUnchanged('category') &&
+          isUnchanged('status') &&
+          isUnchanged('assignedTo') &&
+          isUnchanged('resolution') &&
+          isUnchanged('internalNotes') &&
+          isUnchanged('updatedAt') &&
+          isUnchanged('resolvedAt') &&
+          isUnchanged('updatedBy') &&
+          isUnchanged('action')
+        )
+      );
+      
       allow delete: if isAdmin();
     }
 
-    // ── SUPPORT REQUESTS (CONTACT PAGE) ────────────────────────────────────
-    
+    // ── ANONYMOUS INTEGRATION POINTS (PRODUCTION INTEGRATION) ──────────────
+    // 1. Firebase App Check: Enforce App Check in Firestore settings to block
+    //    non-app requests to support_requests, bug_reports, feature_requests.
+    // 2. Cloudflare Turnstile / reCAPTCHA: Verify client tokens on the frontend
+    //    before calling addDoc/setDoc.
+    // 3. Server-side Rate Limiting: Use Firebase Cloud Functions as a proxy
+    //    for anonymous creations to apply IP-based rate limiting.
+
     match /support_requests/{reqId} {
-      allow create: if true;
+      allow create: if validateSupportRequestSchema(request.resource.data);
       allow read, update: if isSupportOrAdmin();
       allow delete: if isAdmin();
     }
     
     match /bug_reports/{reqId} {
-      allow create: if true;
+      allow create: if validateBugReportSchema(request.resource.data);
       allow read, update: if isSupportOrAdmin();
       allow delete: if isAdmin();
     }
     
     match /feature_requests/{reqId} {
-      allow create: if true;
+      allow create: if validateFeatureRequestSchema(request.resource.data);
       allow read, update: if isSupportOrAdmin();
       allow delete: if isAdmin();
+    }
+
+    // ── ANALYTICS HELPERS ──────────────────────────────────────────────────
+    
+    function validateFeedbackSchema(data) {
+      return data.keys().hasAll(['userId', 'rating', 'message', 'createdAt']) &&
+             data.keys().hasOnly(['userId', 'userEmail', 'rating', 'message', 'description', 'createdAt']) &&
+             (data.userId is string || data.userId == null) &&
+             (!('userEmail' in data) || data.userEmail is string) &&
+             data.rating is int && data.rating >= 1 && data.rating <= 5 &&
+             data.message is string && data.message.size() <= 1000 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             data.createdAt is timestamp;
+    }
+
+    function validateAIAnalyticsSchema(data) {
+      return (data.keys().hasAll(['event', 'createdAt']) || data.keys().hasAll(['action', 'createdAt'])) &&
+             data.keys().hasOnly(['event', 'action', 'createdAt', 'meta', 'userId']) &&
+             (!('event' in data) || (
+               data.event is string && (
+                 data.event == 'LISTING_VIEW' || data.event == 'SEARCH' || data.event == 'PRICE_SUGGESTION' ||
+                 data.event == 'LISTING_SHARE' || data.event == 'WISHLIST_ADD' || data.event == 'PURCHASE_REQUEST' ||
+                 data.event == 'optimizerUsed' || data.event == 'priceSuggestionUsed' || data.event == 'categorySuggestionAccepted' ||
+                 data.event == 'categorySuggestionDismissed' || data.event == 'fraudAlertShown' || data.event == 'smartFeedEngaged' ||
+                 data.event == 'assistantQueried'
+               )
+             )) &&
+             (!('action' in data) || (
+               data.action is string && (
+                 data.action == 'LISTING_VIEW' || data.action == 'SEARCH' || data.action == 'PRICE_SUGGESTION' ||
+                 data.action == 'LISTING_SHARE' || data.action == 'WISHLIST_ADD' || data.action == 'PURCHASE_REQUEST' ||
+                 data.action == 'optimizerUsed' || data.action == 'priceSuggestionUsed' || data.action == 'categorySuggestionAccepted' ||
+                 data.action == 'categorySuggestionDismissed' || data.action == 'fraudAlertShown' || data.action == 'smartFeedEngaged' ||
+                 data.action == 'assistantQueried'
+               )
+             )) &&
+             data.createdAt is timestamp &&
+             (!('meta' in data) || (
+               data.meta is map &&
+               (!('query' in data.meta) || (data.meta.query is string && data.meta.query.size() <= 200)) &&
+               (!('prompt' in data.meta) || (data.meta.prompt is string && data.meta.prompt.size() <= 2000)) &&
+               (!('generatedText' in data.meta) || (data.meta.generatedText is string && data.meta.generatedText.size() <= 10000))
+             )) &&
+             (!('userId' in data) || data.userId is string);
+    }
+
+    function isSupportedPlatform(platform) {
+      return platform is string && (
+        platform.lower() == 'whatsapp' || platform.lower() == 'telegram' || platform.lower() == 'email' ||
+        platform.lower() == 'copy_link' || platform.lower() == 'native_share' || platform.lower() == 'facebook' ||
+        platform.lower() == 'linkedin' || platform.lower() == 'twitter' || platform.lower() == 'discord' ||
+        platform.lower() == 'clipboard' || platform.lower() == 'native' || platform.lower() == 'generic'
+      );
+    }
+
+    function validateShareClickSchema(data) {
+      return data.keys().hasAll(['listingId', 'createdAt']) &&
+             (data.keys().hasAll(['platform']) || data.keys().hasAll(['source'])) &&
+             data.keys().hasOnly(['userId', 'visitorId', 'listingId', 'platform', 'source', 'referrerId', 'createdAt', 'timestamp']) &&
+             (!('userId' in data) || data.userId is string || data.userId == null) &&
+             (!('visitorId' in data) || data.visitorId is string || data.visitorId == null) &&
+             data.listingId is string && data.listingId.size() > 0 &&
+             (!('platform' in data) || isSupportedPlatform(data.platform)) &&
+             (!('source' in data) || isSupportedPlatform(data.source)) &&
+             (!('referrerId' in data) || data.referrerId is string || data.referrerId == null) &&
+             data.createdAt is timestamp &&
+             (!('timestamp' in data) || data.timestamp is timestamp);
+    }
+
+    function validateShareActionSchema(data) {
+      return data.keys().hasAll(['listingId', 'createdAt']) &&
+             (data.keys().hasAll(['action']) || data.keys().hasAll(['platform'])) &&
+             data.keys().hasOnly(['userId', 'sharerId', 'listingId', 'action', 'platform', 'createdAt', 'timestamp']) &&
+             (!('userId' in data) || data.userId is string || data.userId == null) &&
+             (!('sharerId' in data) || data.sharerId is string || data.sharerId == null) &&
+             data.listingId is string && data.listingId.size() > 0 &&
+             (!('action' in data) || isSupportedPlatform(data.action)) &&
+             (!('platform' in data) || isSupportedPlatform(data.platform)) &&
+             data.createdAt is timestamp &&
+             (!('timestamp' in data) || data.timestamp is timestamp);
     }
 
     // ── ANALYTICS COLLECTIONS ──────────────────────────────────────────────
     
     match /feedback/{id} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        validateFeedbackSchema(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
       allow read: if isAdmin();
       allow update, delete: if false;
     }
 
     match /aiAnalytics/{id} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if (
+        request.resource.data.userId == null ||
+        request.resource.data.userId == 'anonymous' ||
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid)
+      ) && validateAIAnalyticsSchema(request.resource.data);
       allow read: if isAdmin();
       allow update, delete: if false;
     }
 
+    match /aiAnalytics/{userId}/events/{eventId} {
+      allow create: if (
+        userId == 'anonymous' ||
+        (isAuthenticated() && userId == request.auth.uid)
+      ) && validateAIAnalyticsSchema(request.resource.data);
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow update, delete: if false;
+    }
+
     match /shareClicksLog/{id} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if (
+        !('userId' in request.resource.data) ||
+        request.resource.data.userId == null ||
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid)
+      ) && validateShareClickSchema(request.resource.data);
       allow read: if isAdmin();
       allow update, delete: if false;
     }
 
     match /shareActionsLog/{id} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if (
+        !('userId' in request.resource.data) ||
+        request.resource.data.userId == null ||
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid)
+      ) && validateShareActionSchema(request.resource.data);
       allow read: if isAdmin();
       allow update, delete: if false;
     }

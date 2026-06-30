@@ -213,6 +213,7 @@ export default function SettingsPage({ setPage }) {
 
       await updateDoc(doc(db, "users", currentUser.uid), {
         name: String(name || "").trim(),
+        displayName: String(name || "").trim(),
         college: String(college || "").trim(),
         phoneNumber: String(phone || "").trim(),
         photoURL: finalPhotoURL
@@ -387,6 +388,8 @@ export default function SettingsPage({ setPage }) {
         userId: currentUser.uid,
         userEmail: currentUser.email,
         description: feedbackDesc.trim(),
+        message: feedbackDesc.trim(),
+        rating: 5,
         createdAt: serverTimestamp()
       });
       toast("Feedback sent! We appreciate your support. 💬", "success");

@@ -430,8 +430,12 @@ export default function Navbar({ page, setPage, searchQuery, setSearchQuery, req
                               ✓ Verified Student
                             </span>
                           ) : (
-                            <span className="verified-status-drawer-text" style={{ color: "var(--txt-2)", fontSize: "12px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid var(--bdr)" }}>
-                              ⚪ Not Verified
+                            <span 
+                              className="verified-status-drawer-text" 
+                              style={{ cursor: "pointer", color: "var(--txt-2)", fontSize: "12px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--light)", padding: "3px 8px", borderRadius: "12px", border: "1px solid var(--bdr)" }}
+                              onClick={(e) => { e.stopPropagation(); setPage("college-verification"); setDrawerOpen(false); }}
+                            >
+                              ⚪ Not Verified (Verify Now)
                             </span>
                           )}
                         </div>

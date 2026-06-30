@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { transactionService } from "../services/transactionService";
+import { PurchaseService } from "../services/purchaseService";
 import { REQUEST_STATUS } from "../constants/requestStatus";
 import { 
   Inbox, ShoppingCart, Clock, CheckCircle, XCircle, DollarSign, 
@@ -49,16 +50,18 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
     const q1 = query(collection(db, "purchaseRequests"), where("sellerId", "==", currentUser.uid));
     const q2 = query(collection(db, "purchaseRequests"), where("buyerId",  "==", currentUser.uid));
 
-    const u1 = onSnapshot(q1, s => {
+    const u1 = onSnapshot(q1, async s => {
       const d = s.docs.map(d => ({ id: d.id, ...d.data() }));
-      d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setIncoming(d);
+      const enriched = await PurchaseService.enrichRequests(d);
+      enriched.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setIncoming(enriched);
       setLoading(false);
     });
-    const u2 = onSnapshot(q2, s => {
+    const u2 = onSnapshot(q2, async s => {
       const d = s.docs.map(d => ({ id: d.id, ...d.data() }));
-      d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setOutgoing(d);
+      const enriched = await PurchaseService.enrichRequests(d);
+      enriched.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setOutgoing(enriched);
     });
     return () => { u1(); u2(); };
   }, [currentUser]);
@@ -70,7 +73,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
       toast("Request accepted! Item marked as reserved. 🎉", "success");
     } catch (err) {
       console.error(err);
-      toast("Failed to accept request", "error");
+      toast(`Failed to accept request: ${err.message}`, "error");
     }
   };
 
@@ -80,7 +83,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
       toast("Request declined.", "success");
     } catch (err) {
       console.error(err);
-      toast("Failed to decline request", "error");
+      toast(`Failed to decline request: ${err.message}`, "error");
     }
   };
 
@@ -99,7 +102,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
       toast("Acceptance cancelled. Listing is active again! 🔄", "success");
     } catch (err) {
       console.error(err);
-      toast("Failed to cancel acceptance", "error");
+      toast(`Failed to cancel acceptance: ${err.message}`, "error");
     }
   };
 
@@ -110,7 +113,7 @@ export default function PurchaseRequestsPage({ setPage, setChatWith, setViewProf
       toast("Item marked as exchanged! 🎉", "success");
     } catch (err) {
       console.error(err);
-      toast("Failed to mark as exchanged", "error");
+      toast(`Failed to mark as exchanged: ${err.message}`, "error");
     }
   };
 
