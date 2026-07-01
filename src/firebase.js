@@ -4,25 +4,6 @@ import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-const getEnvVar = (name) => {
-  let val = null;
-  // Check import.meta.env (Vite)
-  try {
-    val = import.meta.env[name];
-  } catch (e) {
-    // Ignore
-  }
-  // Check process.env (Webpack/Node/Fallback)
-  if (!val) {
-    try {
-      val = process.env[name];
-    } catch (e) {
-      // Ignore
-    }
-  }
-  return val;
-};
-
 // Phase 1: Validate required environment variables before startup
 const REQUIRED_ENV_VARS = [
  "VITE_FIREBASE_API_KEY",
@@ -35,7 +16,7 @@ const REQUIRED_ENV_VARS = [
 ]
 
 for (const name of REQUIRED_ENV_VARS) {
-  const value = getEnvVar(name);
+  const value = import.meta.env[name];
   if (!value || value.trim() === "" || value.startsWith("YOUR_")) {
     throw new Error(`Firebase initialization failed: Required environment variable "${name}" is missing or unconfigured.`);
   }
@@ -80,7 +61,7 @@ try {
 const rtdbInstance = getDatabase(app);
 
 //* Phase 6: Integrate Firebase App Check (reCAPTCHA v3 Site Key Check)
-//const siteKey = getEnvVar("REACT_APP_RECAPTCHA_SITE_KEY");
+//const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 //if (siteKey && typeof window !== "undefined") {
   //try {
     //initializeAppCheck(app, {

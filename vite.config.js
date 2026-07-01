@@ -5,16 +5,9 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
 
-  // Map environment variables starting with REACT_APP_ into process.env.*
-  const envWithProcessPrefix = Object.keys(env).reduce((prev, key) => {
-    if (key.startsWith('REACT_APP_')) {
-      prev[`process.env.${key}`] = JSON.stringify(env[key]);
-    }
-    return prev;
-  }, {});
-
-  // Add process.env.NODE_ENV
-  envWithProcessPrefix['process.env.NODE_ENV'] = JSON.stringify(mode);
+  const envWithProcessPrefix = {
+    'process.env.NODE_ENV': JSON.stringify(mode),
+  };
 
   return {
     plugins: [

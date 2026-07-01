@@ -16,7 +16,7 @@ envContent.split('\n').forEach(line => {
   }
 });
 
-const GROQ_KEY = config.REACT_APP_GROQ_API_KEY;
+const GROQ_KEY = config.VITE_GROQ_API_KEY;
 console.log("Using Groq API Key:", GROQ_KEY ? "Found" : "Not Found");
 
 async function testGroq() {

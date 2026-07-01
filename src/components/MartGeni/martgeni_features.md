@@ -48,4 +48,4 @@ This document provides a summary of the active **MartGeni** AI features integrat
 
 All AI functions are routed through a central gatekeeping file:
 * **Config Manager**: [martgeniConfig.js](file:///c:/Users/kumar/OneDrive/Desktop/CampusMart/src/config/martgeniConfig.js) contains feature flags (`enableFloatingAssistant`, `enableListingOptimizer`, etc.) allowing developers to easily toggle individual features.
-* **Resilience**: The service is fully integrated with the **Groq API** (`Llama 3.1` model family). However, if no API key is supplied in the environment (`REACT_APP_GROQ_API_KEY`) or if API limits/errors occur, the service **silently and instantly falls back** to robust local keyword matching and deterministic rule-based algorithms. This guarantees zero client-side crashes.
+* **Resilience**: The service is fully integrated with the **Groq API** (`Llama 3.1` model family). However, if no API key is supplied in the environment (`VITE_GROQ_API_KEY`) or if API limits/errors occur, the service **silently and instantly falls back** to robust local keyword matching and deterministic rule-based algorithms. This guarantees zero client-side crashes.

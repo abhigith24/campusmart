@@ -4,11 +4,18 @@
 //  2. Go to Settings → Upload → Upload presets → Add unsigned preset
 //  3. Note your Cloud Name from the dashboard
 //  4. Add to your .env:
-//       REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
-//       REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
+//       VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+//       VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
 
-const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "YOUR_CLOUD_NAME";
-const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "YOUR_UPLOAD_PRESET";
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+if (!CLOUD_NAME || CLOUD_NAME.trim() === "" || CLOUD_NAME.startsWith("YOUR_")) {
+  throw new Error("Cloudinary configuration failed: VITE_CLOUDINARY_CLOUD_NAME is missing or unconfigured.");
+}
+if (!UPLOAD_PRESET || UPLOAD_PRESET.trim() === "" || UPLOAD_PRESET.startsWith("YOUR_")) {
+  throw new Error("Cloudinary configuration failed: VITE_CLOUDINARY_UPLOAD_PRESET is missing or unconfigured.");
+}
 
 /**
  * Upload a single File to Cloudinary.

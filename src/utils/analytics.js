@@ -7,7 +7,7 @@
  * ignored instead of crashing.
  */
 
-const GA_ID = process.env.REACT_APP_GA_MEASUREMENT_ID;
+const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
 // Safe wrapper — no-ops when GA is unavailable
 function gtag(...args) {

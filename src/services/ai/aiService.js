@@ -50,8 +50,8 @@ function _cacheKey(...args) {
 // ── Groq API Helper ─────────────────────────────────────────────────────────
 
 async function _callGroq(messages, model, jsonMode = false, attempt = 0) {
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
-  if (!apiKey) throw new Error("REACT_APP_GROQ_API_KEY not set");
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) throw new Error("VITE_GROQ_API_KEY not set");
 
   const controller = new AbortController();
   const timer = setTimeout(
@@ -143,7 +143,7 @@ export async function optimizeListingDescription({ title, description, category,
     };
   };
 
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return localFallback();
 
   try {
@@ -232,7 +232,7 @@ export async function suggestPriceRange({ title, category, condition }, userId =
     };
   };
 
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return localFallback();
 
   try {
@@ -325,7 +325,7 @@ export async function categorizeProduct({ title, description }, userId = null) {
   const cached = _cacheGet(cacheKey);
   if (cached) return cached;
 
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return _localCategorize(title, description);
 
   try {
@@ -433,7 +433,7 @@ export async function detectFraudRisk({ content, listingId }, userId = null) {
   }
 
   // For borderline cases, ask Groq for deeper analysis
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return localResult;
 
   const cacheKey = _cacheKey("fraud", content.slice(0, 120));
@@ -611,7 +611,7 @@ export async function generateChatResponse({ messages, userContext, listings = [
     return { replyText, matchedListings: [], suggestedChips: chips };
   };
 
-  const apiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return localReply();
 
   try {
