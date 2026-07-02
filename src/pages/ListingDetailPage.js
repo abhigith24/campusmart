@@ -293,7 +293,10 @@ export default function ListingDetailPage({ listing, setPage, setSelectedListing
       setShowBuyModal(false);
     } catch (err) {
       console.error(err);
-      toast(err.message || "Failed to send request", "error");
+      const userMsg = err.code === "permission-denied"
+        ? "Missing or insufficient permissions to send this purchase request. ❌"
+        : (err.message || "Failed to send request");
+      toast(userMsg, "error");
     }
     setBuyLoading(false);
   }

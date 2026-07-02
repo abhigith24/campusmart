@@ -25,62 +25,46 @@ export const transactionService = {
     const requestId = `${buyerId}_${listing.id}`;
     const requestRef = doc(db, "purchaseRequests", requestId);
 
-    await runTransaction(db, async (transaction) => {
-      const requestSnap = await transaction.get(requestRef);
-      if (requestSnap.exists()) {
-        const data = requestSnap.data();
-        if (
-          data.status === REQUEST_STATUS.PENDING ||
-          data.status === REQUEST_STATUS.ACCEPTED ||
-          data.status === REQUEST_STATUS.EXCHANGED
-        ) {
-          throw new Error("An active purchase request already exists for this item.");
+    try {
+      await runTransaction(db, async (transaction) => {
+        const requestSnap = await transaction.get(requestRef);
+        if (requestSnap.exists()) {
+          const data = requestSnap.data();
+          if (
+            data.status === REQUEST_STATUS.PENDING ||
+            data.status === REQUEST_STATUS.ACCEPTED ||
+            data.status === REQUEST_STATUS.EXCHANGED
+          ) {
+            throw new Error("An active purchase request already exists for this item.");
+          }
         }
-      }
 
-      // Check listing status
-      const listingRef = doc(db, "listings", listing.id);
-      const listingSnap = await transaction.get(listingRef);
-      if (!listingSnap.exists()) {
-        throw new Error("Listing does not exist.");
-      }
-      const listingData = listingSnap.data();
-      if (listingData.status !== LISTING_STATUS.AVAILABLE) {
-        throw new Error("Listing is no longer available.");
-      }
+        // Check listing status
+        const listingRef = doc(db, "listings", listing.id);
+        const listingSnap = await transaction.get(listingRef);
+        if (!listingSnap.exists()) {
+          throw new Error("Listing does not exist.");
+        }
+        const listingData = listingSnap.data();
+        if (listingData.status !== LISTING_STATUS.AVAILABLE) {
+          throw new Error("Listing is no longer available.");
+        }
 
-      transaction.set(requestRef, {
-        buyerId,
-        sellerId: listing.sellerId,
-        listingId: listing.id,
-        status: REQUEST_STATUS.PENDING,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        transaction.set(requestRef, {
+          buyerId,
+          sellerId: listing.sellerId,
+          listingId: listing.id,
+          status: REQUEST_STATUS.PENDING,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
       });
-
-      // User-driven notifications created on client (Issue 3: Keep only user-driven notifications on client)
-      const notifRef = doc(collection(db, "notifications"));
-      transaction.set(notifRef, {
-        type: "PURCHASE_REQUEST",
-        sellerId: listing.sellerId,
-        buyerId,
-        listingId: listing.id,
-        purchaseRequestId: requestId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-
-      const notifBuyerRef = doc(collection(db, "notifications"));
-      transaction.set(notifBuyerRef, {
-        type: "PURCHASE_REQUEST",
-        sellerId: listing.sellerId,
-        buyerId,
-        listingId: listing.id,
-        purchaseRequestId: requestId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-    });
+    } catch (err) {
+      if (err.code === "permission-denied") {
+        throw new Error("Missing or insufficient permissions to create a purchase request. ❌");
+      }
+      throw err;
+    }
 
     activityLogService.logPurchaseRequest(buyerId, listing.sellerId, listing.id, requestId);
     return requestId;

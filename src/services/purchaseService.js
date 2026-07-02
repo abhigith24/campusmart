@@ -11,9 +11,9 @@ export const PurchaseService = {
       sellerId: requestData.sellerId,
       listingId: requestData.listingId,
       status: "PENDING",
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
-    if (requestData.updatedAt) allowedData.updatedAt = requestData.updatedAt;
     if (requestData.message) allowedData.message = requestData.message;
     if (requestData.negotiatedPrice !== undefined) allowedData.negotiatedPrice = requestData.negotiatedPrice;
 
